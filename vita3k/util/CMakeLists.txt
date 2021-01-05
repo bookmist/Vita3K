@@ -20,6 +20,7 @@ add_library(
     include/util/types.h
     include/util/vector_utils.h
     src/util.cpp
+    src/instrset_detect.cpp
 )
 
 target_include_directories(util PUBLIC include)
