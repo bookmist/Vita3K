@@ -712,6 +712,7 @@ EXPORT(int, sceKernelExitDeleteThread, int status) {
 
     thread->to_do = ThreadToDo::exit;
     stop(*thread->cpu);
+    thread->returned_value = status;
     thread->something_to_do.notify_all();
 
     for (auto t : thread->waiting_threads) {
