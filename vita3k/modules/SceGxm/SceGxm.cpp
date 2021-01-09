@@ -1690,16 +1690,14 @@ EXPORT(int, sceGxmProgramParameterGetType, const SceGxmProgramParameter *paramet
     return parameter->type;
 }
 
-EXPORT(bool, sceGxmProgramParameterIsRegFormat, const SceGxmProgram *program, const SceGxmProgramParameter *parameter) {
-    if (program->is_fragment()) {
+EXPORT(bool, sceGxmProgramParameterIsRegFormat, const SceGxmProgram *program, Ptr<const SceGxmProgramParameter> parameter, Ptr<uint32_t> param_2) {
+    //code from disassembled source. I don't know what structure is param_2.
+    if (program->get_type() != Vertex) {
         return false;
     }
-
-    if (parameter->category != SceGxmParameterCategory::SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE) {
-        return false;
-    }
-
-    return UNIMPLEMENTED();
+    const std::uint8_t *VertexOutputs = reinterpret_cast<const std::uint8_t *>(&program->varyings_offset) + program->varyings_offset;
+    uint32_t *param2 = param_2.get(host.mem);
+    return ((VertexOutputs[(param2[3] >> 5) + 2]) & (1 << (param2[3] & 0x1f))) != 0;
 }
 
 EXPORT(bool, sceGxmProgramParameterIsSamplerCube, const SceGxmProgramParameter *parameter) {
