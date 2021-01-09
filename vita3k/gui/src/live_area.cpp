@@ -405,7 +405,7 @@ void draw_information_bar(GuiState &gui, HostState &host) {
                 ImGui::GetForegroundDrawList()->AddImageRounded(get_app_icon(gui, gui.apps_list_opened[a])->second, icon_scal_pos, icon_scal_size, ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, 15.f, ImDrawCornerFlags_All);
             else
                 ImGui::GetForegroundDrawList()->AddRectFilled(icon_scal_pos, icon_scal_size, IM_COL32_WHITE, 0.f, ImDrawCornerFlags_All);
-            if (gui.apps_list_opened[a] != gui.apps_list_opened[gui.current_app_selected])
+            if ((gui.current_app_selected < gui.apps_list_opened.size())&&(gui.apps_list_opened[a] != gui.apps_list_opened[gui.current_app_selected]))
                 ImGui::GetForegroundDrawList()->AddRectFilled(icon_scal_pos, icon_scal_size, IM_COL32(0.f, 0.f, 0.f, 140.f), 15.f, ImDrawCornerFlags_All);
         }
     }
