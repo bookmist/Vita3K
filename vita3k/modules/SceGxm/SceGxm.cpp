@@ -1690,7 +1690,57 @@ EXPORT(int, sceGxmProgramParameterGetType, const SceGxmProgramParameter *paramet
     return parameter->type;
 }
 
+void LogSceGxmProgramParameter(const SceGxmProgramParameter *parameter) {
+    assert(parameter);
+    char *name = (char *)parameter + parameter->name_offset;
+    const SceGxmProgramParameter *p2 = parameter;
+    std::string category_name;
+    switch (p2->category) {
+    case SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE: category_name = "SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE"; break;
+    case SCE_GXM_PARAMETER_CATEGORY_UNIFORM: category_name = "SCE_GXM_PARAMETER_CATEGORY_UNIFORM"; break;
+    case SCE_GXM_PARAMETER_CATEGORY_SAMPLER: category_name = "SCE_GXM_PARAMETER_CATEGORY_SAMPLER"; break;
+    case SCE_GXM_PARAMETER_CATEGORY_AUXILIARY_SURFACE: category_name = "SCE_GXM_PARAMETER_CATEGORY_AUXILIARY_SURFACE"; break;
+    case SCE_GXM_PARAMETER_CATEGORY_UNIFORM_BUFFER: category_name = "SCE_GXM_PARAMETER_CATEGORY_UNIFORM_BUFFER"; break;
+    default: category_name = log_hex<uint8_t>(p2->category);
+    }
+    std::string parameter_type;
+    switch (p2->type) {
+    case SCE_GXM_PARAMETER_TYPE_F32: parameter_type = "SCE_GXM_PARAMETER_TYPE_F32"; break;
+    case SCE_GXM_PARAMETER_TYPE_F16: parameter_type = "SCE_GXM_PARAMETER_TYPE_F16"; break;
+    case SCE_GXM_PARAMETER_TYPE_C10: parameter_type = "SCE_GXM_PARAMETER_TYPE_C10"; break;
+    case SCE_GXM_PARAMETER_TYPE_U32: parameter_type = "SCE_GXM_PARAMETER_TYPE_U32"; break;
+    case SCE_GXM_PARAMETER_TYPE_S32: parameter_type = "SCE_GXM_PARAMETER_TYPE_S32"; break;
+    case SCE_GXM_PARAMETER_TYPE_U16: parameter_type = "SCE_GXM_PARAMETER_TYPE_U16"; break;
+    case SCE_GXM_PARAMETER_TYPE_S16: parameter_type = "SCE_GXM_PARAMETER_TYPE_S16"; break;
+    case SCE_GXM_PARAMETER_TYPE_U8: parameter_type = "SCE_GXM_PARAMETER_TYPE_U8"; break;
+    case SCE_GXM_PARAMETER_TYPE_S8: parameter_type = "SCE_GXM_PARAMETER_TYPE_S8"; break;
+    case SCE_GXM_PARAMETER_TYPE_AGGREGATE: parameter_type = "SCE_GXM_PARAMETER_TYPE_AGGREGATE"; break;
+    default: parameter_type = log_hex<uint8_t>(p2->type);
+    }
+    std::string semantic;
+    switch (static_cast<SceGxmParameterSemantic>(p2->semantic)) {
+    case SCE_GXM_PARAMETER_SEMANTIC_NONE: semantic = "SCE_GXM_PARAMETER_SEMANTIC_NONE"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_ATTR: semantic = "SCE_GXM_PARAMETER_SEMANTIC_ATTR"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_BCOL: semantic = "SCE_GXM_PARAMETER_SEMANTIC_BCOL"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_BINORMAL: semantic = "SCE_GXM_PARAMETER_SEMANTIC_BINORMAL"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES: semantic = "SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT: semantic = "SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_COLOR: semantic = "SCE_GXM_PARAMETER_SEMANTIC_COLOR"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_DIFFUSE: semantic = "SCE_GXM_PARAMETER_SEMANTIC_DIFFUSE"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_FOGCOORD: semantic = "SCE_GXM_PARAMETER_SEMANTIC_FOGCOORD"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_NORMAL: semantic = "SCE_GXM_PARAMETER_SEMANTIC_NORMAL"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_POINTSIZE: semantic = "SCE_GXM_PARAMETER_SEMANTIC_POINTSIZE"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_POSITION: semantic = "SCE_GXM_PARAMETER_SEMANTIC_POSITION"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_SPECULAR: semantic = "SCE_GXM_PARAMETER_SEMANTIC_SPECULAR"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_TANGENT: semantic = "SCE_GXM_PARAMETER_SEMANTIC_TANGENT"; break;
+    case SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD: semantic = "SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD"; break;
+    default: semantic = log_hex<uint8_t>(p2->semantic);
+    }
+    LOG_INFO("ProgramParameter: name: {}, category:{}, type:{}, semantic:{}, semantic_index:{}, array_size:{}, resource_index:{}", name, category_name, parameter_type, semantic, p2->semantic_index, p2->array_size, p2->resource_index);
+}
+
 EXPORT(bool, sceGxmProgramParameterIsRegFormat, const SceGxmProgram *program, Ptr<const SceGxmProgramParameter> parameter, Ptr<uint32_t> param_2) {
+    LogSceGxmProgramParameter(parameter.get(host.mem));
     //code from disassembled source. I don't know what structure is param_2.
     if (program->get_type() != Vertex) {
         return false;
