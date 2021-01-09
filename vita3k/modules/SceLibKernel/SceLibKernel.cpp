@@ -1342,10 +1342,70 @@ EXPORT(int, sceKernelReceiveMsgPipeVectorCB) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceKernelRegisterThreadEventHandler) {
+
+/**
+ * @defgroup	Thread event handler type
+ * Defining thread events that trigger thread event handlers
+ */
+/*@{*/
+#define SCE_KERNEL_THREAD_EVENT_TYPE_START (0x04) /**< Thread start event */
+#define SCE_KERNEL_THREAD_EVENT_TYPE_EXIT (0x08) /**< Thread end event */
+
+/**
+ * Valid thread event mask
+ */
+#define SCE_KERNEL_THREAD_EVENT_TYPE_ALL (SCE_KERNEL_THREAD_EVENT_TYPE_START | SCE_KERNEL_THREAD_EVENT_TYPE_EXIT)
+/*@}*/
+
+/**
+ * @defgroup	Thread specification for thread event handler
+ * Thread specification macro in sceKernelRegisterThreadEventHandler()
+ */
+/*@{*/
+#define SCE_KERNEL_THREAD_ID_USER ((SceUID)0xfffffff0) /**< Specify all user threads */
+/*@}*/
+
+/**
+ * @brief Thread event handler type
+ *
+ * Thread event handler type.
+ * @param	type		The thread event handler call cause is passed.
+ *				- SCE_KERNEL_THREAD_EVENT_TYPE_START: thread started
+ *				- SCE_KERNEL_THREAD_EVENT_TYPE_EXIT : thread terminated
+ * @param	threadId	Identifier of the thread that caused the thread event handler to be called is passed.
+ * @param	arg		Argument when calling the thread event handler is passed.
+ * @param	pCommon		pCommon specified in sceKernelRegisterThreadEventHandler() is passed as it is.
+ * @retval	SCE_OK		Success
+ * @retval	Any value other than SCE_OK	Remove this thread event handler
+ */
+typedef SceInt32 (*SceKernelThreadEventHandler)(SceInt32 type, SceUID threadId, SceInt32 arg, void *pCommon);
+
+struct sceKernelRegisterThreadEventHandlerOpt {
+    void *SceKernelThreadEventHandler;
+    int num1;
+    int reserved0;
+    int reserved1;
+};
+
+EXPORT(int, sceKernelRegisterThreadEventHandler, char *name, SceUID uid, uint32_t num0, sceKernelRegisterThreadEventHandlerOpt *opt) {
+    const auto thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
+    std::string thread_name;
+    if (thread) {
+        thread_name = thread->name;
+        if (thread_name.empty()) {
+            thread_name = "*";
+        }
+    }
+    LOG_WARN("({}, thread (id:{}, name:{}), uid:{}, num0:{}, num1:{}, event:{} {})", name, thread_id, thread_name, log_hex(uid), log_hex(num0), log_hex(opt->num1),
+        ((num0 & SCE_KERNEL_THREAD_EVENT_TYPE_START) == SCE_KERNEL_THREAD_EVENT_TYPE_START ? "START" : ""),
+        ((num0 & SCE_KERNEL_THREAD_EVENT_TYPE_EXIT) == SCE_KERNEL_THREAD_EVENT_TYPE_EXIT ? "EXIT" : ""));
+    /*
+    LOG_WARN("sceKernelRegisterThreadEventHandler({}, thread (id:{}, name:{}), event:{}{})", name, thread_id2, thread->name, 
+        (num0 &SCE_KERNEL_THREAD_EVENT_TYPE_START == SCE_KERNEL_THREAD_EVENT_TYPE_START ? "START" :""), 
+        (num0 &SCE_KERNEL_THREAD_EVENT_TYPE_EXIT == SCE_KERNEL_THREAD_EVENT_TYPE_EXIT ? "EXIT" :""));    
+        */
     return UNIMPLEMENTED();
 }
-
 EXPORT(int, sceKernelSendMsgPipe) {
     return UNIMPLEMENTED();
 }
