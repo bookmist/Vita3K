@@ -46,7 +46,7 @@ enum class DebugLevel {
     WARNINGS,
     ALL,
 };
-
+/*
 struct SceAvPlayerMemoryAllocator {
     Ptr<void> user_data;
 
@@ -73,7 +73,7 @@ struct SceAvPlayerEventManager {
     // Cast to SceAvPlayerEventCallback.
     Ptr<void> event_callback;
 };
-
+*/
 struct SceAvPlayerInfo {
     SceAvPlayerMemoryAllocator memory_allocator;
     SceAvPlayerFileManager file_manager;
@@ -82,7 +82,7 @@ struct SceAvPlayerInfo {
     uint32_t base_priority;
     int32_t frame_buffer_count;
     int32_t auto_start;
-    uint8_t unknown0[3];
+    uint32_t unknown0;
     uint32_t unknown1;
 };
 
@@ -168,6 +168,12 @@ EXPORT(int, sceAvPlayerAddSource, SceUID player_handle, const char *path) {
 
     player_info->player.queue(expand_path(host.io, path, host.pref_path));
 
+    const ThreadStatePtr thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
+    uint32_t argp_arr[4] = {0,0,0,0};
+    argp_arr[0] = (uint)(player_info->event_manager.user_data.address());
+    argp_arr[1] = 2;//SCE_AVPLAYER_STATE_READY
+    Ptr<void> argp = Ptr<void>(argp_arr[0]);
+    run_on_current(*thread, Ptr<void>(player_info->event_manager.event_callback), 4, argp);
     return 0;
 }
 
@@ -289,10 +295,33 @@ EXPORT(SceUID, sceAvPlayerInit, SceAvPlayerInfo *info) {
         if (info->memory_allocator.texture_deallocator)
             LOG_WARN("Texture Deallocator will not be used.");
 
-        player->last_frame_time = current_time();
+    LOG_DEBUG("SceAvPlayerInfo.memory_allocator: user_data:{}, general_allocator:{}, general_deallocator:{}, texture_allocator:{}, texture_deallocator:{}", 
+        log_hex(info->memory_allocator.user_data.address()), log_hex(info->memory_allocator.general_allocator.address()), log_hex(info->memory_allocator.general_deallocator.address()), 
+        log_hex(info->memory_allocator.texture_allocator.address()), log_hex(info->memory_allocator.texture_deallocator.address()));
+    LOG_DEBUG("SceAvPlayerInfo.file_manager: user_data:{}, open_file:{}, close_file:{}, read_file:{}, file_size:{}",
+        log_hex(info->file_manager.user_data.address()), log_hex(info->file_manager.open_file.address()), log_hex(info->file_manager.close_file.address()), log_hex(info->file_manager.read_file.address()), 
+        log_hex(info->file_manager.file_size.address()));
+    LOG_DEBUG("SceAvPlayerInfo.event_manager: user_data:{}, event_callback:{}",
+        log_hex(info->event_manager.user_data.address()), log_hex(info->event_manager.event_callback.address()));
+    LOG_DEBUG("SceAvPlayerInfo: debug_level:{}, base_priority:{}, frame_buffer_count:{}, auto_start:{}, unknown0:{}, unknown1:{}", 
+        log_hex(info->debug_level), log_hex(info->base_priority), log_hex(info->frame_buffer_count), log_hex(info->auto_start),
+        log_hex(info->unknown0), log_hex(info->unknown1));
+        
+    player->last_frame_time = current_time();
+    player->memory_allocator = info->memory_allocator;
+    player->file_manager = info->file_manager;
+    player->event_manager = info->event_manager;
 
-        // Result is defined as a void *, but I just call it SceUID because it is easier to deal with. Same size.
-        return player_handle;
+
+    const ThreadStatePtr thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
+    uint32_t argp_arr[4] = { 0, 0, 1, 0 };
+    argp_arr[0] = (uint)(player->event_manager.user_data.address());
+    argp_arr[1] = 2; //SCE_AVPLAYER_STATE_READY
+    Ptr<void> argp = Ptr<void>(argp_arr[0]);
+    run_on_current(*thread, Ptr<void>(player->event_manager.event_callback), 4, argp);
+
+    // Result is defined as a void *, but I just call it SceUID because it is easier to deal with. Same size.
+    return player_handle;
     } else {
         LOG_WARN("Video is skipped");
         return 0;

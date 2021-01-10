@@ -185,6 +185,33 @@ typedef std::map<SceUID, WaitingThreadState> KernelWaitingThreadStates;
 typedef std::shared_ptr<DecoderState> DecoderPtr;
 typedef std::map<SceUID, DecoderPtr> DecoderStates;
 
+struct SceAvPlayerMemoryAllocator {
+    Ptr<void> user_data;
+
+    // All of these should be cast to SceAvPlayerAllocator or SceAvPlayerDeallocator types.
+    Ptr<void> general_allocator;
+    Ptr<void> general_deallocator;
+    Ptr<void> texture_allocator;
+    Ptr<void> texture_deallocator;
+};
+
+struct SceAvPlayerFileManager {
+    Ptr<void> user_data;
+
+    // Cast to SceAvPlayerOpenFile, SceAvPlayerCloseFile, SceAvPlayerReadFile and SceAvPlayerGetFileSize.
+    Ptr<void> open_file;
+    Ptr<void> close_file;
+    Ptr<void> read_file;
+    Ptr<void> file_size;
+};
+
+struct SceAvPlayerEventManager {
+    Ptr<void> user_data;
+
+    // Cast to SceAvPlayerEventCallback.
+    Ptr<void> event_callback;
+};
+
 struct PlayerInfoState {
     PlayerState player;
 
@@ -203,6 +230,9 @@ struct PlayerInfoState {
     bool paused = false;
 
     uint64_t last_frame_time = 0;
+    SceAvPlayerMemoryAllocator memory_allocator;
+    SceAvPlayerFileManager file_manager;
+    SceAvPlayerEventManager event_manager;
 };
 
 typedef std::shared_ptr<PlayerInfoState> PlayerPtr;
