@@ -162,18 +162,111 @@ static Ptr<uint8_t> get_buffer(const PlayerPtr &player, MediaType media_type,
     Ptr<uint8_t> buffer = buffers[ring_index % PlayerInfoState::RING_BUFFER_COUNT];
     return buffer;
 }
+//callback_thread/*
+struct AvPlayerCallbackThreadData_t {
+    KernelState *kernel = nullptr;
+    MemState *mem = nullptr;
+    SceUID thid = SCE_KERNEL_ERROR_ILLEGAL_THREAD_ID;
+};
+
+AvPlayerCallbackThreadData_t AvPlayerCallbackThreadData;
+#include <modules\module_parent.h>
+void init(HostState &host, SceUID base_thread_id) {
+    if (AvPlayerCallbackThreadData.thid != SCE_KERNEL_ERROR_ILLEGAL_THREAD_ID) {
+        return;
+    }
+    const char *export_name = "AvPlayerCallbackThread_init";
+    const ThreadStatePtr main_thread = util::find(base_thread_id, host.kernel.threads);
+
+    const auto stack_size = SCE_KERNEL_STACK_SIZE_USER_DEFAULT; // TODO: Verify this is the correct stack size
+
+    auto inject = create_cpu_dep_inject(host);
+    auto new_thread_id = create_thread(Ptr<void>(read_pc(*main_thread->cpu)), host.kernel, host.mem, "AvPlayerCallbackThread", SCE_KERNEL_DEFAULT_PRIORITY_USER, stack_size, inject, nullptr);
+
+    if (new_thread_id > 0x80000000) {
+        LOG_ERROR("Callback thread creation error");
+        return;
+    }
+    AvPlayerCallbackThreadData.mem = &host.mem;
+    AvPlayerCallbackThreadData.kernel = &host.kernel;
+    AvPlayerCallbackThreadData.thid = new_thread_id;
+    const ThreadStatePtr av_player_callback_thread = util::find(new_thread_id, host.kernel.threads);
+
+    const std::function<void(SDL_Thread *)> delete_thread = [av_player_callback_thread](SDL_Thread *running_thread) {
+        {
+            const std::lock_guard<std::mutex> lock(av_player_callback_thread->mutex);
+            av_player_callback_thread->to_do = ThreadToDo::exit;
+        }
+        av_player_callback_thread->something_to_do.notify_all(); // TODO Should this be notify_one()?
+    };
+
+    
+}
+
+struct CPUState_z {
+    SceUID thread_id;
+    MemState *mem = nullptr;
+    CallSVC call_svc;
+    ResolveNIDName resolve_nid_name;
+    size_t disasm;
+    void *disasm2;
+    void *get_watch_memory_addr;
+    void *uc;
+    void *memory_read_hook = 0;
+    void *memory_write_hook = 0;
+    void *code_hook = 0;
+    bool returning = false;
+    std::stack<Address> lr_stack;
+
+    bool did_break = false;
+    bool did_inject = false;
+
+    std::vector<ModuleRegion> module_regions;
+    std::stack<StackFrame> stack_frames;
+};
+
+int run(HostState &host, SceUID thread_id, Address callback_address, uint arglen, uint32_t args[]) {
+    if (AvPlayerCallbackThreadData.thid == SCE_KERNEL_ERROR_ILLEGAL_THREAD_ID) {
+        LOG_ERROR("Callback thread error");
+        return 0;
+    }
+    const ThreadStatePtr thread = util::find(AvPlayerCallbackThreadData.thid, AvPlayerCallbackThreadData.kernel->threads);
+    std::unique_lock<std::mutex> lock(thread->mutex);
+    stop(*thread->cpu);
+    if (arglen > 0){
+        write_reg(*thread->cpu, 0, args[0]);
+    }
+    if (arglen > 1) {
+        write_reg(*thread->cpu, 1, args[1]);
+    }
+    if (arglen > 2) {
+        write_reg(*thread->cpu, 2, args[2]);
+    } /*
+    if (arglen > 3) {
+        //remaining arguments shold be puched into stack
+        for (int i = 3; i < arglen; i++) {
+            CPUState_z *state = (CPUState_z *)(uintptr_t)(thread->cpu.get());
+            state->stack_frames.push({ static_cast<uint32_t>(args[i]), read_sp(*thread->cpu)});
+        }
+    }
+    */
+    write_pc(*thread->cpu, callback_address);
+    lock.unlock();
+    run_thread(*thread, true);
+    return read_reg(*thread->cpu, 0);
+}
+/**/
+//end of callback_thread
 
 EXPORT(int, sceAvPlayerAddSource, SceUID player_handle, const char *path) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
 
     player_info->player.queue(expand_path(host.io, path, host.pref_path));
 
-    const ThreadStatePtr thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
     uint32_t argp_arr[4] = {0,0,0,0};
-    argp_arr[0] = (uint)(player_info->event_manager.user_data.address());
+    argp_arr[0] = player_info->event_manager.user_data.address();
     argp_arr[1] = 2;//SCE_AVPLAYER_STATE_READY
-    Ptr<void> argp = Ptr<void>(argp_arr[0]);
-    run_on_current(*thread, Ptr<void>(player_info->event_manager.event_callback), 4, argp);
+    run(host, thread_id, player_info->event_manager.event_callback.address(), 4, argp_arr);
     return 0;
 }
 
@@ -231,8 +324,43 @@ EXPORT(bool, sceAvPlayerGetAudioData, SceUID player_handle, SceAvPlayerFrameInfo
     return true;
 }
 
-EXPORT(int, sceAvPlayerGetStreamInfo) {
-    return UNIMPLEMENTED();
+struct SceAvPlayerStreamInfo {
+    MediaType stream_type;
+    uint32_t unknown;
+    SceAvPlayerStreamDetails stream_details;
+};
+
+enum SceAvPlayerErrorCode {
+    SCE_AVPLAYER_ERROR_ILLEGAL_ADDR = 0x806a0001,
+    SCE_AVPLAYER_ERROR_INVALID_ARGUMENT = 0x806a0002
+};
+
+    EXPORT(uint32_t, sceAvPlayerGetStreamInfo, SceUID player_handle, uint stream_no, Ptr<SceAvPlayerStreamInfo> stream_info) {
+    if (!stream_info) {
+        return SCE_AVPLAYER_ERROR_ILLEGAL_ADDR;
+    }
+    if (player_handle == 0) {
+        return SCE_AVPLAYER_ERROR_ILLEGAL_ADDR;
+    } 
+    const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
+    auto StreamInfo = stream_info.get(host.mem);
+    if (stream_no == 0) { //suspect always two streams: audio and video //first is video
+        DecoderSize size = player_info->player.get_size();
+        StreamInfo->stream_type = MediaType::VIDEO;
+        StreamInfo->stream_details.video.width = size.width;
+        StreamInfo->stream_details.video.height = size.height;
+        StreamInfo->stream_details.video.aspect_ratio = static_cast<float>(size.width) / static_cast<float>(size.height);
+        strcpy(StreamInfo->stream_details.video.language, "ENG");
+    } else if (stream_no == 1) { // audio
+        StreamInfo->stream_type = MediaType::AUDIO;
+        StreamInfo->stream_details.audio.channels = player_info->player.last_channels;
+        StreamInfo->stream_details.audio.sample_rate = player_info->player.last_sample_rate;
+        StreamInfo->stream_details.audio.size = player_info->player.last_channels * player_info->player.last_sample_count * sizeof(int16_t);
+        strcpy(StreamInfo->stream_details.audio.language, "ENG");
+    } else {
+        return SCE_AVPLAYER_ERROR_INVALID_ARGUMENT;
+    }
+    return 0;
 }
 
 EXPORT(bool, sceAvPlayerGetVideoData, SceUID player_handle, SceAvPlayerFrameInfo *frame_info) {
@@ -312,14 +440,8 @@ EXPORT(SceUID, sceAvPlayerInit, SceAvPlayerInfo *info) {
     player->file_manager = info->file_manager;
     player->event_manager = info->event_manager;
 
-
-    const ThreadStatePtr thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
-    uint32_t argp_arr[4] = { 0, 0, 1, 0 };
-    argp_arr[0] = (uint)(player->event_manager.user_data.address());
-    argp_arr[1] = 2; //SCE_AVPLAYER_STATE_READY
-    Ptr<void> argp = Ptr<void>(argp_arr[0]);
-    run_on_current(*thread, Ptr<void>(player->event_manager.event_callback), 4, argp);
-
+    init(host, thread_id);
+    //host.kernel.watch_import_calls = true;
     // Result is defined as a void *, but I just call it SceUID because it is easier to deal with. Same size.
     return player_handle;
     } else {
@@ -369,6 +491,9 @@ EXPORT(int, sceAvPlayerSetTrickSpeed) {
 
 EXPORT(int, sceAvPlayerStart, SceUID player_handle) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
+    if (player_info->player.videos_queue.empty()) {
+        return 0;
+    }
     player_info->player.pop_video();
 
     return 0;
@@ -382,7 +507,7 @@ EXPORT(int, sceAvPlayerStop, SceUID player_handle) {
 }
 
 EXPORT(int, sceAvPlayerStreamCount) {
-    return UNIMPLEMENTED();
+    return UNIMPLEMENTED()+2;
 }
 
 BRIDGE_IMPL(sceAvPlayerAddSource)
