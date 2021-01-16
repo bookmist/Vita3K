@@ -2187,7 +2187,11 @@ EXPORT(int, sceGxmSetVertexTexture, SceGxmContext *context, uint32_t textureInde
     if (textureIndex > (SCE_GXM_MAX_TEXTURE_UNITS - 1)) {
         return RET_ERROR(SCE_GXM_ERROR_INVALID_VALUE);
     }
-
+    if (texture->data_addr == 0) {
+        LOG_DEBUG("Vertex texture has no data. Ignored");
+    } else {
+        renderer::set_fragment_texture(*host.renderer, context->renderer.get(), &context->state, textureIndex + SCE_GXM_MAX_TEXTURE_UNITS, *texture);
+    }
     return UNIMPLEMENTED();
 }
 

@@ -271,7 +271,15 @@ void sync_front_depth_bias(const GxmContextState &state) {
 
 void sync_texture(GLContext &context, const GxmContextState &state, const MemState &mem, std::size_t index,
     const Config &config, const std::string &base_path, const std::string &title_id) {
-    const SceGxmTexture &texture = state.fragment_textures[index];
+
+    const SceGxmTexture *tmp_texture;
+    if (index >= SCE_GXM_MAX_TEXTURE_UNITS) {
+        tmp_texture = &state.vertex_textures[index - SCE_GXM_MAX_TEXTURE_UNITS];
+    } else {
+        tmp_texture = &state.fragment_textures[index];    
+    }
+
+    const SceGxmTexture &texture = *tmp_texture;
 
     if (texture.data_addr == 0) {
         LOG_WARN("Texture has null data.");
@@ -293,22 +301,59 @@ void sync_texture(GLContext &context, const GxmContextState &state, const MemSta
     }
 
     if (config.dump_textures) {
-        auto frag_program = state.fragment_program.get(mem);
-        auto program = frag_program->program.get(mem);
-        const auto program_hash = sha256(program, program->size);
-
-        std::string parameter_name;
-        const auto fragment_program = state.fragment_program.get(mem);
-        const auto fragment_program_gxp = fragment_program->program.get(mem);
-        const auto parameters = gxp::program_parameters(*fragment_program_gxp);
-        for (uint32_t i = 0; i < fragment_program_gxp->parameter_count; ++i) {
-            const auto parameter = &parameters[i];
-            if (parameter->resource_index == index) {
-                parameter_name = gxp::parameter_name_raw(*parameter);
-                break;
+        if ((index < SCE_GXM_MAX_TEXTURE_UNITS)) {
+            Sha256Hash program_hash;
+            if (state.vertex_program) {
+                auto vert_program = state.vertex_program.get(mem);
+                auto program = vert_program->program.get(mem);
+                program_hash = sha256(program, program->size);
+            } else {
+                program_hash = sha256(0, 0);
             }
-        }
+            std::string parameter_name;
+            if (state.vertex_program) {
+                const auto vertex_program = state.vertex_program.get(mem);
+                const auto vertex_program_gxp = vertex_program->program.get(mem);
+                const auto parameters = gxp::program_parameters(*vertex_program_gxp);
+                for (uint32_t i = 0; i < vertex_program_gxp->parameter_count; ++i) {
+                    const auto parameter = &parameters[i];
+                    if (parameter->resource_index == index) {
+                        parameter_name = gxp::parameter_name_raw(*parameter);
+                        break;
+                    }
+                }
+            } else {
+                parameter_name = "*NO_PROGRAM*";
+            }
+            renderer::gl::texture::dump(texture, mem, parameter_name, base_path, title_id, program_hash);
+        } else {
+
+            Sha256Hash program_hash;
+            if (state.fragment_program) {
+                auto frag_program = state.fragment_program.get(mem);
+                auto program = frag_program->program.get(mem);
+                program_hash = sha256(program, program->size);
+            } else {
+                program_hash = sha256(0,0);
+            }
+
+            std::string parameter_name;
+            if (state.fragment_program) {
+                const auto fragment_program = state.fragment_program.get(mem);
+                const auto fragment_program_gxp = fragment_program->program.get(mem);
+                const auto parameters = gxp::program_parameters(*fragment_program_gxp);
+                for (uint32_t i = 0; i < fragment_program_gxp->parameter_count; ++i) {
+                    const auto parameter = &parameters[i];
+                    if (parameter->resource_index == index) {
+                        parameter_name = gxp::parameter_name_raw(*parameter);
+                        break;
+                    }
+                }
+            } else {
+                parameter_name = "*NO_PROGRAM*";
+            }
         renderer::gl::texture::dump(texture, mem, parameter_name, base_path, title_id, program_hash);
+        }
     }
 
     glActiveTexture(GL_TEXTURE0);
