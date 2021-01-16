@@ -324,8 +324,11 @@ COMMAND_SET_STATE(stencil_ref) {
 COMMAND_SET_STATE(fragment_texture) {
     const std::uint32_t texture_index = helper.pop<std::uint32_t>();
     SceGxmTexture texture = helper.pop<SceGxmTexture>();
-    state->fragment_textures[texture_index] = texture;
-
+    if (texture_index >= SCE_GXM_MAX_TEXTURE_UNITS) {
+        state->vertex_textures[texture_index - SCE_GXM_MAX_TEXTURE_UNITS] = texture;
+    } else {
+        state->fragment_textures[texture_index] = texture;
+    }
     switch (renderer.current_backend) {
     case Backend::OpenGL: {
         gl::sync_texture(*reinterpret_cast<gl::GLContext *>(render_context), *state, mem, texture_index,
