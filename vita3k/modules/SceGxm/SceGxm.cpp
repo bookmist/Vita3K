@@ -568,6 +568,17 @@ EXPORT(void, sceGxmDepthStencilSurfaceSetBackgroundStencil, SceGxmDepthStencilSu
 
 EXPORT(void, sceGxmDepthStencilSurfaceSetForceLoadMode, SceGxmDepthStencilSurface *surface, SceGxmDepthStencilForceLoadMode forceLoad) {
     assert(surface);
+    /*
+    switch (forceLoad) {
+    SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_DISABLED:
+        LOG_DEBUG("SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_DISABLED");
+        break;
+    SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED:
+        LOG_DEBUG("SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED");
+        break;
+     default: LOG_DEBUG(log_hex(forceLoad));
+    }
+    */
     // TODO: Implement on the renderer side
     // surface->zlsControl = (forceLoad & SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED) | (surface->zlsControl & ~SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED);
     UNIMPLEMENTED();
@@ -575,6 +586,17 @@ EXPORT(void, sceGxmDepthStencilSurfaceSetForceLoadMode, SceGxmDepthStencilSurfac
 
 EXPORT(void, sceGxmDepthStencilSurfaceSetForceStoreMode, SceGxmDepthStencilSurface *surface, SceGxmDepthStencilForceStoreMode forceStore) {
     assert(surface);
+    /*
+    switch (forceStore) {
+    SCE_GXM_DEPTH_STENCIL_FORCE_STORE_DISABLED:
+        LOG_DEBUG("SCE_GXM_DEPTH_STENCIL_FORCE_STORE_DISABLED");
+        break;
+    SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED:
+        LOG_DEBUG("SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED");
+        break;
+    default: LOG_DEBUG(log_hex(forceStore));
+    }
+    */
     // TODO: Implement on the renderer side
     // surface->zlsControl = (forceStore & SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED) | (surface->zlsControl & ~SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED);
     UNIMPLEMENTED();
@@ -1843,8 +1865,8 @@ EXPORT(int, sceGxmSetFragmentDefaultUniformBuffer, SceGxmContext *context, Ptr<c
 }
 
 EXPORT(void, sceGxmSetFragmentProgram, SceGxmContext *context, Ptr<const SceGxmFragmentProgram> fragmentProgram) {
-    assert(context);
-    assert(fragmentProgram);
+    //assert(context);
+    //assert(fragmentProgram);
 
     if (!context || !fragmentProgram)
         return;
@@ -1892,6 +1914,11 @@ EXPORT(void, sceGxmSetFrontDepthWriteEnable, SceGxmContext *context, SceGxmDepth
 }
 
 EXPORT(void, sceGxmSetFrontFragmentProgramEnable, SceGxmContext *context, SceGxmFragmentProgramMode enable) {
+    /*
+    switch (enable) {
+    case SCE_GXM_FRAGMENT_PROGRAM_DISABLED: LOG_DEBUG("SCE_GXM_FRAGMENT_PROGRAM_DISABLED"); break;
+    case SCE_GXM_FRAGMENT_PROGRAM_ENABLED: LOG_DEBUG("SCE_GXM_FRAGMENT_PROGRAM_ENABLED"); break;
+    }*/
     UNIMPLEMENTED();
 }
 
