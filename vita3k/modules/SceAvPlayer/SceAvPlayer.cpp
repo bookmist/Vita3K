@@ -170,7 +170,7 @@ struct AvPlayerCallbackThreadData_t {
 };
 
 AvPlayerCallbackThreadData_t AvPlayerCallbackThreadData;
-#include <modules\module_parent.h>
+#include <modules/module_parent.h>
 void init(HostState &host, SceUID base_thread_id) {
     if (AvPlayerCallbackThreadData.thid != SCE_KERNEL_ERROR_ILLEGAL_THREAD_ID) {
         return;
@@ -507,7 +507,8 @@ EXPORT(int, sceAvPlayerStop, SceUID player_handle) {
 }
 
 EXPORT(int, sceAvPlayerStreamCount) {
-    return UNIMPLEMENTED()+2;
+    STUBBED("ALWAYS RETURN 2 (VIDEO AND AUDIO)");
+    return 2;
 }
 
 BRIDGE_IMPL(sceAvPlayerAddSource)
