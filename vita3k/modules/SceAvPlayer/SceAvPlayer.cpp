@@ -133,6 +133,30 @@ enum class MediaType {
     AUDIO,
 };
 
+struct SceAvPlayerStreamInfo {
+    MediaType stream_type;
+    uint32_t unknown;
+    SceAvPlayerStreamDetails stream_details;
+};
+
+enum SceAvPlayerErrorCode {
+    SCE_AVPLAYER_ERROR_ILLEGAL_ADDR = 0x806a0001,
+    SCE_AVPLAYER_ERROR_INVALID_ARGUMENT = 0x806a0002,
+    SCE_AVPLAYER_ERROR_NOT_ENOUGH_MEMORY = 0x806a0003,
+    SCE_AVPLAYER_ERROR_INVALID_EVENT = 0x806a0004,
+    SCE_AVPLAYER_ERROR_SOME_STREAM_PROBLEM = 0x806a00a1,
+};
+
+enum SceAvPlayerState {
+    SCE_AVPLAYER_STATE_UNKNOWN = 0,
+    SCE_AVPLAYER_STATE_STOP = 1,
+    SCE_AVPLAYER_STATE_READY = 2, //not used, processed internally
+    SCE_AVPLAYER_STATE_PLAY = 3,
+    SCE_AVPLAYER_STATE_PAUSE = 4,
+    SCE_AVPLAYER_STATE_BUFFERING = 5,
+    SCE_AVPLAYER_STATE_SPECIAL_32 = 32
+};
+
 static inline uint64_t current_time() {
     return std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch())
@@ -199,8 +223,6 @@ void init(HostState &host, SceUID base_thread_id) {
         }
         av_player_callback_thread->something_to_do.notify_all(); // TODO Should this be notify_one()?
     };
-
-    
 }
 
 struct CPUState_z {
@@ -233,7 +255,7 @@ int run(HostState &host, SceUID thread_id, Address callback_address, uint arglen
     const ThreadStatePtr thread = util::find(AvPlayerCallbackThreadData.thid, AvPlayerCallbackThreadData.kernel->threads);
     std::unique_lock<std::mutex> lock(thread->mutex);
     stop(*thread->cpu);
-    if (arglen > 0){
+    if (arglen > 0) {
         write_reg(*thread->cpu, 0, args[0]);
     }
     if (arglen > 1) {
@@ -255,24 +277,26 @@ int run(HostState &host, SceUID thread_id, Address callback_address, uint arglen
     run_thread(*thread, true);
     return read_reg(*thread->cpu, 0);
 }
-/**/
+uint run_event_callback(HostState &host, SceUID thread_id, const PlayerPtr player_info, int32_t event_id, int32_t source_id, void *event_data) {
+    uint32_t argp_arr[4] = { 0, 0, 0, 0 };
+    argp_arr[0] = player_info->event_manager.user_data.address();
+    argp_arr[1] = 2; //SCE_AVPLAYER_STATE_READY
+    return run(host, thread_id, player_info->event_manager.event_callback.address(), 4, argp_arr);
+} /**/
 //end of callback_thread
 
 EXPORT(int, sceAvPlayerAddSource, SceUID player_handle, const char *path) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
 
     player_info->player.queue(expand_path(host.io, path, host.pref_path));
-
-    uint32_t argp_arr[4] = {0,0,0,0};
-    argp_arr[0] = player_info->event_manager.user_data.address();
-    argp_arr[1] = 2;//SCE_AVPLAYER_STATE_READY
-    run(host, thread_id, player_info->event_manager.event_callback.address(), 4, argp_arr);
+    run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_BUFFERING, 0, 0);
     return 0;
 }
 
 EXPORT(int, sceAvPlayerClose, SceUID player_handle) {
+    const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
+    run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_STOP, 0, 0);
     host.kernel.players.erase(player_handle);
-
     return 0;
 }
 
@@ -286,7 +310,19 @@ EXPORT(int, sceAvPlayerDisableStream) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAvPlayerEnableStream) {
+EXPORT(int, sceAvPlayerStreamCount, SceUID player_handle) {
+    STUBBED("ALWAYS RETURN 2 (VIDEO AND AUDIO)");
+    return 2;
+}
+
+EXPORT(int, sceAvPlayerEnableStream, SceUID player_handle, uint32_t stream_no) {
+    if (player_handle == 0) {
+        return SCE_AVPLAYER_ERROR_ILLEGAL_ADDR;
+    }
+    if (stream_no > (CALL_EXPORT(sceAvPlayerStreamCount, player_handle))) {
+        return SCE_AVPLAYER_ERROR_INVALID_ARGUMENT;
+    }
+    LOG_INFO("Stream_no {}", stream_no);
     return UNIMPLEMENTED();
 }
 
@@ -320,28 +356,16 @@ EXPORT(bool, sceAvPlayerGetAudioData, SceUID player_handle, SceAvPlayerFrameInfo
     frame_info->data = buffer;
 
     strcpy(frame_info->stream_details.audio.language, "ENG");
-
     return true;
 }
 
-struct SceAvPlayerStreamInfo {
-    MediaType stream_type;
-    uint32_t unknown;
-    SceAvPlayerStreamDetails stream_details;
-};
-
-enum SceAvPlayerErrorCode {
-    SCE_AVPLAYER_ERROR_ILLEGAL_ADDR = 0x806a0001,
-    SCE_AVPLAYER_ERROR_INVALID_ARGUMENT = 0x806a0002
-};
-
-    EXPORT(uint32_t, sceAvPlayerGetStreamInfo, SceUID player_handle, uint stream_no, Ptr<SceAvPlayerStreamInfo> stream_info) {
+EXPORT(uint32_t, sceAvPlayerGetStreamInfo, SceUID player_handle, uint stream_no, Ptr<SceAvPlayerStreamInfo> stream_info) {
     if (!stream_info) {
         return SCE_AVPLAYER_ERROR_ILLEGAL_ADDR;
     }
     if (player_handle == 0) {
         return SCE_AVPLAYER_ERROR_ILLEGAL_ADDR;
-    } 
+    }
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
     auto StreamInfo = stream_info.get(host.mem);
     if (stream_no == 0) { //suspect always two streams: audio and video //first is video
@@ -352,6 +376,7 @@ enum SceAvPlayerErrorCode {
         StreamInfo->stream_details.video.aspect_ratio = static_cast<float>(size.width) / static_cast<float>(size.height);
         strcpy(StreamInfo->stream_details.video.language, "ENG");
     } else if (stream_no == 1) { // audio
+        player_info->player.receive_audio();
         StreamInfo->stream_type = MediaType::AUDIO;
         StreamInfo->stream_details.audio.channels = player_info->player.last_channels;
         StreamInfo->stream_details.audio.sample_rate = player_info->player.last_sample_rate;
@@ -400,7 +425,6 @@ EXPORT(bool, sceAvPlayerGetVideoData, SceUID player_handle, SceAvPlayerFrameInfo
     frame_info->stream_details.video.aspect_ratio = static_cast<float>(size.width) / static_cast<float>(size.height);
     strcpy(frame_info->stream_details.video.language, "ENG");
     frame_info->data = buffer;
-
     return true;
 }
 
@@ -423,18 +447,18 @@ EXPORT(SceUID, sceAvPlayerInit, SceAvPlayerInfo *info) {
         if (info->memory_allocator.texture_deallocator)
             LOG_WARN("Texture Deallocator will not be used.");
 
-    LOG_DEBUG("SceAvPlayerInfo.memory_allocator: user_data:{}, general_allocator:{}, general_deallocator:{}, texture_allocator:{}, texture_deallocator:{}", 
-        log_hex(info->memory_allocator.user_data.address()), log_hex(info->memory_allocator.general_allocator.address()), log_hex(info->memory_allocator.general_deallocator.address()), 
+    LOG_DEBUG("SceAvPlayerInfo.memory_allocator: user_data:{}, general_allocator:{}, general_deallocator:{}, texture_allocator:{}, texture_deallocator:{}",
+        log_hex(info->memory_allocator.user_data.address()), log_hex(info->memory_allocator.general_allocator.address()), log_hex(info->memory_allocator.general_deallocator.address()),
         log_hex(info->memory_allocator.texture_allocator.address()), log_hex(info->memory_allocator.texture_deallocator.address()));
     LOG_DEBUG("SceAvPlayerInfo.file_manager: user_data:{}, open_file:{}, close_file:{}, read_file:{}, file_size:{}",
-        log_hex(info->file_manager.user_data.address()), log_hex(info->file_manager.open_file.address()), log_hex(info->file_manager.close_file.address()), log_hex(info->file_manager.read_file.address()), 
+        log_hex(info->file_manager.user_data.address()), log_hex(info->file_manager.open_file.address()), log_hex(info->file_manager.close_file.address()), log_hex(info->file_manager.read_file.address()),
         log_hex(info->file_manager.file_size.address()));
     LOG_DEBUG("SceAvPlayerInfo.event_manager: user_data:{}, event_callback:{}",
         log_hex(info->event_manager.user_data.address()), log_hex(info->event_manager.event_callback.address()));
-    LOG_DEBUG("SceAvPlayerInfo: debug_level:{}, base_priority:{}, frame_buffer_count:{}, auto_start:{}, unknown0:{}, unknown1:{}", 
+    LOG_DEBUG("SceAvPlayerInfo: debug_level:{}, base_priority:{}, frame_buffer_count:{}, auto_start:{}, unknown0:{}, unknown1:{}",
         log_hex(info->debug_level), log_hex(info->base_priority), log_hex(info->frame_buffer_count), log_hex(info->auto_start),
         log_hex(info->unknown0), log_hex(info->unknown1));
-        
+
     player->last_frame_time = current_time();
     player->memory_allocator = info->memory_allocator;
     player->file_manager = info->file_manager;
@@ -452,7 +476,7 @@ EXPORT(SceUID, sceAvPlayerInit, SceAvPlayerInfo *info) {
 
 EXPORT(bool, sceAvPlayerIsActive, SceUID player_handle) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
-
+    
     return !player_info->player.video_playing.empty();
 }
 
@@ -463,7 +487,7 @@ EXPORT(int, sceAvPlayerJumpToTime) {
 EXPORT(int, sceAvPlayerPause, SceUID player_handle) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
     player_info->paused = true;
-
+    run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_PAUSE, 0, 0);
     return 0;
 }
 
@@ -473,8 +497,12 @@ EXPORT(int, sceAvPlayerPostInit) {
 
 EXPORT(int, sceAvPlayerResume, SceUID player_handle) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
+    if (player_info->paused) {
+        run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_UNKNOWN, 0, 0);
+    } else {
+        run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_PLAY, 0, 0);
+    }
     player_info->paused = false;
-
     return 0;
 }
 
@@ -492,23 +520,19 @@ EXPORT(int, sceAvPlayerSetTrickSpeed) {
 EXPORT(int, sceAvPlayerStart, SceUID player_handle) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
     if (player_info->player.videos_queue.empty()) {
+        run_event_callback(host, thread_id, player_info, 3, 0, 0);
         return 0;
     }
     player_info->player.pop_video();
-
+    run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_PLAY, 0, 0);
     return 0;
 }
 
 EXPORT(int, sceAvPlayerStop, SceUID player_handle) {
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
     player_info->player.free_video();
-
+    run_event_callback(host, thread_id, player_info, SCE_AVPLAYER_STATE_STOP, 0, 0);
     return 0;
-}
-
-EXPORT(int, sceAvPlayerStreamCount) {
-    STUBBED("ALWAYS RETURN 2 (VIDEO AND AUDIO)");
-    return 2;
 }
 
 BRIDGE_IMPL(sceAvPlayerAddSource)
