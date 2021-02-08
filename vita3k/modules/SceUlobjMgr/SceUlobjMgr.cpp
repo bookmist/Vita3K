@@ -28,3 +28,24 @@ EXPORT(int, _sceUlobjMgrStartSupportingUserlevelObject) {
 EXPORT(int, _sceUlobjMgrStopSupportingUserlevelObject) {
     return UNIMPLEMENTED();
 }
+
+//register something
+EXPORT(int, SceUlobjDbg_D7F0F610, uint32_t param_1, uint32_t param_2, Ptr<uint32_t> param_3) {
+    STUBBED("SceUlobjDbg_D7F0F610");
+    if (!param_3) {
+        return 0x8001000e;
+    } else {
+        if (((param_2 & 0xfffffffc) == 0) && ((param_1 & 7) == 0)) {
+            *(param_3.get(emuenv.mem)) = 0x1fffffff;
+            return 0x8001000c;
+        } else {
+            *(param_3.get(emuenv.mem)) = 0x0DEADBEE;
+            return 0x80010016;
+        }
+    }
+    //return UNIMPLEMENTED();
+}
+//unregister something
+EXPORT(int, SceUlobjDbg_F9C0F5DA) {
+    return UNIMPLEMENTED();
+}

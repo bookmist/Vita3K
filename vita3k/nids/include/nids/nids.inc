@@ -7195,6 +7195,9 @@ NID(SceUlobjDbg_F9C0F5DA, 0xF9C0F5DA)
 NID(_sceUlobjMgrRegisterLibultProtocolRevision, 0x50F2F2AA)
 NID(_sceUlobjMgrStartSupportingUserlevelObject, 0x08769991)
 NID(_sceUlobjMgrStopSupportingUserlevelObject, 0xEF09284B)
+// Module SceUlobjDbg:
+NID(SceUlobjDbg_D7F0F610, 0xD7F0F610)
+NID(SceUlobjDbg_F9C0F5DA, 0xF9C0F5DA)
 // Module "SceUlt"
 // Library "SceUlt"
 NID(_sceUltConditionVariableCreate, 0xD76A156C)
