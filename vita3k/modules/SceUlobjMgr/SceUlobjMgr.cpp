@@ -17,7 +17,11 @@
 
 #include <module/module.h>
 
-EXPORT(int, _sceUlobjMgrRegisterLibultProtocolRevision) {
+#include <util/tracy.h>
+TRACY_MODULE_NAME(SceUlobjMgr);
+
+EXPORT(int, _sceUlobjMgrRegisterLibultProtocolRevision, SceUInt32 revision) {
+    TRACY_FUNC(_sceUlobjMgrRegisterLibultProtocolRevision, revision);
     return UNIMPLEMENTED();
 }
 
