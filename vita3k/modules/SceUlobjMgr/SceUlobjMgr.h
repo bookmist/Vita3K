@@ -22,3 +22,5 @@
 BRIDGE_DECL(_sceUlobjMgrRegisterLibultProtocolRevision)
 BRIDGE_DECL(_sceUlobjMgrStartSupportingUserlevelObject)
 BRIDGE_DECL(_sceUlobjMgrStopSupportingUserlevelObject)
+BRIDGE_DECL(SceUlobjDbg_D7F0F610)
+BRIDGE_DECL(SceUlobjDbg_F9C0F5DA)
