@@ -130,6 +130,64 @@ void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id)
                 0xB295EB61, // sceKernelGetTLSAddr
                 0x46E7BE7B, // sceKernelLockLwMutex
                 0x91FA6614, // sceKernelUnlockLwMutex
+                //
+                0x29C34DF5, //sceGxmSetFragmentTexture
+                0x9EB4380F, //sceGxmSetVertexTexture
+                0x65DD0C84, //sceGxmSetUniformDataF
+                0xDBA8D061, //sceGxmProgramParameterGetArraySize
+                0xBD2998D1, //sceGxmProgramParameterGetComponentCount
+                0xBB58267D, //sceGxmProgramParameterGetContainerIndex
+                0x3148C6B6, //sceKernelLockLwMutexCB
+                0xF65D4917, //sceGxmTextureGetType
+                0x8FA3F9C3, //sceGxmProgramGetDefaultUniformBufferSize
+                0xBC059AFC, //sceGxmDraw
+                0x97118913, //sceGxmReserveVertexDefaultUniformBuffer
+                0xB110C123, //sceKernelGetProcessTimeWide
+                0xFA695FD7, //sceGxmTextureSetMagFilter
+                0x416764E3, //sceGxmTextureSetMinFilter
+                0x1CA9FE0B, //sceGxmTextureSetMipFilter
+                0x4281763E, //sceGxmTextureSetUAddrMode
+                0x126CDAA3, //sceGxmTextureSetVAddrMode
+                0x575958A8, //sceGxmSetFrontFragmentProgramEnable
+                0xEC94DFF7, //sceKernelSetEventFlag
+                0xF32CBF34, //sceGxmSetFrontDepthWriteEnable
+                0x14BD831F, //sceGxmSetFrontDepthFunc
+                0x895DF2E9, //sceGxmSetVertexStream
+                0xAD2F48D9, //sceGxmSetFragmentProgram
+                0x31FF8ABD, //sceGxmSetVertexProgram
+                0xAAA97F81, //sceGxmSetFrontDepthBias
+                0xFD93209D, //sceGxmSetFrontPolygonMode
+                0xE1CA72AE, //sceGxmSetCullMode
+                0xB8645A9A, //sceGxmSetFrontStencilFunc
+                0x7B1FABB6, //sceGxmReserveFragmentDefaultUniformBuffer
+                0xE9F973B1, //sceKernelGetProcessTimeLow
+                0xA93EA96, //sceNgsSystemUnlock
+                0xB9D971F2, //sceNgsSystemLock
+                0x1FBB0FE1, //sceKernelPollEventFlag
+                0x9C0180E1, //sceKernelDelayThreadCB
+                0x6FF9151, //sceGxmProgramGetParameter
+                0xF33D9980, //sceGxmColorSurfaceGetStrideInPixels
+                0x814C90AF, //sceDisplayWaitSetFrameBufCB
+                0x7A410B64, //sceDisplaySetFrameBuf
+                0x2DB6026C, //sceGxmColorSurfaceGetData
+                0x8734FF4E, //sceGxmBeginScene
+                0x70C86868, //sceGxmSetRegionClip
+                0x6752183, //sceGxmSetFrontPointLineWidth
+                0x3EB3380B, //sceGxmSetViewport
+                0xFE300E2F, //sceGxmEndScene
+                0xF5D3F3E8, //sceGxmDepthStencilSurfaceSetBackgroundStencil
+                0xC44ACD7, //sceGxmDepthStencilSurfaceSetForceLoadMode
+                0x8FA6FE44, //sceGxmSetFrontStencilRef
+                0x32F280F0, //sceGxmDepthStencilSurfaceSetBackgroundDepth
+                0x12AAA7AF, //sceGxmDepthStencilSurfaceSetForceStoreMode
+                0xEC5C26B5, //sceGxmDisplayQueueAddEntry
+                0x3D25FCE9, //sceGxmPadHeartbeat
+                0x3B0AE9A9, //sceNpCheckCallback
+                0x83C0E2AF, //sceKernelWaitEventFlag
+                0xC9B8C0B4, //sceNgsVoiceGetStateData
+                0x684F080C, //sceNgsSystemUpdate
+                0x2DB3F5F, //sceAudioOutOutput
+                0x4CB87CA7, //sceKernelClearEventFlag
             };
             auto lr = read_lr(cpu);
             log_import_call('H', nid, thread_id, hle_nid_blacklist, lr);
@@ -146,13 +204,13 @@ void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id)
         }
     } else {
         auto pc = read_pc(cpu);
-
+        /*
         uint32_t *const stub = Ptr<uint32_t>(Address(pc)).get(host.mem);
 
         stub[0] = encode_arm_inst(INSTRUCTION_MOVW, (uint16_t)export_pc, 12);
         stub[1] = encode_arm_inst(INSTRUCTION_MOVT, (uint16_t)(export_pc >> 16), 12);
         stub[2] = encode_arm_inst(INSTRUCTION_BRANCH, 0, 12);
-
+        */
         // LLE - directly run ARM code imported from some loaded module
         if (is_returning(cpu)) {
             LOG_TRACE("[LLE] TID: {:<3} FUNC: {} returned {}", thread_id, import_name(nid), log_hex(read_reg(cpu, 0)));
