@@ -106,7 +106,9 @@ EXPORT(int, _sceFiberAttachContextAndSwitch, SceFiber *fiber, Ptr<void> thread_s
     const ThreadStatePtr thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
     auto old_fiber = thread->fiber.cast<SceFiber>().get(host.mem);
     auto result = _fiberSwitch(host, thread, fiber, old_fiber->cpu, argOnRunTo, argOnRun, true);
-    write_sp(*(thread->cpu), thread_stack.address());
+    if (thread_stack) {
+        write_sp(*(thread->cpu), thread_stack.address());
+    }
     return result;
 }
 
