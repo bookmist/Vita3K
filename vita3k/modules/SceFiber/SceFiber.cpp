@@ -24,14 +24,6 @@
 
 const static int DEFAULT_FIBER_STACK_SIZE = 4096;
 
-EXPORT(int, _sceFiberAttachContextAndRun) {
-    return UNIMPLEMENTED();
-}
-
-EXPORT(int, _sceFiberAttachContextAndSwitch) {
-    return UNIMPLEMENTED();
-}
-
 InitialFiber *_findIntialFiber(KernelState &kernel, Address sp) {
     // TODO use interval tree
     // TODO destroy initial fibers
@@ -91,7 +83,7 @@ void _initializeFiber(HostState &host, const ThreadStatePtr thread, SceFiber *fi
     }
 
     fiber->cpu.sp = addrContext.address() + sizeContext;
-    memset(addrContext.get(host.mem), 0xCC, sizeContext);
+    memset(addrContext.get(host.mem), 0x00, sizeContext);
 
     SceFiber *fiberCopy = new SceFiber();
     memcpy(fiberCopy, fiber, sizeof(*fiberCopy));
@@ -101,6 +93,21 @@ void _initializeFiber(HostState &host, const ThreadStatePtr thread, SceFiber *fi
     ifiber.end = addrContext.address() + sizeContext;
     ifiber.fiber = fiberCopy;
     host.kernel.initial_fibers.push_back(ifiber);
+}
+
+EXPORT(int, _sceFiberAttachContextAndRun) {
+    return UNIMPLEMENTED();
+}
+
+EXPORT(int, _sceFiberAttachContextAndSwitch, SceFiber *fiber, Ptr<void> thread_stack, uint32_t thread_stack_size, uint32_t argOnRunTo, Ptr<uint32_t> argOnRun) {
+    if (!fiber) {
+        return RET_ERROR(SCE_FIBER_ERROR_NULL);
+    }
+    const ThreadStatePtr thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
+    auto old_fiber = thread->fiber.cast<SceFiber>().get(host.mem);
+    auto result = _fiberSwitch(host, thread, fiber, old_fiber->cpu, argOnRunTo, argOnRun, true);
+    write_sp(*(thread->cpu), thread_stack.address());
+    return result;
 }
 
 EXPORT(SceInt32, _sceFiberInitializeImpl, SceFiber *fiber, const char *name, Ptr<SceFiberEntry> entry, SceUInt32 argOnInitialize, Ptr<void> addrContext, SceSize sizeContext, SceFiberOptParam *params) {
