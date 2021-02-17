@@ -477,15 +477,22 @@ EXPORT(int, _sceKernelWaitSemaCB, SceUID semaid, int signal, SceUInt *timeout) {
     return semaphore_wait(host.kernel, export_name, thread_id, semaid, signal, timeout);
 }
 
-EXPORT(int, _sceKernelWaitSignal, uint32_t unknown, uint32_t delay, uint32_t timeout, SceKernelWaitSignalParams *params) {
+EXPORT(int, _sceKernelWaitSignal, uint32_t delay, uint32_t timeout, Ptr<uint32_t> params) {
     STUBBED("sceKernelWaitSignal");
     const auto thread = lock_and_find(thread_id, host.kernel.threads, host.kernel.mutex);
-    LOG_TRACE("thread {} is waiting to get signaled", thread_id);
+    //LOG_TRACE("thread {} is waiting to get signaled", thread_id);
     thread->signal.wait();
-    LOG_TRACE("thread {} gets signaled", thread_id);
-    if (params != nullptr) {
-        params->result_ptr.get(host.mem)->dret = 0;
+    //LOG_TRACE("thread {} gets signaled", thread_id);
+    if (delay || timeout || params) {
+        LOG_TRACE("param_1: {}, param_2: {}, param_3:{}", log_hex(delay), log_hex(timeout), log_hex(params.address()));
     }
+    if (params) {
+        *(params.get(host.mem)) = 0;
+    }
+    /*
+    if (params != nullptr && params->result_ptr) {
+        params->result_ptr.get(host.mem)->dret = 0;
+    }*/
     return SCE_KERNEL_OK;
 }
 
@@ -873,7 +880,7 @@ EXPORT(int, sceKernelResumeThreadForVM) {
 EXPORT(int, sceKernelSendSignal, SceUID target_thread_id) {
     STUBBED("sceKernelSendSignal");
     const auto thread = lock_and_find(target_thread_id, host.kernel.threads, host.kernel.mutex);
-    LOG_TRACE("signaling thread {}", target_thread_id);
+    //LOG_TRACE("signaling thread {}", target_thread_id);
     thread->signal.notify();
     return SCE_KERNEL_OK;
 }

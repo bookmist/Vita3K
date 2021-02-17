@@ -1536,8 +1536,8 @@ EXPORT(int, sceKernelWaitSemaCB, SceUID semaid, int signal, SceUInt *timeout) {
     return CALL_EXPORT(_sceKernelWaitSema, semaid, signal, timeout);
 }
 
-EXPORT(int, sceKernelWaitSignal, uint32_t unknown, uint32_t delay, uint32_t timeout, SceKernelWaitSignalParams *params) {
-    return CALL_EXPORT(_sceKernelWaitSignal, unknown, delay, timeout, params);
+EXPORT(int, sceKernelWaitSignal, uint32_t delay, uint32_t timeout, Ptr<uint32_t> params) {
+    return CALL_EXPORT(_sceKernelWaitSignal, delay, timeout, params);
 }
 
 EXPORT(int, sceKernelWaitSignalCB) {
