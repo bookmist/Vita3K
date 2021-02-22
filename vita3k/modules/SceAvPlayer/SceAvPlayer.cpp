@@ -284,7 +284,7 @@ EXPORT(bool, sceAvPlayerGetAudioData, SceUID player_handle, SceAvPlayerFrameInfo
     return true;
 }
 
-EXPORT(uint32_t, sceAvPlayerGetStreamInfo, SceUID player_handle, uint stream_no, Ptr<SceAvPlayerStreamInfo> stream_info) {
+EXPORT(uint32_t, sceAvPlayerGetStreamInfo, SceUID player_handle, uint stream_no, SceAvPlayerStreamInfo *stream_info) {
     if (!stream_info) {
         return SCE_AVPLAYER_ERROR_ILLEGAL_ADDR;
     }
@@ -293,21 +293,20 @@ EXPORT(uint32_t, sceAvPlayerGetStreamInfo, SceUID player_handle, uint stream_no,
     }
     STUBBED("ALWAYS SUSPECTS 2 STREAMS: VIDEO AND AUDIO");
     const PlayerPtr &player_info = lock_and_find(player_handle, host.kernel.players, host.kernel.mutex);
-    auto StreamInfo = stream_info.get(host.mem);
     if (stream_no == 0) { //suspect always two streams: audio and video //first is video
         DecoderSize size = player_info->player.get_size();
-        StreamInfo->stream_type = MediaType::VIDEO;
-        StreamInfo->stream_details.video.width = size.width;
-        StreamInfo->stream_details.video.height = size.height;
-        StreamInfo->stream_details.video.aspect_ratio = static_cast<float>(size.width) / static_cast<float>(size.height);
-        strcpy(StreamInfo->stream_details.video.language, "ENG");
+        stream_info->stream_type = MediaType::VIDEO;
+        stream_info->stream_details.video.width = size.width;
+        stream_info->stream_details.video.height = size.height;
+        stream_info->stream_details.video.aspect_ratio = static_cast<float>(size.width) / static_cast<float>(size.height);
+        strcpy(stream_info->stream_details.video.language, "ENG");
     } else if (stream_no == 1) { // audio
         player_info->player.receive_audio(); //TODO: Get audio info without skipping data frames
-        StreamInfo->stream_type = MediaType::AUDIO;
-        StreamInfo->stream_details.audio.channels = player_info->player.last_channels;
-        StreamInfo->stream_details.audio.sample_rate = player_info->player.last_sample_rate;
-        StreamInfo->stream_details.audio.size = player_info->player.last_channels * player_info->player.last_sample_count * sizeof(int16_t);
-        strcpy(StreamInfo->stream_details.audio.language, "ENG");
+        stream_info->stream_type = MediaType::AUDIO;
+        stream_info->stream_details.audio.channels = player_info->player.last_channels;
+        stream_info->stream_details.audio.sample_rate = player_info->player.last_sample_rate;
+        stream_info->stream_details.audio.size = player_info->player.last_channels * player_info->player.last_sample_count * sizeof(int16_t);
+        strcpy(stream_info->stream_details.audio.language, "ENG");
     } else {
         return SCE_AVPLAYER_ERROR_INVALID_ARGUMENT;
     }

@@ -31,21 +31,21 @@ struct SceKernelWaitSignalParams {
     Ptr<SceKernelWaitSignalResult> result_ptr;
 };
 
-EXPORT(int, __sceKernelCreateLwMutex, Ptr<SceKernelLwMutexWork> workarea, const char *name, unsigned int attr, Ptr<SceKernelCreateLwMutex_opt> opt);
-EXPORT(int, _sceKernelDeleteLwMutex, Ptr<SceKernelLwMutexWork> workarea);
-EXPORT(int, _sceKernelLockLwMutex, Ptr<SceKernelLwMutexWork> workarea, int lock_count, unsigned int *ptimeout);
-EXPORT(int, _sceKernelGetLwMutexInfoById, SceUID lightweight_mutex_id, Ptr<SceKernelLwMutexInfo> info, SceSize size);
-EXPORT(int, _sceKernelCreateLwCond, Ptr<SceKernelLwCondWork> workarea, const char *name, SceUInt attr, Ptr<SceKernelCreateLwCond_opt> opt);
+EXPORT(int, __sceKernelCreateLwMutex, SceKernelLwMutexWork *workarea, const char *name, unsigned int attr, SceKernelCreateLwMutex_opt *opt);
+EXPORT(int, _sceKernelDeleteLwMutex, SceKernelLwMutexWork *workarea);
+EXPORT(int, _sceKernelLockLwMutex, SceKernelLwMutexWork *workarea, int lock_count, unsigned int *ptimeout);
+EXPORT(int, _sceKernelGetLwMutexInfoById, SceUID lightweight_mutex_id, SceKernelLwMutexInfo *info, SceSize size);
+EXPORT(int, _sceKernelCreateLwCond, SceKernelLwCondWork *workarea, const char *name, SceUInt attr, SceKernelCreateLwCond_opt *opt);
 EXPORT(int, sceKernelCreateThreadForUser, const char *name, SceKernelThreadEntry entry, int init_priority, SceKernelCreateThread_opt *options);
 EXPORT(int, _sceKernelStartThread, SceUID thid, SceSize arglen, Ptr<void> argp);
 EXPORT(int, _sceKernelLockMutex, SceUID mutexid, int lock_count, unsigned int *timeout);
 EXPORT(SceUID, _sceKernelCreateEventFlag, const char *pName, SceUInt32 attr, SceUInt32 initPattern, const SceKernelEventFlagOptParam *pOptParam);
-EXPORT(int, _sceKernelCreateSema, const char *name, SceUInt attr, int initVal, Ptr<SceKernelCreateSema_opt> opt);
+EXPORT(int, _sceKernelCreateSema, const char *name, SceUInt attr, int initVal, SceKernelCreateSema_opt *opt);
 EXPORT(int, _sceKernelWaitSema, SceUID semaid, int signal, SceUInt *timeout);
 EXPORT(int, _sceKernelPollEventFlag, SceUID event_id, unsigned int flags, unsigned int wait, unsigned int *outBits);
 EXPORT(int, _sceKernelWaitThreadEnd, SceUID thid, int *stat, SceUInt *timeout);
 EXPORT(int, _sceKernelWaitThreadEndCB, SceUID thid, int *stat, SceUInt *timeout);
-EXPORT(int, _sceKernelWaitSignal, uint32_t delay, uint32_t timeout, Ptr<uint32_t> params);
+EXPORT(int, _sceKernelWaitSignal, uint32_t delay, uint32_t timeout, Ptr<uint32_t> params, uint32_t param_4);
 
 BRIDGE_DECL(__sceKernelCreateLwMutex)
 BRIDGE_DECL(_sceKernelCancelEvent)

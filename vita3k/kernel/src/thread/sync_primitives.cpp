@@ -104,7 +104,7 @@ inline int handle_timeout(const ThreadStatePtr &thread, std::unique_lock<std::mu
 // * Mutex *
 // *********
 
-SceUID mutex_create(SceUID *uid_out, KernelState &kernel, MemState &mem, const char *export_name, const char *mutex_name, SceUID thread_id, SceUInt attr, int init_count, Ptr<SceKernelLwMutexWork> workarea, SyncWeight weight) {
+SceUID mutex_create(SceUID *uid_out, KernelState &kernel, MemState &mem, const char *export_name, const char *mutex_name, SceUID thread_id, SceUInt attr, int init_count, SceKernelLwMutexWork *workarea, SyncWeight weight) {
     if ((strlen(mutex_name) > 31) && ((attr & 0x80) == 0x80)) {
         return RET_ERROR(SCE_KERNEL_ERROR_UID_NAME_TOO_LONG);
     }
@@ -120,7 +120,7 @@ SceUID mutex_create(SceUID *uid_out, KernelState &kernel, MemState &mem, const c
     mutex->uid = uid;
     mutex->init_count = init_count;
     mutex->lock_count = init_count;
-    mutex->workarea = workarea;
+    mutex->workarea = Ptr<SceKernelLwMutexWork>(workarea, mem);
     std::copy(mutex_name, mutex_name + KERNELOBJECT_MAX_NAME_LENGTH, mutex->name);
     mutex->attr = attr;
     mutex->owner = nullptr;
@@ -130,11 +130,10 @@ SceUID mutex_create(SceUID *uid_out, KernelState &kernel, MemState &mem, const c
     }
 
     if (weight == SyncWeight::Light) {
-        SceKernelLwMutexWork *workarea_mem = workarea.get(mem);
-        workarea_mem->lockCount = init_count;
-        if (workarea_mem->lockCount)
-            workarea_mem->owner = thread_id;
-        workarea_mem->attr = attr;
+        workarea->lockCount = init_count;
+        if (workarea->lockCount)
+            workarea->owner = thread_id;
+        workarea->attr = attr;
     }
 
     const std::lock_guard<std::mutex> kernel_lock(kernel.mutex);

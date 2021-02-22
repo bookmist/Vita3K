@@ -74,9 +74,8 @@ EXPORT(int, _sceIoIoctlAsync) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(SceOff, _sceIoLseek, const SceUID fd, Ptr<_sceIoLseekOpt> opt) {
-    _sceIoLseekOpt kk = *opt.get(host.mem);
-    return seek_file(fd, opt.get(host.mem)->offset, opt.get(host.mem)->whence, host.io, export_name);
+EXPORT(SceOff, _sceIoLseek, const SceUID fd, _sceIoLseekOpt *opt) {
+    return seek_file(fd, opt->offset, opt->whence, host.io, export_name);
 }
 
 EXPORT(int, _sceIoLseekAsync) {

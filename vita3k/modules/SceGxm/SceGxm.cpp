@@ -1484,8 +1484,8 @@ EXPORT(Ptr<SceGxmProgramParameter>, sceGxmProgramFindParameterBySemantic, const 
 }
 
 EXPORT(Ptr<SceGxmProgramParameter>, _sceGxmProgramFindParameterBySemantic, const SceGxmProgram *program, SceGxmParameterSemantic semantic, uint32_t index) {
-    return export_sceGxmProgramFindParameterBySemantic(host, thread_id, export_name, program, semantic, index);
-}
+    return CALL_EXPORT(sceGxmProgramFindParameterBySemantic, program, semantic, index);
+}    
 
 EXPORT(uint32_t, sceGxmProgramGetDefaultUniformBufferSize, const SceGxmProgram *program) {
     return program->default_uniform_buffer_count * 4;
@@ -1621,7 +1621,7 @@ EXPORT(int, sceGxmProgramParameterGetSemantic, const SceGxmProgramParameter *par
 }
 
 EXPORT(int, _sceGxmProgramParameterGetSemantic, const SceGxmProgramParameter *parameter) {
-    return export_sceGxmProgramParameterGetSemantic(host, thread_id, export_name, parameter);
+    return CALL_EXPORT(sceGxmProgramParameterGetSemantic, parameter);
 }
 
 EXPORT(uint32_t, sceGxmProgramParameterGetSemanticIndex, const SceGxmProgramParameter *parameter) {
