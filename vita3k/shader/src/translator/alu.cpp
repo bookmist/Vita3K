@@ -1359,6 +1359,7 @@ bool USSETranslatorVisitor::vdual(
             result = load(ops[0], write_mask_source);
             break;
         }
+        case Opcode::FADD:
         case Opcode::VADD: {
             const spv::Id first = load(ops[0], write_mask_source);
             const spv::Id second = load(ops[1], write_mask_source);
