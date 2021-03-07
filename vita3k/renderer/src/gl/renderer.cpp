@@ -235,6 +235,7 @@ bool create(SDL_Window *window, std::unique_ptr<State> &state) {
     }
 
     if (choosen_minor_version >= 3) {
+        glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(debug_output_callback), nullptr);
     }
 
@@ -449,7 +450,7 @@ void get_surface_data(GLContext &context, size_t width, size_t height, size_t st
     if (pixels == nullptr) {
         return;
     }
-
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
     glPixelStorei(GL_PACK_ROW_LENGTH, static_cast<GLint>(stride_in_pixels));
 
     // TODO Need more check into this
