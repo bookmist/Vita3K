@@ -104,7 +104,7 @@ uint32_t Atrac9DecoderState::get_superframe_size() {
 uint32_t Atrac9DecoderState::get(DecoderQuery query) {
     switch (query) {
     case DecoderQuery::CHANNELS: return context->channels;
-    case DecoderQuery::BIT_RATE: return context->bit_rate;
+    case DecoderQuery::BIT_RATE: return (uint32_t)context->bit_rate;
     case DecoderQuery::SAMPLE_RATE: return context->sample_rate;
     case DecoderQuery::AT9_BLOCK_ALIGN: return get_block_align();
     case DecoderQuery::AT9_SAMPLE_PER_SUPERFRAME: return get_samples_per_superframe();
