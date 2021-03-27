@@ -45,6 +45,8 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <regex>
+#include <boost/algorithm/string/replace.hpp>
 
 using boost::optional;
 
@@ -1299,11 +1301,12 @@ static SpirvCode convert_gxp_to_spirv_impl(const SceGxmProgram &program, const s
         spv::Id v4 = b.makeVectorType(b.makeFloatType(32), 4);
         spv::Id rezero = b.makeFloatConstant(0.0f);
         spv::Id rezero_v = b.makeCompositeConstant(v4, { rezero, rezero, rezero, rezero });
-        utils::make_for_loop(b, ite, b.makeIntConstant(0), b.makeIntConstant(REG_O_COUNT / 4), [&]() {
+        for (int i = 0; i < REG_O_COUNT / 4; i++) {
             Operand target_to_store;
-            spv::Id dest = b.createAccessChain(spv::StorageClassPrivate, parameters.outs, { b.createLoad(ite) });
+            spv::Id ite = b.makeIntConstant(i);
+            spv::Id dest = b.createAccessChain(spv::StorageClassPrivate, parameters.outs, { ite });
             b.createStore(rezero_v, dest);
-        });
+        }        
     }
 
     generate_shader_body(b, parameters, program, features, utils, end_hook_func, texture_queries);
@@ -1513,6 +1516,100 @@ usse::SpirvCode convert_gxp_to_spirv(const SceGxmProgram &program, const std::st
     return convert_gxp_to_spirv_impl(program, shader_name, features, translation_state, hint_attributes, force_shader_debug, dumper);
 }
 
+struct replace_pair {
+    std::regex regexp;
+    std::string replace;
+};
+
+replace_pair init_replace_pair(std::string search, std::string replace) {
+    replace_pair result;
+    try {
+        result = { std::regex(search, std::regex_constants::ECMAScript), replace };
+    } catch (const std::regex_error &rerr) {
+        result = { std::regex("", std::regex_constants::ECMAScript), "" };
+        LOG_ERROR("error code {}, {}", rerr.code(), rerr.what());
+        LOG_ERROR(search);
+    }
+    return result;
+}
+
+std::vector<replace_pair> opts;
+
+std::string optimise_glsl(std::string source) {
+    //std::vector<replace_pair> opts;
+    if (opts.size() == 0) {
+        opts.push_back(init_replace_pair(R"(((u|i)?vec2 ([\w\d\[\]]+) = (u|i)?vec2\(([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+)\);)\n(.+\n?.+)\3\.x)", "$2\n$7$5"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec2 ([\w\d\[\]]+) = (u|i)?vec2\(([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+)\);)\n(.+\n?.+)\3\.y)", "$2\n$7$6"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec3 ([\w\d\[\]]+) = (u|i)?vec3\(([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+)\);)\n(.+\n?.+)\3\.x)", "$2\n$8$5"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec3 ([\w\d\[\]]+) = (u|i)?vec3\(([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+)\);)\n(.+\n?.+)\3\.y)", "$2\n$8$6"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec3 ([\w\d\[\]]+) = (u|i)?vec3\(([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+), ([\w\d\[\]\.\(\)]+)\);)\n(.+\n?.+)\3\.z)", "$2\n$8$7"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec4 ([\w\d\[\]]+) = (u|i)?vec4\(([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+)\);)\n(.+\n?.+)\3\.x)", "$2\n$9$5"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec4 ([\w\d\[\]]+) = (u|i)?vec4\(([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+)\);)\n(.+\n?.+)\3\.y)", "$2\n$9$6"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec4 ([\w\d\[\]]+) = (u|i)?vec4\(([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+)\);)\n(.+\n?.+)\3\.z)", "$2\n$9$7"));
+        opts.push_back(init_replace_pair(R"(((u|i)?vec4 ([\w\d\[\]]+) = (u|i)?vec4\(([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+), ([\w\d\[\]\.\(\)-]+)\);)\n(.+\n?.+)\3\.w)", "$2\n$9$8"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec\d ([\w\d\[\]]+) = ([\w\d\[\]]+);\n\s+\2\.(\w) = (.+);\n\s+\2 = \1;)", "$2.$4 = $5;"));
+        opts.push_back(init_replace_pair(R"(uintBitsToFloat\(floatBitsToUint\(([\w\d\[\]\.]+)\) \| 0u\))", "$1"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec2\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.x)", "$2"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec2\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.y)", "$3"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec3\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.x)", "$2"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec3\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.y)", "$3"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec3\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.z)", "$4"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec4\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.x)", "$2"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec4\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.y)", "$3"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec4\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.z)", "$4"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec4\(([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+), ([\w\d\[\]\.-]+)\)\.w)", "$5"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec\d\((\d+\.\d+f?)\)\.\w)", "$2"));
+        opts.push_back(init_replace_pair(R"(uintBitsToFloat\(0u \| 0u\))", "0.0f"));
+        opts.push_back(init_replace_pair(R"(([\w\d\[\]]+) = vec4\(([\w\d\[\]\.]+), ([\w\d\[\]\.]+), \1\.z, \1\.w\);\n\s+\1 = vec4\(\1\.x, \1\.y, ([\w\d\[\]\.]+), ([\w\d\[\]\.]+)\);)", "$1 = vec4($2, $3, $4, $5);"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec4\(([\w\d\[\]]+)\.x, \2\.y, \2\.z, \2\.w\))", "$2.xyzw"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec3\(([\w\d\[\]]+)\.([a-z]), \2\.([a-z]), \2\.([a-z])\))", "$2.$3$4$5"));
+        opts.push_back(init_replace_pair(R"((u|i)?vec2\(([\w\d\[\]]+)\.([a-z]), \2\.([a-z])\))", "$2.$3$4"));
+    }
+    for (auto it = opts.begin(); it != opts.end(); it++) {
+        if (!it->replace.empty()) {
+            source = std::regex_replace(source, it->regexp, it->replace);
+        }
+    }
+    //remove unused assigns
+    //std::regex r_search(R"(^ +([\w\d]+ )?([\w\d\[\]]+) =.+$)", std::regex_constants::ECMAScript);
+    const std::regex r_search(R"(^ +(vec\d )?(_\d+) =)", std::regex_constants::ECMAScript);
+
+    auto words_begin = std::sregex_iterator(source.begin(), source.end(), r_search);
+    auto words_end = std::sregex_iterator();
+    auto source_2 = source;
+    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+        std::smatch match = *i;
+        std::string var_name = match.str(2);
+        if (source.find(var_name, match.position(2) + 1) == std::string::npos) {
+            boost::replace_all(var_name, "[", "\\[");
+            boost::replace_all(var_name, "]", "\\]");
+            source_2 = std::regex_replace(source_2, std::regex("^.+" + var_name + " = .+$\\n"), "");
+        }
+    }
+    source = source_2;
+    for (auto it = opts.begin(); it != opts.end(); it++) {
+        if (!it->replace.empty()) {
+            source = std::regex_replace(source, it->regexp, it->replace);
+        }
+    }
+    /*
+    words_begin = std::sregex_iterator(source.begin(), source.end(), r_search);
+    words_end = std::sregex_iterator();
+    source_2 = source;
+    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+        std::smatch match = *i;
+        std::string var_name = match.str(2);
+        if (source.find(var_name, match.position(2) + 1) == std::string::npos) {
+            boost::replace_all(var_name, "[", "\\[");
+            boost::replace_all(var_name, "]", "\\]");
+            source_2 = std::regex_replace(source_2, std::regex("^.+" + var_name + " = .+$\\n"), "");
+        }
+    }
+    source = source_2;
+    */
+    return source;
+}
+
 std::string convert_gxp_to_glsl(const SceGxmProgram &program, const std::string &shader_name, const FeatureState &features, const std::vector<SceGxmVertexAttribute> *hint_attributes, bool maskupdate, bool force_shader_debug, std::function<bool(const std::string &ext, const std::string &dump)> dumper) {
     TranslationState translation_state;
     translation_state.is_fragment = program.is_fragment();
@@ -1520,6 +1617,7 @@ std::string convert_gxp_to_glsl(const SceGxmProgram &program, const std::string 
     std::vector<uint32_t> spirv_binary = convert_gxp_to_spirv_impl(program, shader_name, features, translation_state, hint_attributes, force_shader_debug, dumper);
 
     const auto source = convert_spirv_to_glsl(shader_name, spirv_binary, features, translation_state);
+    //const auto source = optimise_glsl(source_1);
 
     if (LOG_SHADER_CODE || force_shader_debug) {
         LOG_DEBUG("Generated GLSL:\n{}", source);
