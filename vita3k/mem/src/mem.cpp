@@ -133,7 +133,7 @@ Address alloc(MemState &state, size_t size, const char *name) {
     const size_t page_count = (size + (state.page_size - 1)) / state.page_size;
     const Allocated::iterator block = std::search_n(state.allocated_pages.begin(), state.allocated_pages.end(), page_count, 0);
     if (block == state.allocated_pages.end()) {
-        assert(false);
+        //assert(false);
         return 0;
     }
 
