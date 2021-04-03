@@ -102,11 +102,15 @@ bool PlayerState::next_packet(int32_t stream_id) {
 
             if (stream_id == video_stream_id) {
                 int err = avcodec_send_packet(video_context, this_packet);
+                if (err == AVERROR(AVERROR_EOF)) {
+                    return false;
+                }
                 assert(err == 0);
-            }
-
-            if (stream_id == audio_stream_id) {
+            } else if (stream_id == audio_stream_id) {
                 int err = avcodec_send_packet(audio_context, this_packet);
+                if (err == AVERROR(AVERROR_EOF)) {
+                    return false;
+                }
                 assert(err == 0);
             }
 

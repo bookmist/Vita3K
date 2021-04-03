@@ -1417,7 +1417,13 @@ EXPORT(int, sceKernelStopUnloadModule) {
 
 EXPORT(int, sceKernelTryLockLwMutex, SceKernelLwMutexWork *workarea, int lock_count) {
     const auto lwmutexid = workarea->uid;
-    return mutex_try_lock(host.kernel, host.mem, export_name, thread_id, lwmutexid, lock_count, SyncWeight::Light);
+    int res;
+    for (int i = 0; i < 5; i++) {
+        res = mutex_try_lock(host.kernel, host.mem, export_name, thread_id, lwmutexid, lock_count, SyncWeight::Light);
+        if (res == 0)
+            return res;
+    }
+    return res;
 }
 
 EXPORT(int, sceKernelTryReceiveMsgPipe) {

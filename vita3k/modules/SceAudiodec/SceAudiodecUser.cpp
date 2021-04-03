@@ -133,8 +133,9 @@ EXPORT(int, sceAudiodecCreateDecoder, SceAudiodecCtrl *ctrl, SceAudiodecCodec co
     }
 }
 
-EXPORT(int, sceAudiodecCreateDecoderExternal) {
-    return UNIMPLEMENTED();
+EXPORT(int, sceAudiodecCreateDecoderExternal, SceAudiodecCtrl *ctrl, SceAudiodecCodec codec) {
+    return CALL_EXPORT(sceAudiodecCreateDecoder, ctrl, codec);
+    //return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceAudiodecCreateDecoderResident) {
@@ -143,6 +144,11 @@ EXPORT(int, sceAudiodecCreateDecoderResident) {
 
 EXPORT(int, sceAudiodecDecode, SceAudiodecCtrl *ctrl) {
     const DecoderPtr &decoder = lock_and_find(ctrl->handle, host.kernel.decoders, host.kernel.mutex);
+    if (!decoder) {
+        LOG_WARN("Decoder not found. Handle:{}", ctrl->handle);
+        return -1;
+    }
+    
 
     DecoderSize size = {};
 
@@ -184,7 +190,7 @@ EXPORT(int, sceAudiodecDeleteDecoderResident) {
 
 EXPORT(int, sceAudiodecGetContextSize) {
     STUBBED("fake size");
-    return 53;
+    return 256;
 }
 
 EXPORT(int, sceAudiodecGetInternalError) {

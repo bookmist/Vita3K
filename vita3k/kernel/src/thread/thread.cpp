@@ -34,6 +34,9 @@
 #include <cassert>
 #include <cstring>
 #include <memory>
+#include <algorithm>
+#include <windows.h>
+
 
 struct ThreadParams {
     KernelState *kernel = nullptr;
@@ -43,8 +46,42 @@ struct ThreadParams {
     std::shared_ptr<SDL_semaphore> host_may_destroy_params = std::shared_ptr<SDL_semaphore>(SDL_CreateSemaphore(0), SDL_DestroySemaphore);
 };
 
+class SE_Exception : public std::exception {
+private:
+    const unsigned int nSE;
+
+public:
+    SE_Exception() noexcept
+        : SE_Exception{ 0 } {}
+    SE_Exception(unsigned int n) noexcept
+        : nSE{ n } {}
+    unsigned int getSeNumber() const noexcept { return nSE; }
+};
+
+class Scoped_SE_Translator {
+private:
+    const _se_translator_function old_SE_translator;
+
+public:
+    Scoped_SE_Translator(_se_translator_function new_SE_translator) noexcept
+        : old_SE_translator{ _set_se_translator(new_SE_translator) } {}
+    ~Scoped_SE_Translator() noexcept { _set_se_translator(old_SE_translator); }
+};
+
+#pragma unmanaged
+void my_trans_func(unsigned int u, PEXCEPTION_POINTERS) {
+    throw SE_Exception(u);
+}
+
+LONG UnhandledExceptionFilter_u(_EXCEPTION_POINTERS *ExceptionInfo){ 
+    LOG_ERROR("UnhandledException");
+    return EXCEPTION_CONTINUE_EXECUTION;
+};
+
 static int SDLCALL thread_function(void *data) {
     assert(data != nullptr);
+    Scoped_SE_Translator scoped_se_translator{ my_trans_func };
+    SetUnhandledExceptionFilter(UnhandledExceptionFilter_u);
     const ThreadParams params = *static_cast<const ThreadParams *>(data);
     SDL_SemPost(params.host_may_destroy_params.get());
     const ThreadStatePtr thread = lock_and_find(params.thid, params.kernel->threads, params.kernel->mutex);
@@ -272,7 +309,8 @@ int run_callback(KernelState &kernel, ThreadState &thread, const SceUID &thid, A
     write_tpidruro(*cpu, read_tpidruro(*thread.cpu)); //TLS
 
     assert(args.size() <= 4);
-    for (int i = 0; i < args.size(); i++) {
+    int stack_vars = (args.size() < 4 ? args.size(): 4);
+    for (int i = 0; i < stack_vars; i++) {
         write_reg(*cpu, i, args[i]);
     }
     // TODO: remaining arguments should be pushed into stack
