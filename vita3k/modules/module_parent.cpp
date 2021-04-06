@@ -118,6 +118,17 @@ static void log_import_call(char emulation_level, uint32_t nid, SceUID thread_id
     }
 }
 
+struct SceAvPlayerInfo {
+    SceAvPlayerMemoryAllocator memory_allocator;
+    SceAvPlayerFileManager file_manager;
+    SceAvPlayerEventManager event_manager;
+    uint32_t debug_level;
+    uint32_t base_priority;
+    int32_t frame_buffer_count;
+    int32_t auto_start;
+    uint32_t unknown0;
+};
+
 void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id) {
     Address export_pc = resolve_export(host.kernel, nid);
 
@@ -216,7 +227,11 @@ void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id)
             LOG_TRACE("[LLE] TID: {:<3} FUNC: {} returned {}", thread_id, import_name(nid), log_hex(read_reg(cpu, 0)));
             return;
         }
-
+        if (nid == 0x4C847ADF) {
+            Ptr<SceAvPlayerInfo> p(read_reg(cpu, 0));
+            p.get(host.mem)->debug_level = 3;
+            LOG_DEBUG("NID(sceAvPlayerInit, 0x4C847ADF)");
+        }
         const std::unordered_set<uint32_t> lle_nid_blacklist = {};
         log_import_call('L', nid, thread_id, lle_nid_blacklist, pc);
         write_pc(cpu, export_pc);
