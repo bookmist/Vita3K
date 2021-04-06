@@ -36,6 +36,7 @@
 #include <memory>
 #include <algorithm>
 #include <windows.h>
+#include <signal.h>
 
 
 struct ThreadParams {
@@ -75,11 +76,54 @@ void my_trans_func(unsigned int u, PEXCEPTION_POINTERS) {
 
 LONG UnhandledExceptionFilter_u(_EXCEPTION_POINTERS *ExceptionInfo){ 
     LOG_ERROR("UnhandledException");
+    spdlog::error("Signal!!!");
+    spdlog::shutdown();
     return EXCEPTION_CONTINUE_EXECUTION;
 };
 
+thread_local ThreadParams thread_params_int;
+thread_local ThreadStatePtr thread_int;
+
+static void log_error_details_int(CPUState &state) {
+    // I don't especially want the time logged for every line, but I also want it to print to the log file...
+    uint32_t pc = read_pc(state);
+    uint32_t sp = read_sp(state);
+    uint32_t lr = read_lr(state);
+    uint32_t registers[13];
+    for (size_t a = 0; a < 13; a++)
+        registers[a] = read_reg(state, a);
+
+    LOG_ERROR("PC: 0x{:0>8x},   SP: 0x{:0>8x},   LR: 0x{:0>8x}", pc, sp, lr);
+    for (int a = 0; a < 6; a++) {
+        LOG_ERROR("r{: <2}: 0x{:0>8x}   r{: <2}: 0x{:0>8x}", a, registers[a], a + 6, registers[a + 6]);
+    }
+    LOG_ERROR("r12: 0x{:0>8x}", registers[12]);
+    if (pc != 0)
+        LOG_ERROR("Executing: {}", disassemble(state, pc));
+    else
+        LOG_CRITICAL("PC IS 0");
+    log_stack_frames(state);
+}
+
+
+extern "C" void abort_handler(int signal_number) {
+    /*Your code goes here. You can output debugging info.
+      If you return from this function, and it was called 
+      because abort() was called, your program will exit or crash anyway
+      (with a dialog box on Windows).
+     */
+    spdlog::error("Signal:{}", signal_number == SIGABRT ? "SIGABRT" : log_hex(signal_number));
+    LOG_ERROR("UnhandledException in thread:{} ({})", thread_params_int.thid, thread_int->name);
+    log_error_details_int(*thread_int->cpu);
+    spdlog::shutdown();
+}
+
 static int SDLCALL thread_function(void *data) {
     assert(data != nullptr);
+    /*Do this early in your program's initialization */
+    signal(SIGABRT, &abort_handler);
+    signal(SIGSEGV, &abort_handler);
+    
     Scoped_SE_Translator scoped_se_translator{ my_trans_func };
     SetUnhandledExceptionFilter(UnhandledExceptionFilter_u);
     const ThreadParams params = *static_cast<const ThreadParams *>(data);
@@ -92,6 +136,9 @@ static int SDLCALL thread_function(void *data) {
         // Any following threads opened with thread_function will not wait.
         params.kernel->wait_for_debugger = false;
     }
+    thread_params_int = params;
+    thread_int = thread;
+
     const bool succeeded = run_thread(*thread, false);
     //assert(succeeded);
     const uint32_t r0 = read_reg(*thread->cpu, 0);

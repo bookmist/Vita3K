@@ -44,8 +44,29 @@
 #include <chrono>
 #include <cstdlib>
 #include <thread>
+#include <windows.h>
+#include <signal.h>
+
+extern "C" void my_function_to_handle_aborts(int signal_number) {
+    /*Your code goes here. You can output debugging info.
+      If you return from this function, and it was called 
+      because abort() was called, your program will exit or crash anyway
+      (with a dialog box on Windows).
+     */
+    LOG_ERROR("UnhandledException");
+    spdlog::error("Signal!!!");
+    spdlog::shutdown();
+}
+
 
 int main(int argc, char *argv[]) {
+    /*Do this early in your program's initialization */
+    signal(22, &my_function_to_handle_aborts);
+    signal(15, &my_function_to_handle_aborts);
+    signal(11, &my_function_to_handle_aborts);
+    signal(6, &my_function_to_handle_aborts);
+    signal(2, &my_function_to_handle_aborts);
+    _set_abort_behavior(0, _WRITE_ABORT_MSG);
     Root root_paths;
     root_paths.set_base_path(string_utils::utf_to_wide(SDL_GetBasePath()));
     root_paths.set_pref_path(SDL_GetPrefPath(org_name, app_name));
