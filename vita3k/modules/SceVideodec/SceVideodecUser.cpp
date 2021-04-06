@@ -119,6 +119,8 @@ struct SceAvcdecArrayPicture {
 
 EXPORT(int, sceAvcdecCreateDecoder, uint32_t codec_type, SceAvcdecCtrl *decoder, const SceAvcdecQueryDecoderInfo *query) {
     assert(codec_type == SCE_VIDEODEC_TYPE_HW_AVCDEC);
+    
+    host.kernel.watch_import_calls = true;
 
     SceUID handle = host.kernel.get_next_uid();
     decoder->handle = handle;

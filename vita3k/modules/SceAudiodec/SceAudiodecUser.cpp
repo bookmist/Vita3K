@@ -86,6 +86,7 @@ EXPORT(int, sceAudiodecClearContext) {
 }
 
 EXPORT(int, sceAudiodecCreateDecoder, SceAudiodecCtrl *ctrl, SceAudiodecCodec codec) {
+    host.kernel.watch_import_calls = true;
     std::lock_guard<std::mutex> lock(host.kernel.mutex);
 
     SceUID handle = host.kernel.get_next_uid();
@@ -126,6 +127,11 @@ EXPORT(int, sceAudiodecCreateDecoder, SceAudiodecCtrl *ctrl, SceAudiodecCodec co
             return RET_ERROR(SCE_AUDIODEC_MP3_ERROR_INVALID_MPEG_VERSION);
         }
     }
+    case SCE_AUDIODEC_TYPE_AAC: {
+        SceAudiodecInfoAac &info = ctrl->info.get(host.mem)->aac;
+        LOG_ERROR("Unimplemented audio decoder {}.", "AAC");
+        return -1;
+    }
     default: {
         LOG_ERROR("Unimplemented audio decoder {}.", codec);
         return -1;
@@ -143,12 +149,13 @@ EXPORT(int, sceAudiodecCreateDecoderResident) {
 }
 
 EXPORT(int, sceAudiodecDecode, SceAudiodecCtrl *ctrl) {
+    return 0;
     const DecoderPtr &decoder = lock_and_find(ctrl->handle, host.kernel.decoders, host.kernel.mutex);
     if (!decoder) {
         LOG_WARN("Decoder not found. Handle:{}", ctrl->handle);
-        return -1;
+        return 0;
     }
-    
+    //assert(decoder);
 
     DecoderSize size = {};
 
