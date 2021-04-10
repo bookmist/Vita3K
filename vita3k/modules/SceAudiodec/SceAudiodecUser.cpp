@@ -47,7 +47,7 @@ struct SceAudiodecInfoMp3 {
 struct SceAudiodecInfoAac {
     uint32_t is_adts;
     uint32_t channels;
-    uint32_t sample_ate;
+    uint32_t sample_rate;
     uint32_t is_sbr;
 };
 
@@ -129,8 +129,11 @@ EXPORT(int, sceAudiodecCreateDecoder, SceAudiodecCtrl *ctrl, SceAudiodecCodec co
     }
     case SCE_AUDIODEC_TYPE_AAC: {
         SceAudiodecInfoAac &info = ctrl->info.get(host.mem)->aac;
-        LOG_ERROR("Unimplemented audio decoder {}.", "AAC");
-        return -1;
+        DecoderPtr decoder = std::make_shared<AacDecoderState>(info.channels, info.sample_rate);
+        host.kernel.decoders[handle] = decoder;
+        STUBBED("Unimplemented audio decoder AAC.");
+        //LOG_ERROR("Unimplemented audio decoder {}.", "AAC");
+        return 0;
     }
     default: {
         LOG_ERROR("Unimplemented audio decoder {}.", codec);

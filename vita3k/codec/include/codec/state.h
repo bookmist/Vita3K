@@ -115,6 +115,26 @@ struct Mp3DecoderState : public DecoderState {
 
     explicit Mp3DecoderState(uint32_t channels);
 };
+/*
+struct SceAudiodecInfoAac {
+    uint32_t is_adts;
+    uint32_t channels;
+    uint32_t sample_rate;
+    uint32_t is_sbr;
+};
+*/
+struct AacDecoderState : public DecoderState {
+    AVCodecContext *context{};
+
+    uint32_t get(DecoderQuery query) override;
+    uint32_t get_es_size(const uint8_t *data) override;
+
+    bool send(const uint8_t *data, uint32_t size) override;
+    bool receive(uint8_t *data, DecoderSize *size) override;
+
+    explicit AacDecoderState(const uint32_t channels, const uint32_t sample_rate);
+};
+
 
 struct PCMDecoderState : public DecoderState {
 private:
