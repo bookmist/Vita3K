@@ -90,6 +90,7 @@ add_library(modules STATIC
 	SceLsdb/SceLsdb.cpp SceLsdb/SceLsdb.h
 	SceMotion/SceMotion.cpp SceMotion/SceMotion.h
 	SceMotionDev/SceMotionDev.cpp SceMotionDev/SceMotionDev.h
+	SceMp4/SceMp4.cpp SceMp4/SceMp4.h 
 	SceMtpIfDriver/SceMtpIf.cpp SceMtpIfDriver/SceMtpIf.h
 	SceMusicExport/SceMusicExport.cpp SceMusicExport/SceMusicExport.h
 	SceNearDialogUtil/SceNearDialogUtil.cpp SceNearDialogUtil/SceNearDialogUtil.h
@@ -197,6 +198,7 @@ add_library(modules STATIC
 	SceVshBridge/SceDrmBridge.cpp SceVshBridge/SceDrmBridge.h
 	SceVshBridge/SceVshBridge.cpp SceVshBridge/SceVshBridge.h
 	SceWlanBt/SceWlan.cpp SceWlanBt/SceWlan.h
+	SceMp4/SceMp4.cpp SceMp4/SceMp4.h
 )
 target_include_directories(modules PUBLIC include)
 target_link_libraries(modules PRIVATE xxHash::xxhash)

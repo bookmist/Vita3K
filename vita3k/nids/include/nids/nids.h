@@ -559,6 +559,10 @@ NID(sceAvPlayerSetTrickSpeed, 0x86E0CF55)
 NID(sceAvPlayerStart, 0x2ACB4217)
 NID(sceAvPlayerStop, 0xBD35E360)
 NID(sceAvPlayerStreamCount, 0x2CD86FD6)
+// Module "SceMp4"
+// Library "SceMp4"
+NID(SceMp4OpenFile, 0x05474AF0)
+NID(SceMp4Init, 0x30E49E4D)
 // Module "SceAvcodec"
 // Library "SceAvcodec"
 NID(_sceAudiodecClearContext, 0x914CC7A7)
