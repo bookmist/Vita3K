@@ -31,6 +31,7 @@ uint32_t H264DecoderState::get(DecoderQuery query) {
     switch (query) {
     case DecoderQuery::WIDTH: return context->width;
     case DecoderQuery::HEIGHT: return context->height;
+    //case DecoderQuery::BUFFER_SIZE: return buffer_size(DecoderSize({ context->width, context->height }));
     default: return 0;
     }
 }
@@ -81,6 +82,19 @@ bool H264DecoderState::receive(uint8_t *data, DecoderSize *size) {
 
     if (data) {
         copy_yuv_data_from_frame(frame, data);
+        /*
+        auto s = _msize(data);
+        auto r = buffer_size(DecoderSize({ (uint16_t)frame->width, (uint16_t)frame->height }));
+        uint8_t *tmpData = data; //malloc(r);
+        if (s < r){
+            LOG_WARN("Wrong mem_size passed {}, got {}", s, r);
+            tmpData = (uint8_t*)malloc(r);
+        }
+        copy_yuv_data_from_frame(frame, tmpData);
+        if (tmpData != data) {
+            memcpy(data, tmpData, s);
+        }
+        */
     }
 
     if (size) {

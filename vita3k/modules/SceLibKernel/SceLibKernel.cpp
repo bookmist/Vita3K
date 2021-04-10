@@ -159,6 +159,9 @@ EXPORT(int, sceClibMspaceIsHeapEmpty) {
 }
 
 EXPORT(Ptr<void>, sceClibMspaceMalloc, Ptr<void> space, uint32_t size) {
+    if (thread_id > 1600) {
+        size += KB(16);
+    }
     void *address = mspace_malloc(space.get(host.mem), size);
     return Ptr<void>(address, host.mem);
 }

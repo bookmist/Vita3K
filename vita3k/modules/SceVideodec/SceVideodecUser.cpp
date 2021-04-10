@@ -119,7 +119,7 @@ struct SceAvcdecArrayPicture {
 
 EXPORT(int, sceAvcdecCreateDecoder, uint32_t codec_type, SceAvcdecCtrl *decoder, const SceAvcdecQueryDecoderInfo *query) {
     assert(codec_type == SCE_VIDEODEC_TYPE_HW_AVCDEC);
-    
+
     host.kernel.watch_import_calls = true;
 
     SceUID handle = host.kernel.get_next_uid();
@@ -161,6 +161,7 @@ EXPORT(int, sceAvcdecDecode, SceAvcdecCtrl *decoder, const SceAvcdecAu *au, SceA
     // TODO: decoding can be done async I think
     decoder_info->configure(&options);
     decoder_info->send(reinterpret_cast<uint8_t *>(au->es.pBuf.get(host.mem)), au->es.size);
+    //auto buf_size = decoder_info->buffer_size;
     decoder_info->receive(output);
 
     picture->numOfOutput++;
@@ -261,7 +262,7 @@ EXPORT(int, sceAvcdecGetSeiUserDataNongameapp) {
 EXPORT(int, sceAvcdecQueryDecoderMemSize, uint32_t codec_type, const SceAvcdecQueryDecoderInfo *query_info, SceAvcdecDecoderInfo *decoder_info) {
     assert(codec_type == SCE_VIDEODEC_TYPE_HW_AVCDEC);
 
-    decoder_info->frameMemSize = H264DecoderState::buffer_size({ query_info->horizontal, query_info->vertical }) * query_info->numOfRefFrames;
+    decoder_info->frameMemSize = H264DecoderState::buffer_size({ query_info->horizontal, query_info->vertical }) * (query_info->numOfRefFrames > 0 ? query_info->numOfRefFrames : 1);
 
     return 0;
 }

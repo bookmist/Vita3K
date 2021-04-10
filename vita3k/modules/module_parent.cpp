@@ -142,6 +142,7 @@ void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id)
                 0x46E7BE7B, // sceKernelLockLwMutex
                 0x91FA6614, // sceKernelUnlockLwMutex
                 //
+                /*
                 0x29C34DF5, //sceGxmSetFragmentTexture
                 0x9EB4380F, //sceGxmSetVertexTexture
                 0x65DD0C84, //sceGxmSetUniformDataF
@@ -199,6 +200,8 @@ void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id)
                 0x684F080C, //sceNgsSystemUpdate
                 0x2DB3F5F, //sceAudioOutOutput
                 0x4CB87CA7, //sceKernelClearEventFlag
+                0xFB972F9,
+                /**/
             };
             auto lr = read_lr(cpu);
             log_import_call('H', nid, thread_id, hle_nid_blacklist, lr);
