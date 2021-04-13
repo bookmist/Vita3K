@@ -24,7 +24,9 @@ void copy_yuv_data_from_frame(AVFrame *frame, uint8_t *dest) {
 }
 
 uint32_t H264DecoderState::buffer_size(DecoderSize size) {
-    return size.width * size.height * 3 / 2;
+    return (size.width + 0xfU & 0xfffffff0) * (size.height + 0xfU & 0xfffffff0) * 3 / 2;
+    //0xfU & 0xfffffff0
+    //framesize = (piVar5[0x18] + 0xfU & 0xfffffff0) * (piVar5[0x19] + 0xfU & 0xfffffff0) * 3 >> 1;
 }
 
 uint32_t H264DecoderState::get(DecoderQuery query) {
@@ -70,14 +72,26 @@ bool H264DecoderState::send(const uint8_t *data, uint32_t size) {
     return true;
 }
 
-bool H264DecoderState::receive(uint8_t *data, DecoderSize *size) {
+uint32_t H264DecoderState::receive(uint8_t *data, DecoderSize *size) {
     AVFrame *frame = av_frame_alloc();
-
+    /*
+    0 : success, a frame was returned AVERROR(EAGAIN)
+        : output is not available in this state - user must try to send new input AVERROR_EOF : the decoder has been fully flushed
+        , and there will be no more output frames AVERROR(EINVAL)
+        : codec not opened
+        , or it is an encoder other negative values : legitimate decoding errors
+    */
     int error = avcodec_receive_frame(context, frame);
     if (error < 0) {
-        LOG_WARN("Error receiving H264 frame: {}.", log_hex(static_cast<uint32_t>(error)));
         av_frame_free(&frame);
-        return false;
+        switch (error) {
+        case AVERROR(EAGAIN): LOG_WARN("Error receiving H264 frame: {}.", "AVERROR(EAGAIN)"); break;
+        case AVERROR_EOF: LOG_WARN("Error receiving H264 frame: {}.", "AVERROR_EOF"); break;
+        case AVERROR(EINVAL): LOG_WARN("Error receiving H264 frame: {}.", "AVERROR(EINVAL)"); break;
+        case AVERROR(EIO): LOG_WARN("Error receiving H264 frame: {}.", "AVERROR(EIO)"); break;
+        default: LOG_WARN("Error receiving H264 frame: {}.", log_hex(static_cast<uint32_t>(error)));
+        }
+        return error;
     }
 
     if (data) {

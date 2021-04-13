@@ -250,7 +250,7 @@ bool PCMDecoderState::send(const uint8_t *data, uint32_t size) {
     return true;
 }
 
-bool PCMDecoderState::receive(uint8_t *data, DecoderSize *size) {
+uint32_t PCMDecoderState::receive(uint8_t *data, DecoderSize *size) {
     if (data) {
         std::memcpy(data, final_result.data(), final_result.size());
     }

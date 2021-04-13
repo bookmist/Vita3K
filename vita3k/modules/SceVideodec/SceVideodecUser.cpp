@@ -120,7 +120,7 @@ struct SceAvcdecArrayPicture {
 EXPORT(int, sceAvcdecCreateDecoder, uint32_t codec_type, SceAvcdecCtrl *decoder, const SceAvcdecQueryDecoderInfo *query) {
     assert(codec_type == SCE_VIDEODEC_TYPE_HW_AVCDEC);
 
-    host.kernel.watch_import_calls = true;
+    //host.kernel.watch_import_calls = true;
 
     SceUID handle = host.kernel.get_next_uid();
     decoder->handle = handle;
@@ -146,6 +146,23 @@ EXPORT(int, sceAvcdecCscInternal) {
     return UNIMPLEMENTED();
 }
 
+enum SceAvcdecErrorCode {
+    SCE_AVCDEC_ERROR_INVALID_TYPE = 0x80620001,
+    SCE_AVCDEC_ERROR_INVALID_PARAM = 0x80620002,
+    SCE_AVCDEC_ERROR_OUT_OF_MEMORY = 0x80620003, //critical
+    SCE_AVCDEC_ERROR_INVALID_STATE = 0x80620004, //critical
+    SCE_AVCDEC_ERROR_UNSUPPORT_IMAGE_SIZE = 0x80620005,
+    SCE_AVCDEC_ERROR_INVALID_COLOR_FORMAT = 0x80620006,
+    SCE_AVCDEC_ERROR_NOT_PHY_CONTINUOUS_MEMORY = 0x80620007,
+    SCE_AVCDEC_ERROR_ALREADY_USED = 0x80620008,
+    SCE_AVCDEC_ERROR_INVALID_POINTER = 0x80620009,
+    SCE_AVCDEC_ERROR_ES_BUFFER_FULL = 0x8062000a,//not error
+    SCE_AVCDEC_ERROR_INITIALIZE = 0x8062000b,
+    SCE_AVCDEC_ERROR_NOT_INITIALIZE = 0x8062000c,//critical
+    SCE_AVCDEC_ERROR_INVALID_STREAM = 0x8062000d,//critical
+    SCE_AVCDEC_ERROR_INVALID_ARGUMENT_SIZE = 0x8062000e
+};
+
 EXPORT(int, sceAvcdecDecode, SceAvcdecCtrl *decoder, const SceAvcdecAu *au, SceAvcdecArrayPicture *picture) {
     const DecoderPtr &decoder_info = lock_and_find(decoder->handle, host.kernel.decoders, host.kernel.mutex);
 
@@ -155,15 +172,33 @@ EXPORT(int, sceAvcdecDecode, SceAvcdecCtrl *decoder, const SceAvcdecAu *au, SceA
     options.dts_upper = au->dts.upper;
     options.dts_lower = au->dts.lower;
 
+    //checks
+    assert(picture);
+    assert(picture->pPicture);    
+    assert(picture->pPicture.get(host.mem)[0]);
+    auto tmp = picture->pPicture.get(host.mem)[0].get(host.mem)->frame.pPicture[0];
+    assert(tmp);
+    assert(tmp.address() != 0x3a9800);
+    assert(tmp.address() != 0x83d600);
+    assert(picture->numOfElm == 1);
     // This is quite long...
-    uint8_t *output = picture->pPicture.get(host.mem)[0].get(host.mem)->frame.pPicture[0].cast<uint8_t>().get(host.mem);
-
+    uint8_t *output = tmp.cast<uint8_t>().get(host.mem);
+    //uint8_t *output = picture->pPicture.get(host.mem)[0].get(host.mem)->frame.pPicture[0].cast<uint8_t>().get(host.mem);
+    LOG_TRACE("pPicture[0].address:{}", tmp.address());
     // TODO: decoding can be done async I think
     decoder_info->configure(&options);
     decoder_info->send(reinterpret_cast<uint8_t *>(au->es.pBuf.get(host.mem)), au->es.size);
-    //auto buf_size = decoder_info->buffer_size;
-    decoder_info->receive(output);
-
+    auto buf_size = picture->pPicture.get(host.mem)[0].get(host.mem)->size;
+    auto res = decoder_info->receive(output);
+    if (res == -EAGAIN)
+        return RET_ERROR(0);
+    if (res != true) {
+        return RET_ERROR(SCE_AVCDEC_ERROR_ALREADY_USED);
+    }
+    /*
+    if (res == false)
+        return SCE_AVCDEC_ERROR_ALREADY_USED;
+        */
     picture->numOfOutput++;
 
     return 0;

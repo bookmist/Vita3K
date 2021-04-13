@@ -128,7 +128,7 @@ bool Mp3DecoderState::send(const uint8_t *data, uint32_t size) {
     return true;
 }
 
-bool Mp3DecoderState::receive(uint8_t *data, DecoderSize *size) {
+uint32_t Mp3DecoderState::receive(uint8_t *data, DecoderSize *size) {
     AVFrame *frame = av_frame_alloc();
 
     int err = avcodec_receive_frame(context, frame);

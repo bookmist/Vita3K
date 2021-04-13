@@ -46,7 +46,7 @@ EXPORT(SceUID, sceCodecEngineOpenUnmapMemBlock, Address memBlock, uint32_t size)
     auto uid = host.kernel.get_next_uid();
     auto guard = std::lock_guard<std::mutex>(host.kernel.mutex);
     CodecEngineBlock block;
-    block.vaddr = 0; //memBlock;
+    block.vaddr = memBlock;
     block.size = size;
     host.kernel.codec_blocks.emplace(uid, block);
     return uid;

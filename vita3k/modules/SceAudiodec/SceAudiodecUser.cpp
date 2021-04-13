@@ -132,14 +132,14 @@ EXPORT(int, sceAudiodecCreateDecoder, SceAudiodecCtrl *ctrl, SceAudiodecCodec co
         DecoderPtr decoder = std::make_shared<AacDecoderState>(info.channels, info.sample_rate);
         host.kernel.decoders[handle] = decoder;
         STUBBED("Unimplemented audio decoder AAC.");
-        //LOG_ERROR("Unimplemented audio decoder {}.", "AAC");
+        //LOG_ERROR("Unimplemented audio decoder {}.", "AAC");*/
         return 0;
     }
     default: {
         LOG_ERROR("Unimplemented audio decoder {}.", codec);
         return -1;
     }
-    }
+    }    
 }
 
 EXPORT(int, sceAudiodecCreateDecoderExternal, SceAudiodecCtrl *ctrl, SceAudiodecCodec codec) {
@@ -163,6 +163,7 @@ EXPORT(int, sceAudiodecDecode, SceAudiodecCtrl *ctrl) {
     DecoderSize size = {};
 
     const auto es_size = std::min(decoder->get_es_size(ctrl->es_data.get(host.mem)), ctrl->es_size_max);
+    LOG_TRACE("ctrl->pcm_data.address:{}", ctrl->pcm_data.address());
 
     decoder->send(ctrl->es_data.get(host.mem), es_size);
     decoder->receive(ctrl->pcm_data.get(host.mem), &size);

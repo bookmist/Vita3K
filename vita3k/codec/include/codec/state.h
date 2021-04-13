@@ -46,7 +46,7 @@ struct DecoderState {
     // TODO: proper error handling (return bool?)
     virtual void flush();
     virtual bool send(const uint8_t *data, uint32_t size) = 0;
-    virtual bool receive(uint8_t *data, DecoderSize *size = nullptr) = 0;
+    virtual uint32_t receive(uint8_t *data, DecoderSize *size = nullptr) = 0;
     virtual void configure(void *options);
     virtual uint32_t get_es_size(const uint8_t *data);
 
@@ -71,7 +71,7 @@ struct H264DecoderState : public DecoderState {
     uint32_t get(DecoderQuery query) override;
 
     bool send(const uint8_t *data, uint32_t size) override;
-    bool receive(uint8_t *data, DecoderSize *size) override;
+    uint32_t receive(uint8_t *data, DecoderSize *size) override;
     void configure(void *options) override;
 
     H264DecoderState(uint32_t width, uint32_t height);
@@ -80,7 +80,7 @@ struct H264DecoderState : public DecoderState {
 
 struct MjpegDecoderState : public DecoderState {
     bool send(const uint8_t *data, uint32_t size) override;
-    bool receive(uint8_t *data, DecoderSize *size) override;
+    uint32_t receive(uint8_t *data, DecoderSize *size) override;
 
     MjpegDecoderState();
 };
@@ -99,7 +99,7 @@ struct Atrac9DecoderState : public DecoderState {
     uint32_t get(DecoderQuery query) override;
 
     bool send(const uint8_t *data, uint32_t size) override;
-    bool receive(uint8_t *data, DecoderSize *size) override;
+    uint32_t receive(uint8_t *data, DecoderSize *size) override;
 
     explicit Atrac9DecoderState(uint32_t config_data);
 };
@@ -111,7 +111,7 @@ struct Mp3DecoderState : public DecoderState {
     uint32_t get_es_size(const uint8_t *data) override;
 
     bool send(const uint8_t *data, uint32_t size) override;
-    bool receive(uint8_t *data, DecoderSize *size) override;
+    uint32_t receive(uint8_t *data, DecoderSize *size) override;
 
     explicit Mp3DecoderState(uint32_t channels);
 };
@@ -130,7 +130,7 @@ struct AacDecoderState : public DecoderState {
     uint32_t get_es_size(const uint8_t *data) override;
 
     bool send(const uint8_t *data, uint32_t size) override;
-    bool receive(uint8_t *data, DecoderSize *size) override;
+    uint32_t receive(uint8_t *data, DecoderSize *size) override;
 
     explicit AacDecoderState(const uint32_t channels, const uint32_t sample_rate);
 };
@@ -153,7 +153,7 @@ public:
     bool he_adpcm;
 
     bool send(const uint8_t *data, uint32_t size) override;
-    bool receive(uint8_t *data, DecoderSize *size) override;
+    uint32_t receive(uint8_t *data, DecoderSize *size) override;
 
     explicit PCMDecoderState(const float dest_frequency);
 };

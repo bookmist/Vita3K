@@ -34,7 +34,9 @@ EXPORT(int, SceMp4OpenFile, Ptr<const char> file_name, SceAvPlayerFileManager *f
     return 10;
 }
 
-EXPORT(int, SceMp4Init) {
+EXPORT(int, SceMp4Init, uint32_t param_1, uint32_t param_2, uint64_t *length ) {
+    LOG_DEBUG("param_1: {}, param_2: {}, param_3: {}", param_1, param_2, log_hex(*length));
+    *length = 1;
     return UNIMPLEMENTED();
 }
 

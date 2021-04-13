@@ -2135,8 +2135,8 @@ EXPORT(int, sceGxmSetVertexDefaultUniformBuffer, SceGxmContext *context, Ptr<con
 }
 
 EXPORT(void, sceGxmSetVertexProgram, SceGxmContext *context, Ptr<const SceGxmVertexProgram> vertexProgram) {
-    assert(context);
-    assert(vertexProgram);
+    //assert(context);
+    //assert(vertexProgram);
 
     if (!context || !vertexProgram)
         return;

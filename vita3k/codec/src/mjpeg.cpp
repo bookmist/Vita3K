@@ -56,7 +56,7 @@ bool MjpegDecoderState::send(const uint8_t *data, uint32_t size) {
     return true;
 }
 
-bool MjpegDecoderState::receive(uint8_t *data, DecoderSize *size) {
+uint32_t MjpegDecoderState::receive(uint8_t *data, DecoderSize *size) {
     AVFrame *frame = av_frame_alloc();
     int error = avcodec_receive_frame(context, frame);
     if (error < 0) {

@@ -229,12 +229,18 @@ void call_import(HostState &host, CPUState &cpu, uint32_t nid, SceUID thread_id)
         if (is_returning(cpu)) {
             LOG_TRACE("[LLE] TID: {:<3} FUNC: {} returned {}", thread_id, import_name(nid), log_hex(read_reg(cpu, 0)));
             return;
-        }
+        } /*
         if (nid == 0x4C847ADF) {
             Ptr<SceAvPlayerInfo> p(read_reg(cpu, 0));
             p.get(host.mem)->debug_level = 3;
             LOG_DEBUG("NID(sceAvPlayerInit, 0x4C847ADF)");
+        }*/
+        if (nid == 0x774C2C05) {
+            Ptr<uint32_t> p(read_reg(cpu, 0));
+            p.get(host.mem)[0x11] = 0;
+            LOG_DEBUG("NID(sceFiosInitialize, 0x774C2C05)");
         }
+        
         const std::unordered_set<uint32_t> lle_nid_blacklist = {};
         log_import_call('L', nid, thread_id, lle_nid_blacklist, pc);
         write_pc(cpu, export_pc);

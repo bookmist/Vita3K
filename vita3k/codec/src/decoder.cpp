@@ -10,6 +10,10 @@ uint32_t DecoderState::get(DecoderQuery query) {
     return 0;
 }
 
+uint32_t DecoderState::receive(uint8_t *data, DecoderSize *size) {
+    return false;
+}
+
 void DecoderState::configure(void *options) {
     // do nothing
 }
