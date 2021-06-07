@@ -43,6 +43,7 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
     bool finished = false;
 
     std::uint8_t *data_ptr = data.extra_storage.data();
+    size_t data_len = data.extra_storage.size();
 
     if (!decoder || (decoder->he_adpcm != static_cast<bool>(params->type))) {
         decoder = std::make_unique<PCMDecoderState>(data.parent->rack->system->sample_rate);
@@ -82,6 +83,7 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
             }
 
             data_ptr = data.extra_storage.data();
+            data_len = data.extra_storage.size();
 
             std::uint32_t bytes_left_in_buffer = data.extra_storage.size();
             std::uint32_t samples_to_take_per_channel = bytes_left_in_buffer / sizeof(float) / 2;
@@ -136,8 +138,15 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
 
     std::uint32_t gran_to_be_passed = std::min<std::uint32_t>(state->decoded_gran_pending, data.parent->rack->system->granularity);
     data_ptr += 2 * sizeof(float) * state->decoded_gran_passed;
+    data_len -= 2 * sizeof(float) * state->decoded_gran_passed;
+    data_len /= sizeof(float);
 
     data.parent->products[0].data = data_ptr;
+    if (data_len > std::numeric_limits<uint16_t>::max()) {
+        LOG_TRACE("Too big data Length:{}", data_len);
+        data_len = std::numeric_limits<uint16_t>::max();
+    }
+    data.parent->products[0].reserved = static_cast<uint16_t>(data_len);
 
     state->decoded_gran_pending = (state->decoded_gran_pending < state->decoded_gran_passed) ? 0 : (state->decoded_gran_pending - gran_to_be_passed);
     state->decoded_gran_passed += gran_to_be_passed;

@@ -188,7 +188,7 @@ struct RackDescription {
 struct Rack;
 
 struct VoiceProduct {
-    std::uint8_t reserved[2];
+    std::uint16_t reserved;
     std::uint8_t *data;
 };
 

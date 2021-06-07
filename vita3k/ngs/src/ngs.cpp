@@ -80,7 +80,12 @@ std::int32_t VoiceInputManager::receive(ngs::Patch *patch, const VoiceProduct &p
 
     // Try mixing, also with the use of this volume matrix
     // Dest is our voice to receive this data.
-    for (std::int32_t k = 0; k < patch->dest->rack->system->granularity; k++) {
+    auto t = patch->dest->rack->system->granularity;
+    if (t * 2 > product.reserved) {
+        t = product.reserved / 2;
+        //LOG_TRACE("Too small data. Data size:{}", t);
+    }
+    for (std::int32_t k = 0; k < t; k++) {
         dest_buffer[k * 2] = std::clamp(dest_buffer[k * 2] + data_to_mix_in[k * 2] * patch->volume_matrix[0][0]
                 + data_to_mix_in[k * 2 + 1] * patch->volume_matrix[1][0],
             -1.0f, 1.0f);

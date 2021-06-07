@@ -31,7 +31,12 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
     float *product_before = reinterpret_cast<float *>(data.parent->products[0].data);
 
     if (product_before) {
-        for (std::int32_t i = 0; i < data.parent->rack->system->granularity * 2; i++) {
+        auto t = data.parent->rack->system->granularity * 2;
+        if (t > data.parent->products[0].reserved) {
+            t = data.parent->products[0].reserved;
+            LOG_TRACE("Too small data. Data size:{}", t);
+        }
+        for (std::int32_t i = 0; i < t; i++) {
             product_before[i] *= 0.5f;
         }
     }
