@@ -148,6 +148,10 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio" AND (CMAKE_C_COMPILER_ID MATCHES "MSV
 	string(APPEND CMAKE_CXX_FLAGS " /MP")
 endif()
 
+if (MSVC AND (MSVC_VERSION GREATER_EQUAL 1913))
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /experimental:external /external:I${CMAKE_SOURCE_DIR}/external/ /external:W0 /external:templates-")
+endif()
+
 add_subdirectory(external)
 add_subdirectory(vita3k)
 add_subdirectory(tools/gen-modules)
