@@ -44,8 +44,8 @@ struct SharedAudioOutPortState {
 };
 
 struct AudioOutPort {
-    ReadOnlyAudioOutPortState ro;
-    SharedAudioOutPortState shared;
+    ReadOnlyAudioOutPortState ro{};
+    SharedAudioOutPortState shared{};
     // Channel range from 0 - 32768
     int left_channel_volume = SCE_AUDIO_VOLUME_0DB;
     int right_channel_volume = SCE_AUDIO_VOLUME_0DB;
@@ -54,7 +54,7 @@ struct AudioOutPort {
 };
 
 struct AudioInPort {
-    SDL_AudioDeviceID id;
+    SDL_AudioDeviceID id{};
     bool running = false;
     int len_bytes = 0;
 };
@@ -76,7 +76,7 @@ struct SharedAudioState {
     std::mutex mutex;
     int next_port_id = 1;
     AudioOutPortPtrs out_ports;
-    AudioInPort in_port;
+    AudioInPort in_port{};
 };
 
 struct AudioState {

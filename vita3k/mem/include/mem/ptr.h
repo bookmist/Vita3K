@@ -73,7 +73,7 @@ public:
             const auto ptr = reinterpret_cast<volatile U *>(&mem.memory[addr]);
             return ::atomic_compare_and_swap(ptr, value, expected);
         } else {
-            assert(false);
+            static_assert(false);
         }
     }
 
