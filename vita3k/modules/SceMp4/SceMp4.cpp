@@ -17,31 +17,31 @@
 
 #include "SceMp4.h"
 
-EXPORT(int, sceMp4CloseFile) {
+EXPORT(int, sceMp4CloseFile, SceUID player_handle) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4EnableStream) {
+EXPORT(int, sceMp4EnableStream, SceUID player_handle, int32_t stream_no, bool state) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4GetNextUnit) {
+EXPORT(int, sceMp4GetNextUnit, SceUID player_handle, uint32_t param_2) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4GetNextUnit2Ref) {
+EXPORT(int, sceMp4GetNextUnit2Ref, SceUID player_handle, uint32_t *param_2) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4GetNextUnit3Ref) {
+EXPORT(int, sceMp4GetNextUnit3Ref, SceUID player_handle, uint32_t *param_2) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4GetNextUnitData) {
+EXPORT(int, sceMp4GetNextUnitData, SceUID player_handle, void *param_2) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4GetStreamInfo) {
+EXPORT(int, sceMp4GetStreamInfo, SceUID player_handle, int32_t stream_no, uint32_t *stream_info) {
     return UNIMPLEMENTED();
 }
 
@@ -49,29 +49,41 @@ EXPORT(int, sceMp4JumpPTS) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4OpenFile) {
-    STUBBED("Fake Size");
+struct SceAvPlayerFileManager {
+    uint32_t user_data = 0;
 
+    // Cast to SceAvPlayerOpenFile, SceAvPlayerCloseFile, SceAvPlayerReadFile and SceAvPlayerGetFileSize.
+    Ptr<void> open_file;
+    Ptr<void> close_file;
+    Ptr<void> read_file;
+    Ptr<void> file_size;
+};
+
+EXPORT(int, sceMp4OpenFile, char *file_name, SceAvPlayerFileManager *file_manager, int32_t param_3, int32_t memory_base, int32_t capacity, int32_t param_6, int32_t log_level) {
+    STUBBED("Fake Handle");
+    LOG_DEBUG("file_name: {}", file_name);
     return 13;
 }
 
-EXPORT(int, sceMp4PTSToTime) {
+EXPORT(SceInt64, sceMp4PTSToTime, SceInt64 pts) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4ReleaseBuffer) {
+EXPORT(void, sceMp4ReleaseBuffer, SceUID player_handle, uint32_t *buffer) {
+    buffer[0] = 0;
+    buffer[1] = 0;
+    buffer[2] = 0;
+}
+
+EXPORT(int, sceMp4Reset, SceUID player_handle) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4Reset) {
+EXPORT(int, sceMp4StartFileStreaming, SceUID player_handle, uint32_t param_2, SceInt64 *result) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMp4StartFileStreaming) {
-    return UNIMPLEMENTED();
-}
-
-EXPORT(int, sceMp4TimeToPTS) {
+EXPORT(SceInt64, sceMp4TimeToPTS, SceInt64 Time) {
     return UNIMPLEMENTED();
 }
 
