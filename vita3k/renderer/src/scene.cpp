@@ -87,6 +87,12 @@ COMMAND(handle_sync_surface_data) {
         gl::get_surface_data(*reinterpret_cast<gl::GLContext *>(render_context), width, height,
             stride_in_pixels, pixels, render_context->record.color_surface.colorFormat);
 
+        if (render_context->record.depth_stencil_surface.depthData && ((render_context->record.depth_stencil_surface.zlsControl & SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED) == SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED)) {
+            auto control = render_context->record.depth_stencil_surface.control.get(mem);
+            uint32_t *const pixels2 = Ptr<uint32_t>(render_context->record.depth_stencil_surface.depthData.address()).get(mem);
+            gl::get_ds_surface_data(*reinterpret_cast<gl::GLContext *>(render_context), width, height,
+                stride_in_pixels, pixels2, control->format);
+        }
         break;
     }
 
