@@ -125,8 +125,9 @@ public:
     template <typename T>
     T MemoryRead(Dynarmic::A32::VAddr addr) {
         Ptr<T> ptr{ addr };
-        if (!ptr || !ptr.valid(*parent->mem)) {
+        if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
             LOG_WARN("Invalid read of uint{}_t at address: 0x{:x}", sizeof(T) * 8, addr);
+            cpu->log_error_details(0);
             return 0;
         }
 
@@ -156,8 +157,9 @@ public:
     template <typename T>
     void MemoryWrite(Dynarmic::A32::VAddr addr, T value) {
         Ptr<T> ptr{ addr };
-        if (!ptr || !ptr.valid(*parent->mem)) {
+        if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
             LOG_WARN("Invalid write of uint{}_t at addr: 0x{:x}, val = 0x{:x}", sizeof(T) * 8, addr, value);
+            cpu->log_error_details(1);
             return;
         }
 
@@ -448,6 +450,25 @@ std::size_t DynarmicCPU::processor_id() const {
 
 void DynarmicCPU::invalidate_jit_cache(Address start, size_t length) {
     jit->InvalidateCacheRange(start, length);
+}
+
+void DynarmicCPU::log_error_details(uint32_t code) {
+    // I don't especially want the time logged for every line, but I also want it to print to the log file...
+    LOG_ERROR("Dynarmic error {}. Thread: {}", log_hex(code), parent->thread_id);
+
+    uint32_t pc = get_pc();
+    uint32_t sp = get_sp();
+    uint32_t lr = get_lr();
+    uint32_t registers[13];
+    for (size_t a = 0; a < 13; a++)
+        registers[a] = get_reg(a);
+
+    LOG_ERROR("PC: 0x{:0>8x},   SP: 0x{:0>8x},   LR: 0x{:0>8x}", pc, sp, lr);
+    for (int a = 0; a < 6; a++) {
+        LOG_ERROR("r{: <2}: 0x{:0>8x}   r{: <2}: 0x{:0>8x}", a, registers[a], a + 6, registers[a + 6]);
+    }
+    LOG_ERROR("r12: 0x{:0>8x}", registers[12]);
+    //LOG_ERROR("Executing: {}", disassemble(*this->parent, pc));
 }
 
 // TODO: proper abstraction
