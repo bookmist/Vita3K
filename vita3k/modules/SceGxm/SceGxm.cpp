@@ -868,7 +868,7 @@ EXPORT(uint8_t, sceGxmDepthStencilSurfaceGetBackgroundStencil, const SceGxmDepth
 EXPORT(SceGxmDepthStencilForceLoadMode, sceGxmDepthStencilSurfaceGetForceLoadMode, const SceGxmDepthStencilSurface *surface) {
     assert(surface);
     // TODO: Implement on the renderer side
-    // return static_cast<SceGxmDepthStencilForceLoadMode>(surface->zlsControl & SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED);
+    return static_cast<SceGxmDepthStencilForceLoadMode>(surface->zlsControl & SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED);
     STUBBED("SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_DISABLED");
     return SceGxmDepthStencilForceLoadMode::SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_DISABLED;
 }
@@ -876,7 +876,7 @@ EXPORT(SceGxmDepthStencilForceLoadMode, sceGxmDepthStencilSurfaceGetForceLoadMod
 EXPORT(SceGxmDepthStencilForceStoreMode, sceGxmDepthStencilSurfaceGetForceStoreMode, const SceGxmDepthStencilSurface *surface) {
     assert(surface);
     // TODO: Implement on the renderer side
-    // return static_cast<SceGxmDepthStencilForceStoreMode>(surface->zlsControl & SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED);
+    return static_cast<SceGxmDepthStencilForceStoreMode>(surface->zlsControl & SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED);
     STUBBED("SCE_GXM_DEPTH_STENCIL_FORCE_STORE_DISABLED");
     return SceGxmDepthStencilForceStoreMode::SCE_GXM_DEPTH_STENCIL_FORCE_STORE_DISABLED;
 }
@@ -889,6 +889,32 @@ EXPORT(int, sceGxmDepthStencilSurfaceGetFormat, const SceGxmDepthStencilSurface 
 EXPORT(uint32_t, sceGxmDepthStencilSurfaceGetStrideInSamples, const SceGxmDepthStencilSurface *surface) {
     assert(surface);
     return UNIMPLEMENTED();
+}
+
+std::string get_depthStencilFormat_str(SceGxmDepthStencilFormat depthStencilFormat) {
+    switch (depthStencilFormat) {
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_DF32";
+
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_S8:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_S8";
+
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32_S8:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_DF32_S8";
+
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32M:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_DF32M";
+
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32M_S8:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_DF32M_S8";
+
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_S8D24:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_S8D24";
+
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_D16:
+        return "SCE_GXM_DEPTH_STENCIL_FORMAT_D16";
+    }
+    return "";
 }
 
 EXPORT(int, sceGxmDepthStencilSurfaceInit, SceGxmDepthStencilSurface *surface, SceGxmDepthStencilFormat depthStencilFormat, SceGxmDepthStencilSurfaceType surfaceType, uint32_t strideInSamples, Ptr<void> depthData, Ptr<void> stencilData) {
@@ -908,6 +934,7 @@ EXPORT(int, sceGxmDepthStencilSurfaceInit, SceGxmDepthStencilSurface *surface, S
     SceGxmDepthStencilControl control;
     control.disabled = false;
     control.format = depthStencilFormat;
+    LOG_TRACE("get_depthStencilFormat_str:{}", get_depthStencilFormat_str(depthStencilFormat));
     memcpy(tmp_surface.control.get(host.mem), &control, sizeof(SceGxmDepthStencilControl));
     memcpy(surface, &tmp_surface, sizeof(SceGxmDepthStencilSurface));
     return 0;
@@ -951,14 +978,14 @@ EXPORT(void, sceGxmDepthStencilSurfaceSetBackgroundStencil, SceGxmDepthStencilSu
 EXPORT(void, sceGxmDepthStencilSurfaceSetForceLoadMode, SceGxmDepthStencilSurface *surface, SceGxmDepthStencilForceLoadMode forceLoad) {
     assert(surface);
     // TODO: Implement on the renderer side
-    // surface->zlsControl = (forceLoad & SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED) | (surface->zlsControl & ~SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED);
+    surface->zlsControl = (forceLoad & SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED) | (surface->zlsControl & ~SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED);
     UNIMPLEMENTED();
 }
 
 EXPORT(void, sceGxmDepthStencilSurfaceSetForceStoreMode, SceGxmDepthStencilSurface *surface, SceGxmDepthStencilForceStoreMode forceStore) {
     assert(surface);
     // TODO: Implement on the renderer side
-    // surface->zlsControl = (forceStore & SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED) | (surface->zlsControl & ~SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED);
+    surface->zlsControl = (forceStore & SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED) | (surface->zlsControl & ~SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED);
     UNIMPLEMENTED();
 }
 

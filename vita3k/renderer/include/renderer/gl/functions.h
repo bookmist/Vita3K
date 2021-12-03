@@ -56,6 +56,7 @@ bool create(std::unique_ptr<VertexProgram> &vp, GLState &state, const SceGxmProg
 void sync_rendertarget(const GLRenderTarget &rt);
 void set_context(GLContext &ctx, const MemState &mem, const GLRenderTarget *rt, const FeatureState &features);
 void get_surface_data(GLContext &context, size_t width, size_t height, size_t stride_in_pixels, uint32_t *pixels, SceGxmColorFormat format);
+void get_ds_surface_data(GLContext &context, size_t width, size_t height, size_t stride_in_pixels, uint32_t *pixels, SceGxmDepthStencilFormat format);
 void draw(GLState &renderer, GLContext &context, const FeatureState &features, SceGxmPrimitiveType type, SceGxmIndexFormat format,
     void *indices, size_t count, uint32_t instance_count, MemState &mem, const char *base_path, const char *title_id, const Config &config);
 

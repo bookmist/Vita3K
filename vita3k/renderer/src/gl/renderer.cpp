@@ -445,13 +445,14 @@ void set_context(GLContext &context, const MemState &mem, const GLRenderTarget *
     if (context.record.region_clip_mode != SCE_GXM_REGION_CLIP_NONE) {
         glDisable(GL_SCISSOR_TEST);
     }
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glClearDepth(context.record.depth_stencil_surface.backgroundDepth);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-
+    if ((context.record.depth_stencil_surface.zlsControl & (SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED | SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED))
+        != (SCE_GXM_DEPTH_STENCIL_FORCE_LOAD_ENABLED | SCE_GXM_DEPTH_STENCIL_FORCE_STORE_ENABLED)) {
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glClearDepth(context.record.depth_stencil_surface.backgroundDepth);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+    }
     sync_mask(context, mem);
     // TODO: Take request to force load from given memory
 
@@ -582,6 +583,48 @@ void get_surface_data(GLContext &context, size_t width, size_t height, size_t st
             }
         }
         memcpy(pixels, buffer.data(), buffer.size());
+    }
+
+    glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+    ++context.texture_cache.timestamp;
+}
+
+void get_ds_surface_data(GLContext &context, size_t width, size_t height, size_t stride_in_pixels, uint32_t *pixels, SceGxmDepthStencilFormat format) {
+    R_PROFILE(__func__);
+
+    if (pixels == nullptr) {
+        return;
+    }
+
+    glPixelStorei(GL_PACK_ROW_LENGTH, static_cast<GLint>(stride_in_pixels));
+
+    // TODO Need more check into this
+    switch (format) {
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32:
+        glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+        break;
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_S8:
+        glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_STENCIL_INDEX, GL_BYTE, pixels);
+        break;
+    //case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32_S8:
+    //   glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, pixels);
+    //   break;
+    //case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32M:
+    //    glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_DEPTH_COMPONENT, GL_FLOAT, pixels);
+    //   break;
+    //case SCE_GXM_DEPTH_STENCIL_FORMAT_DF32M_S8:
+    //   glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, pixels);
+    //   break;
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_S8D24:
+        glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, pixels);
+        break;
+    case SCE_GXM_DEPTH_STENCIL_FORMAT_D16:
+        glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_DEPTH_COMPONENT, GL_HALF_FLOAT, pixels);
+        break;
+    default:
+        LOG_ERROR("Depth stencil format not implemented: {}, report this to developer", format);
+        //glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        break;
     }
 
     glPixelStorei(GL_PACK_ROW_LENGTH, 0);
