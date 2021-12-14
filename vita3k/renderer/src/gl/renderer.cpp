@@ -167,8 +167,9 @@ static void debug_output_callback(GLenum source, GLenum type, GLuint id, GLenum 
         severity_fmt = "UNKSERV";
         break;
     }
-
-    LOG_DEBUG("[OPENGL - {} - {}] {}", type_str, severity_fmt, message);
+    if (type != GL_DEBUG_TYPE_PERFORMANCE) {
+        LOG_DEBUG("[OPENGL - {} - {}] {}", type_str, severity_fmt, message);
+    }
 }
 #endif
 
@@ -215,6 +216,7 @@ bool create(SDL_Window *window, std::unique_ptr<State> &state, const Config &con
     LOG_INFO("GL_SHADING_LANGUAGE_VERSION = {}", version);
 
 #ifndef NDEBUG
+    glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(debug_output_callback), nullptr);
 #endif
 
