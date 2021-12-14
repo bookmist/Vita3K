@@ -407,8 +407,10 @@ typedef struct SceNetCheckDialogResult {
 } SceNetCheckDialogResult;
 
 EXPORT(int, sceNetCheckDialogGetResult, SceNetCheckDialogResult *result) {
-    result->result = -1;
-    return UNIMPLEMENTED();
+    STUBBED("No PSN (psnModeSucceeded = false)");
+    result->result = SCE_COMMON_DIALOG_RESULT_OK;
+    result->psnModeSucceeded = false;
+    return 0;
 }
 
 EXPORT(SceCommonDialogStatus, sceNetCheckDialogGetStatus) {
@@ -421,6 +423,8 @@ EXPORT(int, sceNetCheckDialogInit) {
 }
 
 EXPORT(int, sceNetCheckDialogTerm) {
+    host.common_dialog.status = SCE_COMMON_DIALOG_STATUS_NONE;
+    host.common_dialog.type = NO_DIALOG;
     return UNIMPLEMENTED();
 }
 

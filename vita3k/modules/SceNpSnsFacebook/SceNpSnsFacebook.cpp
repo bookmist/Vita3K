@@ -22,7 +22,8 @@ EXPORT(int, sceNpSnsFacebookAbortRequest) {
 }
 
 EXPORT(int, sceNpSnsFacebookCreateRequest) {
-    return UNIMPLEMENTED();
+    UNIMPLEMENTED();
+    return 18;
 }
 
 EXPORT(int, sceNpSnsFacebookDeleteRequest) {
@@ -34,7 +35,9 @@ EXPORT(int, sceNpSnsFacebookGetAccessToken) {
 }
 
 EXPORT(int, sceNpSnsFacebookGetLongAccessToken) {
-    return UNIMPLEMENTED();
+    UNIMPLEMENTED();
+    return 0x8055260e;
+    //SCE_NP_SNS_FACEBOOK_ERROR_CONFIG_DISABLED 0x8055260e
 }
 
 EXPORT(int, sceNpSnsFacebookInit) {
