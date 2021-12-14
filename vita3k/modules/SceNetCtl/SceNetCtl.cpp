@@ -168,7 +168,7 @@ EXPORT(int, sceNetCtlAdhocGetResult, int eventType, int *errorCode) {
         return RET_ERROR(SCE_NET_CTL_ERROR_INVALID_ADDR);
     }
 
-    *errorCode = SCE_NET_CTL_ERROR_FLIGHT_MODE_ENABLED;
+    *errorCode = 0; //SCE_NET_CTL_ERROR_FLIGHT_MODE_ENABLED;
     return STUBBED("errorCode = SCE_NET_CTL_ERROR_FLIGHT_MODE_ENABLED");
 }
 
@@ -181,7 +181,7 @@ EXPORT(int, sceNetCtlAdhocGetState, int *state) {
         return RET_ERROR(SCE_NET_CTL_ERROR_INVALID_ADDR);
     }
 
-    *state = SCE_NETCTL_STATE_DISCONNECTED;
+    *state = SCE_NETCTL_STATE_CONNECTED; //SCE_NETCTL_STATE_DISCONNECTED;
     return STUBBED("state = SCE_NETCTL_STATE_DISCONNECTED");
 }
 
@@ -339,7 +339,7 @@ EXPORT(int, sceNetCtlInetGetResult, int eventType, int *errorCode) {
         return RET_ERROR(SCE_NET_CTL_ERROR_INVALID_ADDR);
     }
 
-    *errorCode = SCE_NET_CTL_ERROR_FLIGHT_MODE_ENABLED;
+    *errorCode = 0; //SCE_NET_CTL_ERROR_FLIGHT_MODE_ENABLED;
     return STUBBED("errorCode = SCE_NET_CTL_ERROR_FLIGHT_MODE_ENABLED");
 }
 
@@ -352,7 +352,7 @@ EXPORT(int, sceNetCtlInetGetState, int *state) {
         return RET_ERROR(SCE_NET_CTL_ERROR_INVALID_ADDR);
     }
 
-    *state = SCE_NETCTL_STATE_DISCONNECTED;
+    *state = SCE_NETCTL_STATE_CONNECTED; //SCE_NETCTL_STATE_DISCONNECTED;
     return STUBBED("state = SCE_NETCTL_STATE_DISCONNECTED");
 }
 
