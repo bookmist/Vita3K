@@ -238,6 +238,7 @@ bool create(SDL_Window *window, std::unique_ptr<State> &state) {
     LOG_INFO("GL_SHADING_LANGUAGE_VERSION = {}", version);
 
     if (choosen_minor_version >= 3) {
+        glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(debug_output_callback), nullptr);
     }
 
