@@ -266,6 +266,28 @@ void Voice::transition(const VoiceState new_state) {
     }
 }
 
+void Voice::invoke_callback(KernelState &kernel, const MemState &mem, const SceUID thread_id, const std::uint32_t reason1,
+    const std::uint32_t reason2, Address reason_ptr) {
+    if (!callback) {
+        return;
+    }
+
+    const ThreadStatePtr thread = lock_and_find(thread_id, kernel.threads, kernel.mutex);
+    const Address callback_info_addr = stack_alloc(*thread->cpu, sizeof(CallbackInfo));
+
+    CallbackInfo *info = Ptr<CallbackInfo>(callback_info_addr).get(mem);
+    info->rack_handle = Ptr<void>(rack, mem);
+    info->voice_handle = Ptr<void>(this, mem);
+    info->module_id = 0; //rack->modules[index]->module_id();
+    info->callback_reason = reason1;
+    info->callback_reason_2 = reason2;
+    info->callback_ptr = Ptr<void>(reason_ptr);
+    info->userdata = user_data;
+
+    kernel.run_guest_function(callback.address(), { callback_info_addr });
+    stack_free(*thread->cpu, sizeof(CallbackInfo));
+}
+
 std::uint32_t System::get_required_memspace_size(SystemInitParameters *parameters) {
     return sizeof(System);
 }

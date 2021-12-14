@@ -221,6 +221,9 @@ struct Voice {
     std::unique_ptr<std::mutex> voice_lock;
     VoiceProduct products[MAX_VOICE_OUTPUT];
 
+    Ptr<ModuleCallback> callback;
+    Ptr<void> user_data;
+
     void init(Rack *mama);
 
     ModuleData *module_storage(const std::uint32_t index);
@@ -229,6 +232,9 @@ struct Voice {
     Ptr<Patch> patch(const MemState &mem, const std::int32_t index, std::int32_t subindex, std::int32_t dest_index, Voice *dest);
 
     void transition(const VoiceState new_state);
+
+    void invoke_callback(KernelState &kernel, const MemState &mem, const SceUID thread_id, const std::uint32_t reason1,
+        const std::uint32_t reason2, Address reason_ptr);
 };
 
 struct System;
