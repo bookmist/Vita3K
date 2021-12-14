@@ -182,8 +182,9 @@ static void debug_output_callback(GLenum source, GLenum type, GLuint id, GLenum 
         severity_fmt = "UNKSERV";
         break;
     }
-
-    LOG_DEBUG("[OPENGL - {} - {}] {}", type_str, severity_fmt, message);
+    if (type != GL_DEBUG_TYPE_PERFORMANCE) {
+        LOG_DEBUG("[OPENGL - {} - {}] {}", type_str, severity_fmt, message);
+    }
 }
 
 bool create(SDL_Window *window, std::unique_ptr<State> &state, const char *base_path, const bool hashless_texture_cache) {
@@ -231,6 +232,7 @@ bool create(SDL_Window *window, std::unique_ptr<State> &state, const char *base_
 
 #ifndef NDEBUG
     if (choosen_minor_version >= 3) {
+        glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(debug_output_callback), nullptr);
     }
 #endif
