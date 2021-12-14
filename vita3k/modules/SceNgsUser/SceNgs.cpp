@@ -700,8 +700,17 @@ EXPORT(int, sceNgsVoiceResume, SceNgsVoiceHandle handle) {
     return SCE_NGS_OK;
 }
 
-EXPORT(int, sceNgsVoiceSetFinishedCallback) {
-    return UNIMPLEMENTED();
+EXPORT(int, sceNgsVoiceSetFinishedCallback, SceNgsVoiceHandle voice_handle, Ptr<ngs::ModuleCallback> callback, Ptr<void> user_data) {
+    if (host.cfg.current_config.disable_ngs) {
+        return 0;
+    }
+
+    ngs::Voice *voice = voice_handle.get(host.mem);
+
+    voice->callback = callback;
+    voice->user_data = user_data;
+
+    return 0;
 }
 
 EXPORT(SceInt32, sceNgsVoiceSetModuleCallback, SceNgsVoiceHandle voice_handle, const SceUInt32 module, Ptr<ngs::ModuleCallback> callback, Ptr<void> user_data) {

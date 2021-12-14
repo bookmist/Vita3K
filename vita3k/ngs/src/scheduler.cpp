@@ -149,9 +149,10 @@ void VoiceScheduler::update(KernelState &kern, const MemState &mem, const SceUID
                 finished |= voice->rack->modules[i]->process(kern, mem, thread_id, voice->datas[i]);
             }
         }
-        if (is_key_off || finished)
+        if (is_key_off || finished) {
             stop(voice);
-
+            voice->invoke_callback(kern, mem, thread_id, 0, 0, 0);
+        }
         for (std::size_t i = 0; i < voice->rack->vdef->output_count(); i++) {
             if (voice->products[i].data)
                 deliver_data(mem, voice, static_cast<std::uint8_t>(i), voice->products[i]);
