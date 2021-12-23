@@ -2291,7 +2291,8 @@ EXPORT(bool, sceGxmProgramParameterIsRegFormat, const SceGxmProgram *program, co
     if (parameter->category != SceGxmParameterCategory::SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE) {
         return false;
     }
-
+    //bool result = (program->vertex_varyings()->untyped_pa_regs[parameter->resource_index >> 5] >> (parameter->resource_index & 0x1f) & 1) != 0;
+    //bool result = (program->vertex_varyings()->untyped_pa_regs[parameter->resource_index >> 5] & (1 << (parameter->resource_index & 0x1f))) != 0;
     return UNIMPLEMENTED();
 }
 
