@@ -468,7 +468,7 @@ void DynarmicCPU::log_error_details(UINT code) {
         LOG_ERROR("r{: <2}: 0x{:0>8x}   r{: <2}: 0x{:0>8x}", a, registers[a], a + 6, registers[a + 6]);
     }
     LOG_ERROR("r12: 0x{:0>8x}", registers[12]);
-    LOG_ERROR("Executing: {}", disassemble(*this->parent, pc));
+    //LOG_ERROR("Executing: {}", disassemble(*this->parent, pc));
 }
 
 // TODO: proper abstraction

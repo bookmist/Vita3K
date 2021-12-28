@@ -155,9 +155,11 @@ EXPORT(int, sceKernelFreeMemBlock, SceUID uid) {
 
     const Blocks::const_iterator block = state->blocks.find(uid);
     // TODO, is really that ?
-    if (block == state->blocks.end())
-        return RET_ERROR(SCE_KERNEL_ERROR_ILLEGAL_BLOCK_ID);
-
+    if (block == state->blocks.end()) {
+        LOG_ERROR("Block id not found. Ignored. Block id: {}", log_hex(uid));
+        return SCE_KERNEL_OK;
+        //return RET_ERROR(SCE_KERNEL_ERROR_ILLEGAL_BLOCK_ID);
+    }
     free(host.mem, block->second->mappedBase.address());
     state->blocks.erase(block);
 

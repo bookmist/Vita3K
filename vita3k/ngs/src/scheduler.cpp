@@ -34,10 +34,11 @@ bool VoiceScheduler::deque_voice_impl(Voice *voice) {
 }
 
 bool VoiceScheduler::deque_voice(Voice *voice) {
-    if (updater.has_value() && (updater.value() == std::this_thread::get_id())) {
-        pending_deque.push_back(voice);
-        return true;
-    }
+    if (updater.has_value())
+        if ((updater.value() == std::this_thread::get_id())) {
+            pending_deque.push_back(voice);
+            return true;
+        }
 
     lock.lock();
     const bool result = deque_voice_impl(voice);

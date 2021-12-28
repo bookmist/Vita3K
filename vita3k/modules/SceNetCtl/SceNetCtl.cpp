@@ -312,7 +312,7 @@ EXPORT(int, sceNetCtlInetGetInfo, int code, SceNetCtlInfo *info) {
     }
 
     switch (code) {
-    case SCE_NETCTL_INFO_GET_IP_ADDRESS:
+    case SCE_NETCTL_INFO_GET_IP_ADDRESS: {
         char devname[80];
         gethostname(devname, 80);
         struct hostent *resolved = gethostbyname(devname);
@@ -326,6 +326,78 @@ EXPORT(int, sceNetCtlInetGetInfo, int code, SceNetCtlInfo *info) {
             }
         }
         break;
+    }
+    default:
+        switch (code) {
+        case SCE_NETCTL_INFO_GET_CNF_NAME:
+            STUBBED("code SCE_NETCTL_INFO_GET_CNF_NAME not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_DEVICE:
+            STUBBED("code SCE_NETCTL_INFO_GET_DEVICE not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_ETHER_ADDR:
+            STUBBED("code SCE_NETCTL_INFO_GET_ETHER_ADDR not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_MTU:
+            STUBBED("code SCE_NETCTL_INFO_GET_MTU not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_LINK:
+            STUBBED("code SCE_NETCTL_INFO_GET_LINK not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_BSSID:
+            STUBBED("code SCE_NETCTL_INFO_GET_BSSID not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_SSID:
+            STUBBED("code SCE_NETCTL_INFO_GET_SSID not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_WIFI_SECURITY:
+            STUBBED("code SCE_NETCTL_INFO_GET_WIFI_SECURITY not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_RSSI_DBM:
+            STUBBED("code SCE_NETCTL_INFO_GET_RSSI_DBM not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_RSSI_PERCENTAGE:
+            STUBBED("code SCE_NETCTL_INFO_GET_RSSI_PERCENTAGE not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_CHANNEL:
+            STUBBED("code SCE_NETCTL_INFO_GET_CHANNEL not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_IP_CONFIG:
+            STUBBED("code SCE_NETCTL_INFO_GET_IP_CONFIG not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_DHCP_HOSTNAME:
+            STUBBED("code SCE_NETCTL_INFO_GET_DHCP_HOSTNAME not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_PPPOE_AUTH_NAME:
+            STUBBED("code SCE_NETCTL_INFO_GET_PPPOE_AUTH_NAME not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_IP_ADDRESS:
+            STUBBED("code SCE_NETCTL_INFO_GET_IP_ADDRESS not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_NETMASK:
+            STUBBED("code SCE_NETCTL_INFO_GET_NETMASK not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_DEFAULT_ROUTE:
+            STUBBED("code SCE_NETCTL_INFO_GET_DEFAULT_ROUTE not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_PRIMARY_DNS:
+            STUBBED("code SCE_NETCTL_INFO_GET_PRIMARY_DNS not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_SECONDARY_DNS:
+            STUBBED("code SCE_NETCTL_INFO_GET_SECONDARY_DNS not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_HTTP_PROXY_CONFIG:
+            STUBBED("code SCE_NETCTL_INFO_GET_HTTP_PROXY_CONFIG not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_HTTP_PROXY_SERVER:
+            STUBBED("code SCE_NETCTL_INFO_GET_HTTP_PROXY_SERVER not implemented");
+            break;
+        case SCE_NETCTL_INFO_GET_HTTP_PROXY_PORT:
+            STUBBED("code SCE_NETCTL_INFO_GET_HTTP_PROXY_PORT not implemented");
+            break;
+        default:
+            LOG_ERROR("Unknown code:{}", log_hex(code));
+        }
     }
     return 0;
 }
