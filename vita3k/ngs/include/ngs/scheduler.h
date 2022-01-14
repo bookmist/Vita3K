@@ -39,7 +39,7 @@ struct VoiceScheduler {
     std::vector<Voice *> pending_deque;
 
     std::mutex lock;
-    std::optional<std::thread::id> updater;
+    std::thread::id updater;
 
 protected:
     bool deque_voice(Voice *voice);

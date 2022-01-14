@@ -65,7 +65,7 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
             // Ran out of data, supply new
             // Decode new data and deliver them
             // Let's open our context
-            if ((data.extra_storage.size() < data.parent->rack->system->granularity * 2 * sizeof(float)) && (state->current_buffer != -1)) {
+            if ((data.extra_storage.size() < sizeof(float) * data.parent->rack->system->granularity * 2) && (state->current_buffer != -1)) {
                 decoder->source_channels = params->channels;
                 decoder->source_frequency = params->playback_frequency;
 
@@ -140,6 +140,7 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
     data_ptr += 2 * sizeof(float) * state->decoded_gran_passed;
     data_len -= 2 * sizeof(float) * state->decoded_gran_passed;
     data_len /= sizeof(float);
+    data_len /= 2;
 
     data.parent->products[0].data = data_ptr;
     if (data_len > std::numeric_limits<uint16_t>::max()) {

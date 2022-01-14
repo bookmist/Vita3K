@@ -34,8 +34,8 @@ bool VoiceScheduler::deque_voice_impl(Voice *voice) {
 }
 
 bool VoiceScheduler::deque_voice(Voice *voice) {
-    if (updater.has_value())
-        if ((updater.value() == std::this_thread::get_id())) {
+    //if (updater.has_value())
+        if ((updater == std::this_thread::get_id())) {
             pending_deque.push_back(voice);
             return true;
         }
@@ -167,7 +167,7 @@ void VoiceScheduler::update(KernelState &kern, const MemState &mem, const SceUID
     }
 
     pending_deque.clear();
-    updater.reset();
+    updater = std::thread::id();
 }
 
 std::int32_t VoiceScheduler::get_position(Voice *v) {
