@@ -2904,7 +2904,12 @@ EXPORT(int, sceGxmSetVertexDefaultUniformBuffer, SceGxmContext *context, Ptr<con
 EXPORT(void, sceGxmSetVertexProgram, SceGxmContext *context, Ptr<const SceGxmVertexProgram> vertexProgram) {
     if (!context || !vertexProgram)
         return;
-
+    if (IsBadReadPtr(vertexProgram.get(host.mem), sizeof(SceGxmVertexProgram))) {
+        LOG_ERROR("Wrong vertex program");
+    }
+    if (IsBadReadPtr(vertexProgram.get(host.mem)->program.get(host.mem), sizeof(SceGxmProgram))) {
+        LOG_ERROR("Wrong vertex program -> program");
+    }
     context->state.vertex_program = vertexProgram;
     renderer::set_program(*host.renderer, context->renderer.get(), vertexProgram, false);
 }

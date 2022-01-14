@@ -60,6 +60,14 @@ COMMAND_SET_STATE(program) {
     const bool is_fragment = helper.pop<bool>();
 
     if (is_fragment) {
+        if (IsBadReadPtr(program.get(mem), sizeof(SceGxmFragmentProgram))) {
+            LOG_ERROR("Wrong fragment program Adr:{}, old_adr:{}", program.address(), render_context->record.vertex_program.address());
+            //render_context->record.vertex_program.reset();
+            return;
+        }
+        if (IsBadReadPtr(program.cast<const SceGxmFragmentProgram>().get(mem)->program.get(mem), sizeof(SceGxmProgram))) {
+            LOG_ERROR("Wrong fragment program -> program");
+        }
         render_context->record.fragment_program = program.cast<const SceGxmFragmentProgram>();
         const bool is_maskupdate = render_context->record.fragment_program.get(mem)->is_maskupdate;
         render_context->record.is_maskupdate = is_maskupdate;
@@ -75,6 +83,15 @@ COMMAND_SET_STATE(program) {
             break;
         }
     } else {
+        if (IsBadReadPtr(program.get(mem), sizeof(SceGxmVertexProgram))) {
+            LOG_ERROR("Wrong vertex program Adr:{}, old_adr:{}", program.address(), render_context->record.vertex_program.address());
+            //render_context->record.vertex_program.reset();
+            return;
+        }
+        if (IsBadReadPtr(program.cast<const SceGxmVertexProgram>().get(mem)->program.get(mem), sizeof(SceGxmProgram))) {
+            LOG_ERROR("Wrong vertex program -> program");
+        }
+
         render_context->record.vertex_program = program.cast<const SceGxmVertexProgram>();
 
         // Try to bind and layout vertex attributes

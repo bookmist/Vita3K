@@ -1377,9 +1377,9 @@ struct GxmContextState {
 
 struct SceGxmFragmentProgram {
     size_t reference_count = 1;
-    Ptr<const SceGxmProgram> program;
-    bool is_maskupdate;
-    std::unique_ptr<renderer::FragmentProgram> renderer_data;
+    Ptr<const SceGxmProgram> program{};
+    bool is_maskupdate = false;
+    std::unique_ptr<renderer::FragmentProgram> renderer_data{};
 };
 
 struct SceGxmNotification {
@@ -1691,10 +1691,10 @@ static_assert(sizeof(SceGxmVertexAttribute) == 8, "Structure has been incorrectl
 
 struct SceGxmVertexProgram {
     size_t reference_count = 1;
-    Ptr<const SceGxmProgram> program;
-    std::vector<SceGxmVertexStream> streams;
-    std::vector<SceGxmVertexAttribute> attributes;
-    std::unique_ptr<renderer::VertexProgram> renderer_data;
+    Ptr<const SceGxmProgram> program{};
+    std::vector<SceGxmVertexStream> streams{};
+    std::vector<SceGxmVertexAttribute> attributes{};
+    std::unique_ptr<renderer::VertexProgram> renderer_data{};
 };
 
 namespace gxp {
