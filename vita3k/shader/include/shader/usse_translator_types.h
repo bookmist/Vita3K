@@ -21,6 +21,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include "usse_types.h"
 
 namespace spv {
 class Builder;
@@ -35,6 +36,18 @@ struct SpirvUniformBufferInfo {
     std::uint32_t base;
     std::uint32_t size;
     std::uint32_t index_in_container;
+};
+
+struct BankTypeUseInfo {
+    bool use_index_access;
+    std::array<std::set<shader::usse::DataType>, 32 * 4> used_types{};
+};
+
+struct BanksTypeUseInfo {
+    BankTypeUseInfo ins;
+    BankTypeUseInfo uniforms;
+    BankTypeUseInfo temps;
+    BankTypeUseInfo outs;
 };
 
 struct SpirvShaderParameters {
@@ -72,6 +85,7 @@ struct SpirvShaderParameters {
     std::map<std::uint32_t, SpirvUniformBufferInfo> buffers;
 
     spv::Id buffer_container;
+    BanksTypeUseInfo type_use;
 };
 
 using Coord = std::pair<spv::Id, int>;

@@ -65,7 +65,7 @@ public:
 
     USSETranslatorVisitor() = delete;
     explicit USSETranslatorVisitor(spv::Builder &_b, USSERecompiler &_recompiler, const SceGxmProgram &program, const FeatureState &features,
-        utils::SpirvUtilFunctions &utils, const uint64_t &_instr, const SpirvShaderParameters &spirv_params, const NonDependentTextureQueryCallInfos &queries,
+        utils::SpirvUtilFunctions &utils, const uint64_t &_instr, SpirvShaderParameters &spirv_params, const NonDependentTextureQueryCallInfos &queries,
         bool is_secondary_program = false)
         : m_util_funcs(utils)
         , m_second_program(is_secondary_program)
@@ -779,7 +779,7 @@ private:
     const uint64_t &m_instr;
 
     // SPIR-V IDs
-    const SpirvShaderParameters &m_spirv_params;
+    SpirvShaderParameters &m_spirv_params;
 
     USSERecompiler &m_recompiler;
 
@@ -804,7 +804,7 @@ struct USSERecompiler final {
     USSEBlockNode tree_block_node;
 
     explicit USSERecompiler(spv::Builder &b, const SceGxmProgram &program, const FeatureState &features,
-        const SpirvShaderParameters &parameters, utils::SpirvUtilFunctions &utils, spv::Function *end_hook_func, const NonDependentTextureQueryCallInfos &queries);
+        SpirvShaderParameters &parameters, utils::SpirvUtilFunctions &utils, spv::Function *end_hook_func, const NonDependentTextureQueryCallInfos &queries);
 
     void reset(const std::uint64_t *inst, const std::size_t count);
 

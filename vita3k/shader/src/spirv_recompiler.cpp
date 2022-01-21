@@ -1029,13 +1029,13 @@ static SpirvShaderParameters create_parameters(spv::Builder &b, const SceGxmProg
     return spv_params;
 }
 
-static void generate_shader_body(spv::Builder &b, const SpirvShaderParameters &parameters, const SceGxmProgram &program,
+static void generate_shader_body(spv::Builder &b, SpirvShaderParameters &parameters, const SceGxmProgram &program,
     const FeatureState &features, utils::SpirvUtilFunctions &utils, spv::Function *begin_hook_func, spv::Function *end_hook_func, const NonDependentTextureQueryCallInfos &texture_queries) {
     // Do texture queries
     usse::convert_gxp_usse_to_spirv(b, program, features, parameters, utils, begin_hook_func, end_hook_func, texture_queries);
 }
 
-static spv::Function *make_frag_finalize_function(spv::Builder &b, const SpirvShaderParameters &parameters,
+static spv::Function *make_frag_finalize_function(spv::Builder &b, SpirvShaderParameters &parameters,
     const SceGxmProgram &program, utils::SpirvUtilFunctions &utils, const FeatureState &features, TranslationState &translate_state) {
     std::vector<std::vector<spv::Decoration>> decorations;
 
@@ -1104,7 +1104,7 @@ static spv::Function *make_frag_finalize_function(spv::Builder &b, const SpirvSh
     return frag_fin_func;
 }
 
-static spv::Function *make_vert_finalize_function(spv::Builder &b, const SpirvShaderParameters &parameters,
+static spv::Function *make_vert_finalize_function(spv::Builder &b, SpirvShaderParameters &parameters,
     const SceGxmProgram &program, utils::SpirvUtilFunctions &utils, const FeatureState &features, TranslationState &translation_state) {
     std::vector<std::vector<spv::Decoration>> decorations;
 
@@ -1300,6 +1300,59 @@ static void generate_update_mask_body(spv::Builder &b, utils::SpirvUtilFunctions
     b.createStore(mask_v, out);
 }
 
+std::string used_type_to_string(const std::set<shader::usse::DataType> &used_type) {
+    std::string types_str = "";
+
+    const auto append_type = [&used_type, &types_str](DataType type, const char *type_str) {
+        auto result = types_str;
+        if (used_type.find(type) != used_type.end()) {
+            if (!result.empty()) {
+                result = result + ",";
+            }
+            result = result + type_str;
+        }
+        return result;
+    };
+    types_str = append_type(DataType::INT8, "INT8");
+    types_str = append_type(DataType::INT16, "INT16");
+    types_str = append_type(DataType::INT32, "INT32");
+    types_str = append_type(DataType::C10, "C10");
+    types_str = append_type(DataType::F16, "F16");
+    types_str = append_type(DataType::F32, "F32");
+    types_str = append_type(DataType::UINT8, "UINT8");
+    types_str = append_type(DataType::UINT16, "UINT16");
+    types_str = append_type(DataType::UINT32, "UINT32");
+    types_str = append_type(DataType::O8, "O8");
+    types_str = append_type(DataType::TOTAL_TYPE, "TOTAL_TYPE");
+    types_str = append_type(DataType::UNK, "UNK");
+    return types_str;
+}
+
+void save_types_info(const char *file_name, const BanksTypeUseInfo &type_info) {
+    std::ofstream reg_types_dump(file_name, std::ios::trunc);
+    reg_types_dump << file_name << "\n";
+    const auto dump_register = [&reg_types_dump](const BankTypeUseInfo &reg, const char *reg_name) {
+        for (auto i = 0; i < 32; ++i) {
+            if (reg.use_index_access || reg.used_types[i * 4].size() > 0 || reg.used_types[i * 4 + 1].size() > 0 || reg.used_types[i * 4 + 2].size() > 0 || reg.used_types[i * 4 + 3].size() > 0) {
+                reg_types_dump << reg_name << "[" << i << "]";
+                if (reg.use_index_access) {
+                    reg_types_dump << "index access used";
+                } else {
+                    for (auto j = 0; j < 4; j++) {
+                        reg_types_dump << "(" << used_type_to_string(reg.used_types[i * 4 + j]) << "),";
+                    }
+                }
+                reg_types_dump << "\n";
+            }
+        }
+    };
+    dump_register(type_info.ins, "pa");
+    dump_register(type_info.uniforms, "sa");
+    dump_register(type_info.temps, "r");
+    dump_register(type_info.outs, "out");
+    reg_types_dump.close();
+}
+
 static SpirvCode convert_gxp_to_spirv_impl(const SceGxmProgram &program, const std::string &shader_hash, const FeatureState &features, TranslationState &translation_state, const std::vector<SceGxmVertexAttribute> *hint_attributes, bool force_shader_debug, std::function<bool(const std::string &ext, const std::string &dump)> dumper) {
     SpirvCode spirv;
 
@@ -1423,6 +1476,7 @@ static SpirvCode convert_gxp_to_spirv_impl(const SceGxmProgram &program, const s
         if (dumper) {
             dumper("spv", spirv_dump);
         }
+        save_types_info((shader_hash + ".txt").c_str(), parameters.type_use);
     }
 
     if (DUMP_SPIRV_BINARIES) {
