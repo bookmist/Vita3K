@@ -554,6 +554,34 @@ spv::Id shader::usse::utils::unpack_one(spv::Builder &b, SpirvUtilFunctions &uti
     return spv::NoResult;
 }
 
+BankTypeUseInfo *get_type_info_by_bank(BanksTypeUseInfo &banks, RegisterBank bank) {
+    switch (bank) {
+    case RegisterBank::TEMP: {
+        return &banks.temps;
+        break;
+    }
+
+    case RegisterBank::OUTPUT: {
+        return &banks.outs;
+        break;
+    }
+    case RegisterBank::PRIMATTR: {
+        return &banks.ins;
+        break;
+    }
+    case RegisterBank::SECATTR: {
+        return &banks.uniforms;
+        break;
+    }
+    case RegisterBank::FPINTERNAL: {
+        return nullptr;
+        break;
+    }
+    }
+    LOG_ERROR("Unknown bank");
+    return nullptr;
+}
+
 spv::Id shader::usse::utils::pack_one(spv::Builder &b, SpirvUtilFunctions &utils, const FeatureState &features, spv::Id vec, const DataType source_type) {
     switch (source_type) {
     case DataType::INT8:
@@ -638,7 +666,7 @@ static spv::Id apply_modifiers(spv::Builder &b, const shader::usse::RegisterFlag
     return result;
 }
 
-spv::Id shader::usse::utils::load(spv::Builder &b, const SpirvShaderParameters &params, SpirvUtilFunctions &utils, const FeatureState &features, Operand op, const Imm4 dest_mask, int shift_offset) {
+spv::Id shader::usse::utils::load(spv::Builder &b, SpirvShaderParameters &params, SpirvUtilFunctions &utils, const FeatureState &features, Operand op, const Imm4 dest_mask, int shift_offset) {
     spv::Id type_f32 = b.makeFloatType(32);
 
     if (op.bank == RegisterBank::FPCONSTANT) {
@@ -860,6 +888,8 @@ spv::Id shader::usse::utils::load(spv::Builder &b, const SpirvShaderParameters &
         }
         }
 
+        get_type_info_by_bank(params.type_use, op.bank)->use_index_access = true;
+
         spv::Id type_i32 = b.makeIntType(32);
 
         // Calculate the "at" offset.
@@ -981,6 +1011,16 @@ spv::Id shader::usse::utils::load(spv::Builder &b, const SpirvShaderParameters &
         return first_pass;
     }
 
+    auto type_info = get_type_info_by_bank(params.type_use, op.bank);
+    if (type_info) {
+        for (auto i = 0; i < 4; i++) {
+            if ((extract_mask & (1 << i)) && ((int)extract_swizz[i] < (int)SwizzleChannel::C_0)) {
+                int access_offset = op.num + shift_offset + (int)extract_swizz[i] - (int)SwizzleChannel::C_X;
+                type_info->used_types[access_offset].insert(op.type);
+            }
+        }
+    }
+
     return apply_modifiers(b, op.flags, first_pass);
 }
 
@@ -1021,7 +1061,7 @@ spv::Id shader::usse::utils::unpack(spv::Builder &b, SpirvUtilFunctions &utils, 
         swizz, offset, dest_mask);
 }
 
-void shader::usse::utils::store(spv::Builder &b, const SpirvShaderParameters &params, SpirvUtilFunctions &utils, const FeatureState &features, Operand dest,
+void shader::usse::utils::store(spv::Builder &b, SpirvShaderParameters &params, SpirvUtilFunctions &utils, const FeatureState &features, Operand dest,
     spv::Id source, std::uint8_t dest_mask, int off) {
     if (source == spv::NoResult) {
         LOG_WARN("Source invalid");
@@ -1170,6 +1210,7 @@ void shader::usse::utils::store(spv::Builder &b, const SpirvShaderParameters &pa
     }
 
     // Now we do store!
+    auto type_info = get_type_info_by_bank(params.type_use, dest.bank);
     if (total_comp_source == 1) {
         insert_offset += (int)(nearest_swizz_on / (4 / size_comp));
         elem = b.createOp(spv::OpAccessChain, comp_type, { bank_base, b.makeIntConstant(insert_offset >> 2) });
@@ -1183,6 +1224,12 @@ void shader::usse::utils::store(spv::Builder &b, const SpirvShaderParameters &pa
         // Store directly
         elem = b.createOp(spv::OpAccessChain, comp_type, { bank_base, b.makeIntConstant(insert_offset >> 2) });
         b.createStore(source, elem);
+        if (type_info) {
+            for (auto i = 0; i < 4; i++) {
+                type_info->used_types[insert_offset + i].insert(dest.type);
+            }
+        }
+
         return;
     }
 
@@ -1238,6 +1285,14 @@ void shader::usse::utils::store(spv::Builder &b, const SpirvShaderParameters &pa
 
         spv::Id shuffled = b.createOp(spv::OpVectorShuffle, bank_base_elem_type, ops);
         b.createStore(shuffled, elem);
+    }
+
+    if (type_info) {
+        for (auto i = 0; i < total_comp_source; i++) {
+            if (dest_mask & (1 << i)) {
+                type_info->used_types[insert_offset + i].insert(dest.type);
+            }
+        }
     }
 }
 
