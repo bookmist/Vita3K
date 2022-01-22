@@ -1211,9 +1211,12 @@ void shader::usse::utils::store(spv::Builder &b, SpirvShaderParameters &params, 
     if (total_comp_source == 1) {
         insert_offset += (int)(nearest_swizz_on / (4 / size_comp));
         elem = b.createOp(spv::OpAccessChain, comp_type, { bank_base, b.makeIntConstant(insert_offset >> 2) });
-        spv::Id inserted = b.createOp(spv::OpVectorInsertDynamic, bank_base_elem_type, { b.createLoad(elem, spv::NoPrecision), source, b.makeIntConstant(insert_offset % 4) });
+        spv::Id elem_component = b.createOp(spv::OpVectorExtractDynamic, bank_base_elem_type, { elem, b.makeIntConstant(insert_offset % 4) });
 
-        b.createStore(inserted, elem);
+        b.createStore(source, elem_component);
+        if (type_info) {
+            type_info->used_types[insert_offset].insert(dest.type);
+        }
         return;
     }
 
