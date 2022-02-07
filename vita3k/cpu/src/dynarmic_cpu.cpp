@@ -125,7 +125,7 @@ public:
     template <typename T>
     T MemoryRead(Dynarmic::A32::VAddr addr) {
         Ptr<T> ptr{ addr };
-        if (!ptr || !ptr.valid(*parent->mem) || (ptr.address() < parent->mem->page_size)) {
+        if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
             LOG_WARN("Invalid read of uint{}_t at address: 0x{:x}", sizeof(T) * 8, addr);
             cpu->log_error_details(0);
             return 0;
@@ -157,7 +157,7 @@ public:
     template <typename T>
     void MemoryWrite(Dynarmic::A32::VAddr addr, T value) {
         Ptr<T> ptr{ addr };
-        if (!ptr || !ptr.valid(*parent->mem) || IsBadWritePtr(ptr.get(*parent->mem), sizeof(T))) {
+        if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
             LOG_WARN("Invalid write of uint{}_t at addr: 0x{:x}, val = 0x{:x}", sizeof(T) * 8, addr, value);
             cpu->log_error_details(1);
             return;
