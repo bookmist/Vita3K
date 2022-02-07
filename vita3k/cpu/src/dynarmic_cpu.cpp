@@ -452,7 +452,7 @@ void DynarmicCPU::invalidate_jit_cache(Address start, size_t length) {
     jit->InvalidateCacheRange(start, length);
 }
 
-void DynarmicCPU::log_error_details(UINT code) {
+void DynarmicCPU::log_error_details(uint32_t code) {
     // I don't especially want the time logged for every line, but I also want it to print to the log file...
     LOG_ERROR("Dynarmic error {}. Thread: {}", log_hex(code), parent->thread_id);
 

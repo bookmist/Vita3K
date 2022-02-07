@@ -101,5 +101,5 @@ public:
 
     std::size_t processor_id() const override;
     void invalidate_jit_cache(Address start, size_t length) override;
-    void log_error_details(UINT code);
+    void log_error_details(uint32_t code);
 };
