@@ -38,7 +38,7 @@
 #include <unistd.h>
 #endif
 
-#define LOG_GDB_LEVEL 0
+#define LOG_GDB_LEVEL 2
 
 #if LOG_GDB_LEVEL >= 1
 #define LOG_GDB LOG_INFO
