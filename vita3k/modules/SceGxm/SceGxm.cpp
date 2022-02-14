@@ -3478,12 +3478,12 @@ EXPORT(uint32_t, sceGxmTextureGetStride, const SceGxmTexture *texture) {
 
 EXPORT(int, sceGxmTextureGetType, const SceGxmTexture *texture) {
     assert(texture);
-    return (texture->type << 29);
+    return texture ? (texture->type << 29) : 0;
 }
 
 EXPORT(int, sceGxmTextureGetUAddrMode, const SceGxmTexture *texture) {
     assert(texture);
-    return texture->uaddr_mode;
+    return texture ? texture->uaddr_mode : 0;
 }
 
 EXPORT(int, sceGxmTextureGetUAddrModeSafe, const SceGxmTexture *texture) {

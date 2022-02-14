@@ -319,14 +319,18 @@ ThreadState::ThreadState(SceUID id, MemState &mem)
 }
 
 void ThreadState::update_status(ThreadStatus status, std::optional<ThreadStatus> expected) {
-    if (expected)
-        assert(expected.value() == this->status);
+    if (expected) {
+        //assert(expected.value() == this->status);
+        LOG_ERROR_IF(expected.value() != this->status, "Invalid thread id:{} status transition. Thread status expected {}, but in fact {}", this->id, expected.value(), this->status);
+    }
 
-    this->status = status;
-    status_cond.notify_all();
+    if (this->status != status) {
+        this->status = status;
+        status_cond.notify_all();
 
-    if (status == ThreadStatus::dormant) {
-        raise_waiting_threads();
+        if (status == ThreadStatus::dormant) {
+            raise_waiting_threads();
+        }
     }
 }
 
