@@ -407,9 +407,9 @@ typedef struct SceNetCheckDialogResult {
 } SceNetCheckDialogResult;
 
 EXPORT(int, sceNetCheckDialogGetResult, SceNetCheckDialogResult *result) {
-    STUBBED("No PSN (psnModeSucceeded = false)");
+    STUBBED("No PSN (psnModeSucceeded = true)");
     result->result = SCE_COMMON_DIALOG_RESULT_OK;
-    result->psnModeSucceeded = false;
+    result->psnModeSucceeded = true;
     return 0;
 }
 

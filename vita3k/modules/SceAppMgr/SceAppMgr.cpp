@@ -399,12 +399,15 @@ EXPORT(int, _sceAppMgrPspSaveDataRootMount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrReceiveEvent) {
+EXPORT(int, _sceAppMgrReceiveEvent, int * event_id) {
+    *event_id = 0x20000004;
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrReceiveEventNum) {
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrReceiveEventNum, int* event_num) {
+    *event_num = 1;
+    return 0;
+    //return UNIMPLEMENTED();
 }
 
 EXPORT(int, _sceAppMgrReceiveNotificationRequestForShell) {
