@@ -92,6 +92,8 @@ struct ModuleData {
 
     enum Flags {
         PARAMS_LOCK = 1 << 0,
+        MODULE_BYPASS = 1 << 1,
+        MODULE_RESET = 1 << 2,
     };
 
     std::uint8_t flags;
@@ -125,6 +127,8 @@ struct ModuleData {
 
     BufferParamsInfo *lock_params(const MemState &mem);
     bool unlock_params();
+    bool get_bypass();
+    void set_bypass(bool bypass);
 };
 
 struct Module {
@@ -146,6 +150,7 @@ struct VoiceDefinition {
     virtual void new_modules(std::vector<std::unique_ptr<Module>> &mods) = 0;
     virtual std::size_t get_total_buffer_parameter_size() const = 0;
     virtual std::uint32_t output_count() const = 0;
+    virtual const char *get_name() const { return "unknown"; };
 };
 
 struct SystemInitParameters {

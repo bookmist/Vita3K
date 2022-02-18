@@ -145,7 +145,7 @@ void VoiceScheduler::update(KernelState &kern, const MemState &mem, const SceUID
         const bool is_key_off = voice->state == ngs::VOICE_STATE_KEY_OFF;
         bool finished = false;
         for (std::size_t i = 0; i < voice->rack->modules.size(); i++) {
-            if (voice->rack->modules[i]) {
+            if (voice->rack->modules[i] && !voice->datas[i].get_bypass()) {
                 finished |= voice->rack->modules[i]->process(kern, mem, thread_id, voice->datas[i]);
             }
         }

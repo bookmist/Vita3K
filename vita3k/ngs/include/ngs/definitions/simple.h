@@ -24,11 +24,13 @@ struct PlayerVoiceDefinition : public ngs::VoiceDefinition {
     void new_modules(std::vector<std::unique_ptr<ngs::Module>> &mods) override;
     std::size_t get_total_buffer_parameter_size() const override;
     std::uint32_t output_count() const override { return 4; }
+    virtual const char *get_name() const { return "PlayerVoiceDefinition"; };
 };
 
 struct Atrac9VoiceDefinition : public ngs::VoiceDefinition {
     void new_modules(std::vector<std::unique_ptr<ngs::Module>> &mods) override;
     std::size_t get_total_buffer_parameter_size() const override;
     std::uint32_t output_count() const override { return 4; }
+    virtual const char *get_name() const { return "Atrac9VoiceDefinition"; };
 };
 } // namespace ngs::simple

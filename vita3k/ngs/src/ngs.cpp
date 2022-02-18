@@ -126,6 +126,17 @@ bool ModuleData::unlock_params() {
     return false;
 }
 
+bool ModuleData::get_bypass() {
+    return flags & MODULE_BYPASS;
+}
+void ModuleData::set_bypass(bool bypass) {
+    if (bypass) {
+        flags |= MODULE_BYPASS;
+    } else {
+        flags &= ~MODULE_BYPASS;
+    }
+}
+
 void ModuleData::invoke_callback(KernelState &kernel, const MemState &mem, const SceUID thread_id, const std::uint32_t reason1,
     const std::uint32_t reason2, Address reason_ptr) {
     if (!callback) {

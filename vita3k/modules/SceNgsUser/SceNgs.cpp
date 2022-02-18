@@ -99,17 +99,20 @@ EXPORT(int, sceNgsPatchCreateRouting, ngs::PatchSetupInfo *patch_info, SceNgsPat
     if (host.cfg.current_config.disable_ngs) {
         return 0;
     }
-    assert(handle);
+    if (!patch_info || !handle) {
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
 
     // Make the scheduler order this right based on dependencies request
     ngs::Voice *source = patch_info->source.get(host.mem);
 
-    if (!source) {
-        return RET_ERROR(SCE_NGS_ERROR);
+    if (!source || !patch_info->dest) {
+        return RET_ERROR(0x804a000c);
     }
 
-    LOG_TRACE("Patching 0x{:X}:{}:{} to 0x{:X}:{}", patch_info->source.address(), patch_info->source_output_index,
-        patch_info->source_output_index, patch_info->dest.address(), patch_info->dest_input_index);
+    LOG_TRACE("Patching 0x{:X}:{}:{} {} to 0x{:X}:{} {}", patch_info->source.address(), patch_info->source_output_index,
+        patch_info->source_output_index, patch_info->source.get(host.mem)->rack->vdef->get_name(), patch_info->dest.address(), patch_info->dest_input_index,
+        patch_info->dest.get(host.mem)->rack->vdef->get_name());
 
     *handle = source->rack->system->voice_scheduler.patch(host.mem, patch_info);
 
@@ -280,8 +283,23 @@ EXPORT(SceUInt32, sceNgsSystemUpdate, SceNgsSynthSystemHandle handle) {
     return SCE_NGS_OK;
 }
 
-EXPORT(int, sceNgsVoiceBypassModule) {
-    return UNIMPLEMENTED();
+EXPORT(SceInt32, sceNgsVoiceBypassModule, SceNgsVoiceHandle hVoiceHandle, const SceUInt32 uModule, const SceUInt32 uBypassFlag) {
+    if (host.cfg.current_config.disable_ngs)
+        return SCE_NGS_OK;
+
+    ngs::Voice *voice = hVoiceHandle.get(host.mem);
+    if (!voice) {
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
+
+    const std::lock_guard<std::mutex> guard(*voice->voice_lock);
+    ngs::ModuleData *voice_module_data = voice->module_storage(uModule);
+    if (!voice_module_data) {
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
+    voice_module_data->set_bypass(uBypassFlag);
+    return SCE_NGS_OK;
+    //return UNIMPLEMENTED();
 }
 
 EXPORT(Ptr<ngs::VoiceDefinition>, sceNgsVoiceDefGetAtrac9Voice) {
@@ -480,8 +498,35 @@ EXPORT(SceInt32, sceNgsVoiceGetInfo, SceNgsVoiceHandle handle, SceNgsVoiceInfo *
     return SCE_NGS_OK;
 }
 
-EXPORT(int, sceNgsVoiceGetModuleBypass) {
-    return UNIMPLEMENTED();
+EXPORT(SceInt32, sceNgsVoiceGetModuleBypass, SceNgsVoiceHandle hVoiceHandle,
+    const SceUInt32 uModule,
+    SceUInt32 *puBypassFlag) {
+    if (host.cfg.current_config.disable_ngs)
+        return SCE_NGS_OK;
+
+    ngs::Voice *voice = hVoiceHandle.get(host.mem);
+    if (!voice) {
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
+
+    const std::lock_guard<std::mutex> guard(*voice->voice_lock);
+    ngs::ModuleData *voice_module_data = voice->module_storage(uModule);
+    if (!voice_module_data) {
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
+    /*
+    #define SCE_NGS_MODULE_FLAG_BYPASSED     (2)
+    #define SCE_NGS_MODULE_FLAG_NOT_BYPASSED (0)    
+    */
+    if (voice_module_data->get_bypass()) {
+        *puBypassFlag = 2;
+    } else {
+        *puBypassFlag = 0;
+    }
+
+    return SCE_NGS_OK;
+
+    //return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceNgsVoiceGetModuleType) {
@@ -536,7 +581,57 @@ EXPORT(SceInt32, sceNgsVoiceGetStateData, SceNgsVoiceHandle voice_handle, const 
     return SCE_NGS_OK;
 }
 
-EXPORT(int, sceNgsVoiceInit) {
+typedef struct {
+    SceInt32 nNameOffset;
+    SceUInt32 uNameLength;
+    SceInt32 nPresetDataOffset;
+    SceUInt32 uSizePresetData;
+    SceInt32 nBypassFlagsOffset;
+    SceUInt32 uNumBypassFlags;
+} SceNgsVoicePreset;
+
+EXPORT(int, sceNgsVoiceInit, SceNgsVoiceHandle hVoiceHandle, const SceNgsVoicePreset *pPreset, const SceUInt32 uInitFlags) {
+    if (host.cfg.current_config.disable_ngs) {
+        return 0;
+    }
+
+    LOG_TRACE("hVoiceHandle {}", log_hex(hVoiceHandle.address()));
+    if (pPreset) {
+        LOG_TRACE("nNameOffset {}, uNameLength {}", pPreset->nNameOffset, pPreset->uNameLength);
+        LOG_TRACE("nPresetDataOffset {}, uSizePresetData {}", pPreset->nPresetDataOffset, pPreset->uSizePresetData);
+        LOG_TRACE("nBypassFlagsOffset {}, uNumBypassFlags {}", pPreset->nBypassFlagsOffset, pPreset->uNumBypassFlags);
+    }
+    LOG_TRACE_IF(uInitFlags == 0, "uInitFlags = SCE_NGS_VOICE_INIT_BASE");
+    LOG_TRACE_IF(uInitFlags & 1, "uInitFlags = SCE_NGS_VOICE_INIT_ROUTING");
+    LOG_TRACE_IF(uInitFlags & 2, "uInitFlags = SCE_NGS_VOICE_INIT_PRESET");
+    LOG_TRACE_IF(uInitFlags & 4, "uInitFlags = SCE_NGS_VOICE_INIT_CALLBACKS");
+    LOG_TRACE_IF(uInitFlags == 7, "uInitFlags = SCE_NGS_VOICE_INIT_ALL");
+    ngs::Voice *voice = hVoiceHandle.get(host.mem);
+    if (uInitFlags & 1) {
+        for (int i = voice->patches.size() - 1; i >= 0; i--) {
+            for (int j = voice->patches[i].size() - 1; j >= 0; j--) {
+                voice->remove_patch(host.mem, voice->patches[i][j]);
+            }
+        }
+    }
+    for (int i = 0; i < voice->datas.size(); i++) {
+        voice->datas[i].flags |= (1 << 2); //MODULE_RESET
+    }
+    if (uInitFlags & (4)) {
+        for (int i = 0; i < voice->datas.size() - 1; i++) {
+            voice->datas[i].callback = Ptr<ngs::ModuleCallback>();
+            voice->datas[i].user_data = Ptr<void>();
+        }
+        voice->callback = Ptr<ngs::ModuleCallback>();
+        voice->user_data = Ptr<void>();
+    }
+
+    //#define SCE_NGS_VOICE_INIT_BASE             (0)		/* Initialize Basic, resets play and pause flags. */
+    //#define SCE_NGS_VOICE_INIT_ROUTING (1) /* Initialize routing to default settings (no active patches). */
+    //#define SCE_NGS_VOICE_INIT_PRESET (2) /* Initialize using Preset values, this will use the supplied voice preset (see sceNgsVoiceInit). */
+    //#define SCE_NGS_VOICE_INIT_CALLBACKS (4) /* Initialize the callbacks per module */
+    //#define SCE_NGS_VOICE_INIT_ALL (SCE_NGS_VOICE_INIT_BASE | SCE_NGS_VOICE_INIT_CALLBACKS | SCE_NGS_VOICE_INIT_ROUTING | SCE_NGS_VOICE_INIT_PRESET) /* Initialize everything */
+
     return UNIMPLEMENTED();
 }
 
