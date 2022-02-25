@@ -47,7 +47,7 @@ bool Module::process(KernelState &kern, const MemState &mem, const SceUID thread
     if (data.flags & (1 << 2)) {
         decoder = nullptr;
         data.flags &= ~(1 << 2);
-        LOG_TRACE("MODULE_RESET");
+        //LOG_TRACE("MODULE_RESET");
     }
 
     // If decoder hasn't been initialized or ADPCM format is going to be used

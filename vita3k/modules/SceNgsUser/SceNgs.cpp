@@ -109,11 +109,11 @@ EXPORT(int, sceNgsPatchCreateRouting, ngs::PatchSetupInfo *patch_info, SceNgsPat
     if (!source || !patch_info->dest) {
         return RET_ERROR(0x804a000c);
     }
-
+    /*
     LOG_TRACE("Patching 0x{:X}:{}:{} {} to 0x{:X}:{} {}", patch_info->source.address(), patch_info->source_output_index,
         patch_info->source_output_index, patch_info->source.get(host.mem)->rack->vdef->get_name(), patch_info->dest.address(), patch_info->dest_input_index,
         patch_info->dest.get(host.mem)->rack->vdef->get_name());
-
+        */
     *handle = source->rack->system->voice_scheduler.patch(host.mem, patch_info);
 
     if (!*handle) {
@@ -594,7 +594,7 @@ EXPORT(int, sceNgsVoiceInit, SceNgsVoiceHandle hVoiceHandle, const SceNgsVoicePr
     if (host.cfg.current_config.disable_ngs) {
         return 0;
     }
-
+    /*
     LOG_TRACE("hVoiceHandle {}", log_hex(hVoiceHandle.address()));
     if (pPreset) {
         LOG_TRACE("nNameOffset {}, uNameLength {}", pPreset->nNameOffset, pPreset->uNameLength);
@@ -606,6 +606,7 @@ EXPORT(int, sceNgsVoiceInit, SceNgsVoiceHandle hVoiceHandle, const SceNgsVoicePr
     LOG_TRACE_IF(uInitFlags & 2, "uInitFlags = SCE_NGS_VOICE_INIT_PRESET");
     LOG_TRACE_IF(uInitFlags & 4, "uInitFlags = SCE_NGS_VOICE_INIT_CALLBACKS");
     LOG_TRACE_IF(uInitFlags == 7, "uInitFlags = SCE_NGS_VOICE_INIT_ALL");
+    */
     ngs::Voice *voice = hVoiceHandle.get(host.mem);
     if (uInitFlags & 1) {
         for (int i = voice->patches.size() - 1; i >= 0; i--) {
