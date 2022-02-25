@@ -210,7 +210,6 @@ struct SceGxmRenderTarget {
     std::unique_ptr<renderer::RenderTarget> renderer;
     std::uint16_t width;
     std::uint16_t height;
-    std::uint16_t scenesPerFrame;
     SceUID driverMemBlock;
 };
 
@@ -547,10 +546,8 @@ EXPORT(int, sceGxmBeginScene, SceGxmContext *context, uint32_t flags, const SceG
     }
 
     context->state.fragment_sync_object = fragmentSyncObject;
-
     if (fragmentSyncObject.get(host.mem) != nullptr) {
         SceGxmSyncObject *sync = fragmentSyncObject.get(host.mem);
-
         // Wait for both display queue and fragment stage to be done.
         // If it's offline render, the sync object already has the display queue subject done, so don't worry.
         renderer::wishlist(sync, (renderer::SyncObjectSubject)(renderer::SyncObjectSubject::DisplayQueue | renderer::SyncObjectSubject::Fragment));
@@ -582,8 +579,6 @@ EXPORT(int, sceGxmBeginScene, SceGxmContext *context, uint32_t flags, const SceG
 
     const std::uint32_t xmax = (validRegion ? validRegion->xMax : renderTarget->width - 1);
     const std::uint32_t ymax = (validRegion ? validRegion->yMax : renderTarget->height - 1);
-
-    host.renderer->scene_processed_since_last_frame++;
 
     CALL_EXPORT(sceGxmSetDefaultRegionClipAndViewport, context, xmax, ymax);
     return 0;
@@ -844,7 +839,6 @@ EXPORT(int, sceGxmCreateRenderTarget, const SceGxmRenderTargetParams *params, Pt
 
     rt->width = params->width;
     rt->height = params->height;
-    rt->scenesPerFrame = params->scenesPerFrame;
     rt->driverMemBlock = params->driverMemBlock;
 
     return 0;
@@ -1040,9 +1034,6 @@ EXPORT(int, sceGxmDisplayQueueAddEntry, Ptr<SceGxmSyncObject> oldBuffer, Ptr<Sce
     display_callback.old_buffer = oldBuffer.address();
     display_callback.new_buffer = newBuffer.address();
     host.gxm.display_queue.push(display_callback);
-
-    host.renderer->average_scene_per_frame = host.renderer->scene_processed_since_last_frame;
-    host.renderer->scene_processed_since_last_frame = 0;
 
     return 0;
 }
@@ -1465,6 +1456,8 @@ EXPORT(int, sceGxmEndScene, SceGxmContext *context, SceGxmNotification *vertexNo
     renderer::reset_command_list(context->renderer->command_list);
 
     context->state.active = false;
+    host.renderer->scene_processed_since_last_frame++;
+
     return 0;
 }
 
@@ -1785,6 +1778,10 @@ EXPORT(int, sceGxmNotificationWait, const SceGxmNotification *notification) {
 EXPORT(int, sceGxmPadHeartbeat, const SceGxmColorSurface *displaySurface, SceGxmSyncObject *displaySyncObject) {
     if (!displaySurface || !displaySyncObject)
         return RET_ERROR(SCE_GXM_ERROR_INVALID_POINTER);
+
+    host.renderer->average_scene_per_frame = (host.renderer->average_scene_per_frame + host.renderer->scene_processed_since_last_frame + 1) >> 1;
+
+    host.renderer->scene_processed_since_last_frame = 0;
 
     return 0;
 }
