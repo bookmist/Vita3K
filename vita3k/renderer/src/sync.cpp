@@ -64,6 +64,7 @@ int wait_for_status(State &state, int *status, int signal, bool wake_on_equal) {
 
     // Wait for it to get signaled
     state.command_finish_one.wait(lock, [&]() { return (*status == signal) ^ wake_on_unequal; });
+    LOG_ERROR_IF(!((*status == signal) ^ wake_on_unequal), "spurious wakeup");
     return *status;
 }
 
@@ -78,6 +79,7 @@ void wishlist(SceGxmSyncObject *sync_object, const SyncObjectSubject subjects) {
 
     std::unique_lock<std::mutex> finish_mutex(sync_object->lock);
     sync_object->cond.wait(finish_mutex, [&]() { return ((sync_object->done & subjects) == subjects); });
+LOG_ERROR_IF(!((sync_object->done & subjects) == subjects), "spurious wakeup");
 }
 
 void subject_done(SceGxmSyncObject *sync_object, const SyncObjectSubject subjects) {
