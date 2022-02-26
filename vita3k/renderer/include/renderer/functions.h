@@ -19,6 +19,8 @@
 
 #include <renderer/commands.h>
 #include <renderer/types.h>
+#include <renderer/types.h>
+#include <util/log.h>
 
 struct MemState;
 struct FeatureState;
@@ -96,6 +98,7 @@ bool add_command(Context *ctx, const CommandOpcode opcode, int *status, Args... 
         opcode, status, arguments...);
 
     if (!cmd_maked) {
+        LOG_ERROR("Cannot add command opcode: {}, status: {}", log_hex((int)opcode), status ? log_hex(*status) : "");
         return false;
     }
 
