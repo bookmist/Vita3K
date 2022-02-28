@@ -97,6 +97,7 @@ struct ThreadState {
     Block tls;
 
     int priority;
+    int cpu_affinity_mask;
     uint64_t start_tick;
 
     CPUStatePtr cpu;

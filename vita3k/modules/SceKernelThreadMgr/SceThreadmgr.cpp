@@ -794,10 +794,10 @@ EXPORT(int, sceKernelCreateThreadForUser, const char *name, SceKernelThreadEntry
     if (options->cpu_affinity_mask > 0x70000) {
         return RET_ERROR(SCE_KERNEL_ERROR_INVALID_CPU_AFFINITY);
     }
-
-    const ThreadStatePtr thread = host.kernel.create_thread(host.mem, name, entry.cast<void>(), init_priority, options->stack_size, options->option.get(host.mem));
+    const ThreadStatePtr thread = host.kernel.create_thread(host.mem, name, entry.cast<void>(), init_priority, options->stack_size, options->cpu_affinity_mask, options->option.get(host.mem));
     if (!thread)
         return RET_ERROR(SCE_KERNEL_ERROR_ERROR);
+    LOG_TRACE("tid: {} cpu_affinity_mask: {}", thread->id, log_hex(options->cpu_affinity_mask));
     return thread->id;
 }
 

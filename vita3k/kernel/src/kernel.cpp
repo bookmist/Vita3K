@@ -15,6 +15,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#include <windows.h>
+
 #include <kernel/state.h>
 
 #include <kernel/thread/thread_state.h>
@@ -125,13 +127,17 @@ ThreadStatePtr KernelState::get_thread(SceUID thread_id) {
 
 ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name) {
     constexpr size_t DEFAULT_STACK_SIZE = 0x1000;
-    return create_thread(mem, name, Ptr<void>(0), SCE_KERNEL_DEFAULT_PRIORITY, DEFAULT_STACK_SIZE, nullptr);
+    return create_thread(mem, name, Ptr<void>(0), SCE_KERNEL_DEFAULT_PRIORITY, DEFAULT_STACK_SIZE, 0, nullptr);
 }
 
-ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<const void> entry_point, int init_priority, int stack_size, const SceKernelThreadOptParam *option) {
+ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<const void> entry_point, int init_priority, int stack_size, int cpu_affinity_mask, const SceKernelThreadOptParam *option) {
     ThreadStatePtr thread = std::make_shared<ThreadState>(get_next_uid(), mem);
     if (thread->init(*this, name, entry_point, init_priority, stack_size, option) < 0)
         return nullptr;
+    thread->cpu_affinity_mask = cpu_affinity_mask & 0x70000;
+    if (thread->cpu_affinity_mask == 0) {
+        thread->cpu_affinity_mask = 0x70000;
+    }
     const auto lock = std::lock_guard(mutex);
     threads.emplace(thread->id, thread);
 
@@ -139,7 +145,10 @@ ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<c
     params.kernel = this;
     params.thid = thread->id;
 
-    SDL_CreateThread(&thread_function, thread->name.c_str(), &params);
+    auto sdl_thread =  SDL_CreateThread(&thread_function, thread->name.c_str(), &params);
+    if (thread->cpu_affinity_mask != 0x70000) {
+        SetThreadAffinityMask((HANDLE)SDL_GetThreadID(sdl_thread), thread->cpu_affinity_mask >> 16);
+    };
     SDL_SemWait(params.host_may_destroy_params.get());
     return thread;
 }
