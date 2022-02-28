@@ -1027,6 +1027,7 @@ EXPORT(int, sceKernelCreateThreadForUser, const char *name, SceKernelThreadEntry
     const ThreadStatePtr thread = emuenv.kernel.create_thread(emuenv.mem, name, entry.cast<void>(), init_priority, options->cpu_affinity_mask, options->stack_size, options->option.get(emuenv.mem));
     if (!thread)
         return RET_ERROR(SCE_KERNEL_ERROR_ERROR);
+    LOG_TRACE("tid: {} cpu_affinity_mask: {}", thread->id, log_hex(options->cpu_affinity_mask));
     return thread->id;
 }
 

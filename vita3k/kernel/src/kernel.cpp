@@ -19,6 +19,8 @@
 #include "public/tracy/Tracy.hpp"
 #endif
 
+#include <windows.h>
+
 #include <kernel/state.h>
 
 #include <kernel/thread/thread_state.h>
@@ -72,7 +74,19 @@ static int SDLCALL thread_function(void *data) {
     }
     tracy::SetThreadName(th_name.c_str());
 #endif
-
+    if (thread->affinity_mask != 0x70000) {
+        uint32_t affinity_mask = 0;
+        if (thread->affinity_mask & 0x10000) {
+            affinity_mask = affinity_mask | 1;
+        }
+        if (thread->affinity_mask & 0x20000) {
+            affinity_mask = affinity_mask | 4;
+        }
+        if (thread->affinity_mask & 0x40000) {
+            affinity_mask = affinity_mask | 16;
+        }
+        // SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
+    };
     thread->run_loop();
     const uint32_t r0 = read_reg(*thread->cpu, 0);
 
@@ -143,6 +157,10 @@ ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<c
     ThreadStatePtr thread = std::make_shared<ThreadState>(get_next_uid(), mem);
     if (thread->init(*this, name, entry_point, init_priority, affinity_mask, stack_size, option) < 0)
         return nullptr;
+    thread->affinity_mask = affinity_mask & 0x70000;
+    if (thread->affinity_mask == 0) {
+        thread->affinity_mask = 0x70000;
+    }
     const auto lock = std::lock_guard(mutex);
     threads.emplace(thread->id, thread);
 
