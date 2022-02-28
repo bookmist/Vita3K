@@ -2566,7 +2566,15 @@ EXPORT(int, sceGxmInitialize, const SceGxmInitializeParams *params) {
     emuenv.gxm.display_queue.maxPendingCount_ = max_queue_size;
 
     const ThreadStatePtr main_thread = util::find(thread_id, emuenv.kernel.threads);
-    const ThreadStatePtr display_queue_thread = emuenv.kernel.create_thread(emuenv.mem, "SceGxmDisplayQueue", Ptr<void>(0), SCE_KERNEL_HIGHEST_PRIORITY_USER, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, SCE_KERNEL_STACK_SIZE_USER_DEFAULT, nullptr);
+    int affinity_flag = SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT;
+    if (params->flags == 0) {
+        affinity_flag = (0x01 << 16);
+    } else if (params->flags == 0x00010000) {
+        affinity_flag = (0x02 << 16);
+    } else if (params->flags == 0x00020000) {
+        affinity_flag = (0x04 << 16);
+    }
+    const ThreadStatePtr display_queue_thread = emuenv.kernel.create_thread(emuenv.mem, "SceGxmDisplayQueue", Ptr<void>(0), SCE_KERNEL_HIGHEST_PRIORITY_USER, affinity_flag, SCE_KERNEL_STACK_SIZE_USER_DEFAULT, nullptr);
     if (!display_queue_thread) {
         return RET_ERROR(SCE_GXM_ERROR_DRIVER);
     }
