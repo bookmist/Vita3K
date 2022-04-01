@@ -289,13 +289,13 @@ void Voice::invoke_callback(KernelState &kernel, const MemState &mem, const SceU
     CallbackInfo *info = Ptr<CallbackInfo>(callback_info_addr).get(mem);
     info->rack_handle = Ptr<void>(rack, mem);
     info->voice_handle = Ptr<void>(this, mem);
-    info->module_id = 0; //rack->modules[index]->module_id();
+    info->module_id = 0;
     info->callback_reason = reason1;
     info->callback_reason_2 = reason2;
     info->callback_ptr = Ptr<void>(reason_ptr);
     info->userdata = user_data;
 
-    kernel.run_guest_function(callback.address(), { callback_info_addr });
+    kernel.run_guest_function(thread_id, callback.address(), { callback_info_addr });
     stack_free(*thread->cpu, sizeof(CallbackInfo));
 }
 
