@@ -78,6 +78,9 @@ EXPORT(int, sceNgsAT9GetSectionDetails, const std::uint32_t samples_start, const
     if (host.cfg.current_config.disable_ngs) {
         return -1;
     }
+    if (!info) {
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
     // Check magic!
     if ((config_data & 0xFF) != 0xFE && info) {
         return RET_ERROR(SCE_NGS_ERROR);
@@ -299,7 +302,7 @@ EXPORT(SceInt32, sceNgsVoiceBypassModule, SceNgsVoiceHandle hVoiceHandle, const 
     }
     voice_module_data->set_bypass(uBypassFlag);
     return SCE_NGS_OK;
-    //return UNIMPLEMENTED();
+    // return UNIMPLEMENTED();
 }
 
 EXPORT(Ptr<ngs::VoiceDefinition>, sceNgsVoiceDefGetAtrac9Voice) {
@@ -516,7 +519,7 @@ EXPORT(SceInt32, sceNgsVoiceGetModuleBypass, SceNgsVoiceHandle hVoiceHandle,
     }
     /*
     #define SCE_NGS_MODULE_FLAG_BYPASSED     (2)
-    #define SCE_NGS_MODULE_FLAG_NOT_BYPASSED (0)    
+    #define SCE_NGS_MODULE_FLAG_NOT_BYPASSED (0)
     */
     if (voice_module_data->get_bypass()) {
         *puBypassFlag = 2;
@@ -526,7 +529,7 @@ EXPORT(SceInt32, sceNgsVoiceGetModuleBypass, SceNgsVoiceHandle hVoiceHandle,
 
     return SCE_NGS_OK;
 
-    //return UNIMPLEMENTED();
+    // return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceNgsVoiceGetModuleType) {
@@ -616,7 +619,7 @@ EXPORT(int, sceNgsVoiceInit, SceNgsVoiceHandle hVoiceHandle, const SceNgsVoicePr
         }
     }
     for (int i = 0; i < voice->datas.size(); i++) {
-        voice->datas[i].flags |= (1 << 2); //MODULE_RESET
+        voice->datas[i].flags |= (1 << 2); // MODULE_RESET
     }
     if (uInitFlags & (4)) {
         for (int i = 0; i < voice->datas.size() - 1; i++) {
