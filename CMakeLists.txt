@@ -121,13 +121,14 @@ if(NOT VITA3K_FORCE_SYSTEM_BOOST)
             # Set compilation toolset for b2 and Boost builds
             if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
                 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-                    if(CMAKE_GENERATOR_TOOLSET STREQUAL "ClangCL")
+                    set(BOOST_TOOLSET "clang-win")
+                    if(CMAKE_GENERATOR_TOOLSET STREQUAL "clangcl")
                         # Proper toolset should be "clang-win", but b2 has a bug that makes it spam Visual Studio instances if set
                         # Since Clang for Windows is ABI-compatible with MSVC, using MSVC is fine
-                        set(BOOST_TOOLSET "msvc")
+                        #set(BOOST_TOOLSET "clang-win")
                     else()
                         message(WARNING "Boost compilation on Windows requires the use of a clang-cl compiler running inside a Visual Studio Developer CLI environment with a Windows C++ SDK available.")
-                        set(BOOST_TOOLSET "msvc")
+                        #set(BOOST_TOOLSET "msvc")
                     endif()
                 else()
                     set(BOOST_TOOLSET "msvc")
