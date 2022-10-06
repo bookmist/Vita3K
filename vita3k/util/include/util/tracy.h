@@ -75,6 +75,22 @@ inline std::string to_debug_str(const MemState &mem) {
     return "";
 }
 
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
+#define __ENUM_TO_STRING_GEN_CASE_ITEM(r, enum_name, enum_item) \
+    case enum_name::enum_item:                                  \
+        return BOOST_PP_STRINGIZE(enum_item);                   \
+        break;
+
+#define ENUM_TO_STRING_GEN(enum_name, ...)                                                                          \
+    template <>                                                                                                     \
+    inline std::string to_debug_str<enum_name>(const MemState &mem, enum_name data) {                               \
+        switch (data) {                                                                                             \
+            BOOST_PP_SEQ_FOR_EACH(__ENUM_TO_STRING_GEN_CASE_ITEM, enum_name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+        default: return to_debug_str(mem, static_cast<typename std::underlying_type<enum_name>::type>(data));       \
+        }                                                                                                           \
+    }
+
 #ifdef TRACY_ENABLE
 #include "tracy_module_utils.h"
 #include <tracy/Tracy.hpp>
