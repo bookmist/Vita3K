@@ -90,6 +90,41 @@ inline std::string to_debug_str(const MemState &mem) {
         default: return to_debug_str(mem, static_cast<typename std::underlying_type<enum_name>::type>(data));       \
         }                                                                                                           \
     }
+/*console logs*/
+
+#define LOG_CONSOLEX_0()
+#define LOG_CONSOLEX_1(name) LOG_TRACE("no params")
+#define LOG_CONSOLEX_2(name, arg1) LOG_TRACE(#arg1 ":{}", to_debug_str(emuenv.mem, arg1));
+#define LOG_CONSOLEX_3(name, arg1, arg2) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}", to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2));
+#define LOG_CONSOLEX_4(name, arg1, arg2, arg3) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3));
+#define LOG_CONSOLEX_5(name, arg1, arg2, arg3, arg4) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}, " #arg4 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3), to_debug_str(emuenv.mem, arg4));
+#define LOG_CONSOLEX_6(name, arg1, arg2, arg3, arg4, arg5) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}, " #arg4 ":{}, " #arg5 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3), to_debug_str(emuenv.mem, arg4), to_debug_str(emuenv.mem, arg5));
+#define LOG_CONSOLEX_7(name, arg1, arg2, arg3, arg4, arg5, arg6) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}, " #arg4 ":{}, " #arg5 ":{}, " #arg6 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3), to_debug_str(emuenv.mem, arg4), to_debug_str(emuenv.mem, arg5), to_debug_str(emuenv.mem, arg6));
+#define LOG_CONSOLEX_8(name, arg1, arg2, arg3, arg4, arg5, arg6, arg7) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}, " #arg4 ":{}, " #arg5 ":{}, " #arg6 ":{}, " #arg7 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3), to_debug_str(emuenv.mem, arg4), to_debug_str(emuenv.mem, arg5), to_debug_str(emuenv.mem, arg6), to_debug_str(emuenv.mem, arg7));
+#define LOG_CONSOLEX_9(name, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}, " #arg4 ":{}, " #arg5 ":{}, " #arg6 ":{}, " #arg7 ":{}, " #arg8 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3), to_debug_str(emuenv.mem, arg4), to_debug_str(emuenv.mem, arg5), to_debug_str(emuenv.mem, arg6), to_debug_str(emuenv.mem, arg7), to_debug_str(emuenv.mem, arg8));
+#define LOG_CONSOLEX_10(name, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) LOG_TRACE(#arg1 ":{}, " #arg2 ":{}, " #arg3 ":{}, " #arg4 ":{}, " #arg5 ":{}, " #arg6 ":{}, " #arg7 ":{}, " #arg8 ":{}, " #arg9 ":{}", \
+    to_debug_str(emuenv.mem, arg1), to_debug_str(emuenv.mem, arg2), to_debug_str(emuenv.mem, arg3), to_debug_str(emuenv.mem, arg4), to_debug_str(emuenv.mem, arg5), to_debug_str(emuenv.mem, arg6), to_debug_str(emuenv.mem, arg7), to_debug_str(emuenv.mem, arg8), to_debug_str(emuenv.mem, arg9));
+
+#include <boost/preprocessor/facilities/overload.hpp>
+
+#if !BOOST_PP_VARIADICS_MSVC
+
+#define LOG_CONSOLE(...) BOOST_PP_OVERLOAD(LOG_CONSOLEX_, __VA_ARGS__)(__VA_ARGS__)
+
+#else
+#include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/facilities/empty.hpp>
+// or for Visual C++'s default preprocessor
+#define LOG_CONSOLE(...) \
+    BOOST_PP_CAT(BOOST_PP_OVERLOAD(LOG_CONSOLEX_, __VA_ARGS__)(__VA_ARGS__), BOOST_PP_EMPTY())
+
+#endif
 
 #ifdef TRACY_ENABLE
 #include "tracy_module_utils.h"

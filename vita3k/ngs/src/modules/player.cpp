@@ -17,6 +17,7 @@
 
 #include <ngs/modules/player.h>
 #include <util/log.h>
+#include <util/log_to_file.h>
 
 extern "C" {
 #include <libswresample/swresample.h>
@@ -194,6 +195,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                 // Send buffered audio data to decoder
                 decoder->send(input + state->current_byte_position_in_buffer, bytes_to_send);
 
+                std::string file_name = fmt::format("soundlog/ngs_pcm_decoder_voice_{}_voice_module_{}_input.dat", log_hex(intptr_t(data.parent)), log_hex(intptr_t(&data)));
+                log_to_file(file_name, (const char *)(input + state->current_byte_position_in_buffer), bytes_to_send);
+
                 state->current_byte_position_in_buffer += bytes_to_send;
                 state->bytes_consumed_since_key_on += bytes_to_send;
                 state->total_bytes_consumed += bytes_to_send;
@@ -279,6 +283,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
     data_ptr += 2 * sizeof(float) * state->decoded_samples_passed;
 
     data.parent->products[0].data = data_ptr;
+
+    std::string file_name = fmt::format("soundlog/ngs_pcm_decoder_voice_{}_voice_module{}.dat", log_hex(intptr_t(data.parent)), log_hex(intptr_t(&data)));
+    log_to_file(file_name, reinterpret_cast<const char *>(data.parent->products[0].data), data.parent->rack->system->granularity * 2 * sizeof(float));
 
     state->decoded_samples_pending -= samples_to_be_passed;
     state->decoded_samples_passed += samples_to_be_passed;

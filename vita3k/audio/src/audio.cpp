@@ -25,10 +25,14 @@
 #include <kernel/thread/thread_state.h>
 
 #include <util/log.h>
+#include <util/log_to_file.h>
 
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+
+#include <fstream>
+#include <iostream>
 
 static void mix_out_port(uint8_t *stream, uint8_t *temp_buffer, int len, float global_volume, AudioOutPort &port, const ResumeAudioThread &resume_thread) {
     ZoneScopedC(0xF6C2FF); // Tracy - Track function scope with color thistle
@@ -50,7 +54,7 @@ static void mix_out_port(uint8_t *stream, uint8_t *temp_buffer, int len, float g
     }
 
     if (bytes_available == 0)
-        return;
+        return;		
 
     // Mix as much as we need.
     const int bytes_to_get = std::min(len, bytes_available);
@@ -79,7 +83,8 @@ void AudioAdapter::audio_callback(uint8_t *stream, int len_bytes) {
     for (const AudioOutPortPtr &port : ports) {
         mix_out_port(stream, temp_buffer.data(), len_bytes, state.global_volume, *port.get(), state.resume_thread);
     }
-
+    static const std::string file_name("soundlog/sound_final.dat");
+    log_to_file(file_name, (const char *)stream, len_bytes);
     FrameMarkNamed("Audio"); // Tracy - End discontinuous frame for audio rendering
 }
 
