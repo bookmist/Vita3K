@@ -11,6 +11,7 @@ add_library(
 	src/net_utils.cpp
 	src/string_utils.cpp
 	src/tracy.cpp
+	src/util.cpp
 )
 
 # vc_runtime_checker.cpp is directly added from the main CMakeList (for some reason adding it here doesn't work)
