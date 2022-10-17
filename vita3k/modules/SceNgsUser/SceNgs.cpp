@@ -653,6 +653,8 @@ EXPORT(int, sceNgsVoiceGetParamsOutOfRange) {
     return UNIMPLEMENTED();
 }
 
+std::map<std::string, std::ofstream> ngs_sound_log_files;
+
 EXPORT(SceInt32, sceNgsVoiceGetStateData, ngs::Voice *voice, const SceUInt32 module, void *mem, const SceUInt32 mem_size) {
     TRACY_FUNC(sceNgsVoiceGetStateData, voice, module, mem, mem_size);
     if (!emuenv.cfg.current_config.ngs_enable) {
@@ -666,9 +668,18 @@ EXPORT(SceInt32, sceNgsVoiceGetStateData, ngs::Voice *voice, const SceUInt32 mod
     if (!storage)
         return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
 
-    if (mem)
+    if (mem) {
         memcpy(mem, storage->voice_state_data.data(), std::min<std::size_t>(mem_size, storage->voice_state_data.size()));
 
+	    if (mem_size > 128) {
+	        std::string file_name = fmt::format("ngs_voice_{}_module_{}.dat", log_hex(voice_handle.address()), module);
+	        std::ofstream &file = ngs_sound_log_files[file_name];
+	        if (!file.is_open()) {
+	            file.open(file_name, std::ios::binary | std::ios::out | std::ios::trunc);
+	        }
+	        file.write(reinterpret_cast<char *>(mem), mem_size);
+	    }
+	}
     return SCE_NGS_OK;
 }
 

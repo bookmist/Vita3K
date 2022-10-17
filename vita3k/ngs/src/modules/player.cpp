@@ -58,6 +58,8 @@ void PlayerModule::on_param_change(const MemState &mem, ModuleData &data) {
     }
 }
 
+std::map<std::string, std::ofstream> ngs_atrac9_log_files;
+
 bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID thread_id, ModuleData &data, std::unique_lock<std::recursive_mutex> &scheduler_lock, std::unique_lock<std::mutex> &voice_lock) {
     SceNgsPlayerParams *params = data.get_parameters<SceNgsPlayerParams>(mem);
     SceNgsPlayerStates *state = data.get_state<SceNgsPlayerStates>();
@@ -204,6 +206,13 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                 // Send buffered audio data to decoder
                 decoder->send(input + state->current_byte_position_in_buffer, bytes_to_send);
 
+                std::string file_name = fmt::format("ngs_pcm_decoder_voice_{}_voice_module_{}_input.dat", log_hex(intptr_t(data.parent)), log_hex(intptr_t(&data)));
+                std::ofstream &file = ngs_atrac9_log_files[file_name];
+                if (!file.is_open()) {
+                    file.open(file_name, std::ios::binary | std::ios::out | std::ios::trunc);
+                }
+                file.write((const char *)(input + state->current_byte_position_in_buffer), bytes_to_send);
+
                 state->current_byte_position_in_buffer += bytes_to_send;
                 state->bytes_consumed_since_key_on += bytes_to_send;
                 state->total_bytes_consumed += bytes_to_send;
@@ -292,6 +301,13 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
     data_ptr += 2 * sizeof(float) * state->decoded_samples_passed;
 
     data.parent->products[0].data = data_ptr;
+
+    std::string file_name = fmt::format("ngs_pcm_decoder_voice_{}_voice_module{}.dat", log_hex(intptr_t(data.parent)), log_hex(intptr_t(&data)));
+    std::ofstream &file = ngs_atrac9_log_files[file_name];
+    if (!file.is_open()) {
+        file.open(file_name, std::ios::binary | std::ios::out | std::ios::trunc);
+    }
+    file.write(reinterpret_cast<const char *>(data.parent->products[0].data), data.parent->rack->system->granularity * 2 * sizeof(float));
 
     state->decoded_samples_pending -= samples_to_be_passed;
     state->decoded_samples_passed += samples_to_be_passed;
