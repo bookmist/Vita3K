@@ -141,6 +141,7 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                             voice_lock.lock();
                             break;
                         } else {
+                            std::this_thread::sleep_for(std::chrono::microseconds(10));
                             data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_SWAPPED_BUFFER, prev_index,
                                 params->buffer_params[state->current_buffer].buffer.address());
                         }
