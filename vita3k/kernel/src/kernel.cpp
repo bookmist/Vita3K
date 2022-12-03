@@ -60,12 +60,13 @@ static int SDLCALL thread_function(void *data) {
     SDL_SemPost(params.host_may_destroy_params.get());
     const ThreadStatePtr thread = lock_and_find(params.thid, params.kernel->threads, params.kernel->mutex);
 #ifdef TRACY_ENABLE
+    std::string th_name;
     if (!thread->name.empty()) {
-        tracy::SetThreadName(thread->name.c_str());
+        th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
     } else {
-        std::string th_name = "TID:" + std::to_string(thread->id);
-        tracy::SetThreadName(th_name.c_str());
+        th_name = "TID:" + std::to_string(thread->id) + (!thread->name.empty() ? " " + thread->name : "");
     }
+    tracy::SetThreadName(th_name.c_str());
 #endif
 
     thread->run_loop();
