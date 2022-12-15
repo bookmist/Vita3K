@@ -249,7 +249,7 @@ bool ThreadState::run_loop() {
                 // exit requested, exit this callback now
                 return true;
 
-            if (res) {
+            if (res > 0) {
                 returned_value = read_reg(*cpu, 0);
                 call_level--;
                 if (call_level > 0)

@@ -25,6 +25,7 @@
 #include <kernel/thread/thread_state.h>
 
 #include <util/log.h>
+#include <util/log_to_file.h>
 
 #include <algorithm>
 #include <cassert>
@@ -32,8 +33,6 @@
 
 #include <fstream>
 #include <iostream>
-
-std::ofstream sound_log_file;
 
 static void mix_out_port(uint8_t *stream, uint8_t *temp_buffer, int len, AudioOutPort &port, const ResumeAudioThread &resume_thread) {
     ZoneScopedC(0xF6C2FF); // Tracy - Track function scope with color thistle
@@ -55,7 +54,7 @@ static void mix_out_port(uint8_t *stream, uint8_t *temp_buffer, int len, AudioOu
     }
 
     if (bytes_available == 0)
-        return;		
+        return;
 
     // Mix as much as we need.
     const int bytes_to_get = std::min(len, bytes_available);
@@ -96,7 +95,6 @@ bool AudioState::init(const ResumeAudioThread &resume_thread, const std::string 
     if (!adapter)
         return false;
 
-    sound_log_file.open("sound_final.dat", std::ios::out | std::ios::binary | std::ios::trunc);
     return true;
 }
 
