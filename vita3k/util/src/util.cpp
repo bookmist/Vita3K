@@ -852,3 +852,13 @@ uint32_t encode_thumb_inst(uint8_t type, uint32_t immed, uint16_t reg) {
         return 0;
     }
 }
+
+#include <util/log_to_file.h>
+std::map<std::string, fs::ofstream> log_files;
+void log_to_file(const std::string &file_name, const char *data, const size_t size) {
+    fs::ofstream &file = log_files[file_name];
+    if (!file.is_open()) {
+        file.open(file_name, std::ios::binary | std::ios::out | std::ios::trunc);
+    }
+    file.write(data, size);
+}
