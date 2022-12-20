@@ -55,7 +55,7 @@ static void mix_out_port(uint8_t *stream, uint8_t *temp_buffer, int len, AudioOu
     }
 
     if (bytes_available == 0)
-        return;
+        return;		
 
     // Mix as much as we need.
     const int bytes_to_get = std::min(len, bytes_available);
@@ -84,7 +84,8 @@ void AudioAdapter::audio_callback(uint8_t *stream, int len_bytes) {
     for (const AudioOutPortPtr &port : ports) {
         mix_out_port(stream, temp_buffer.data(), len_bytes, *port.get(), state.resume_thread);
     }
-    sound_log_file.write((const char *)stream, len);
+    static const std::string file_name("soundlog/sound_final.dat");
+    log_to_file(file_name, (const char *)stream, len_bytes);
     FrameMarkNamed("Audio"); // Tracy - End discontinuous frame for audio rendering
 }
 
@@ -94,7 +95,6 @@ bool AudioState::init(const ResumeAudioThread &resume_thread, const std::string 
     set_backend(adapter_name);
     if (!adapter)
         return false;
-    }
 
     sound_log_file.open("sound_final.dat", std::ios::out | std::ios::binary | std::ios::trunc);
     return true;
