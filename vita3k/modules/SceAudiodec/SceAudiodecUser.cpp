@@ -38,7 +38,7 @@ ENUM_TO_STRING_GEN(DecoderQuery,
     AT9_FRAMES_IN_SUPERFRAME,
     AT9_SUPERFRAME_SIZE)
 
-ENUM_TO_STRING_GEN( SceAudiodecCodec,
+ENUM_TO_STRING_GEN(SceAudiodecCodec,
     SCE_AUDIODEC_TYPE_AT9,
     SCE_AUDIODEC_TYPE_MP3,
     SCE_AUDIODEC_TYPE_AAC,
@@ -174,7 +174,7 @@ static int create_decoder(EmuEnvState &emuenv, SceAudiodecCtrl *ctrl, SceAudiode
         state->decoders[handle] = decoder;
 
         info.channels = decoder->get(DecoderQuery::CHANNELS);
-        info.bit_rate = decoder->get(DecoderQuery::BIT_RATE);
+        info.bit_rate = 292 * 1024; // decoder->get(DecoderQuery::BIT_RATE);
         info.sample_rate = decoder->get(DecoderQuery::SAMPLE_RATE);
         info.super_frame_size = decoder->get(DecoderQuery::AT9_SUPERFRAME_SIZE);
         info.frames_in_super_frame = decoder->get(DecoderQuery::AT9_FRAMES_IN_SUPERFRAME);
