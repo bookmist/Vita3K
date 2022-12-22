@@ -40,6 +40,8 @@
 #include <util/log.h>
 #include <util/string_utils.h>
 
+#include "c:\Users\Dima\Documents\git\Vita3K\external\thread-pool\BS_thread_pool.hpp"
+
 #if USE_DISCORD
 #include <app/discord.h>
 #endif
@@ -386,17 +388,28 @@ int main(int argc, char *argv[]) {
     emuenv.renderer->set_app(emuenv.io.title_id.c_str(), emuenv.self_name.c_str());
     if (renderer::get_shaders_cache_hashs(*emuenv.renderer) && cfg.shader_cache) {
         SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, compiling shaders...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
+        BS::thread_pool pool;
         for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
+            pool.push_task([&]() { emuenv.renderer->precompile_shader(hash); });
+        }
+        /*
+        for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
+            std::thread th([&]() { emuenv.renderer->precompile_shader(hash); });
+            th.detach();
+        }*/
+        // uint32_t totals = uint32_t(emuenv.renderer->shaders_cache_hashs.size());
+        //  while (totals < emuenv.renderer->programs_count_pre_compiled) {
+        while (pool.get_tasks_total() > 0) {
             handle_events(emuenv, gui);
             gui::draw_begin(gui, emuenv);
             draw_app_background(gui, emuenv);
 
-            emuenv.renderer->precompile_shader(hash);
             gui::draw_pre_compiling_shaders_progress(gui, emuenv, uint32_t(emuenv.renderer->shaders_cache_hashs.size()));
 
             gui::draw_end(gui);
             emuenv.renderer->swap_window(emuenv.window.get());
-        }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        } /**/
     }
     {
         const auto err = run_app(emuenv, main_module_id);
