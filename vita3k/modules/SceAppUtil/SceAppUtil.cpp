@@ -188,8 +188,15 @@ EXPORT(int, sceAppUtilInit, void *initParam, void *bootParam) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppUtilLaunchWebBrowser) {
-    TRACY_FUNC(sceAppUtilLaunchWebBrowser);
+struct SceAppUtilWebBrowserParam {
+    Ptr<const SceChar8> wbstr;
+    SceUInt32 wbstrLength;
+    SceUInt32 launchMode;
+    SceUInt32 reserved0;
+};
+
+EXPORT(int, sceAppUtilLaunchWebBrowser, SceAppUtilWebBrowserParam *param) {
+    TRACY_FUNC(sceAppUtilLaunchWebBrowser, param->wbstr, param->launchMode);
     return UNIMPLEMENTED();
 }
 
