@@ -96,6 +96,7 @@ COMMAND(handle_create_render_target) {
     TRACY_FUNC_COMMANDS(handle_create_render_target);
     std::unique_ptr<RenderTarget> *render_target = helper.pop<std::unique_ptr<RenderTarget> *>();
     SceGxmRenderTargetParams *params = helper.pop<SceGxmRenderTargetParams *>();
+    // TRACY_FUNC_COMMANDS_ARGS(render_target->get(), *params.)
 
     bool result = false;
 
@@ -130,7 +131,7 @@ COMMAND(handle_create_render_target) {
 COMMAND(handle_destroy_render_target) {
     TRACY_FUNC_COMMANDS(handle_destroy_render_target);
     std::unique_ptr<RenderTarget> *render_target = helper.pop<std::unique_ptr<RenderTarget> *>();
-
+    TRACY_FUNC_COMMANDS_ARGS(render_target)
     switch (renderer.current_backend) {
     case Backend::OpenGL:
         // nothing to do
@@ -154,7 +155,7 @@ COMMAND(handle_memory_map) {
     TRACY_FUNC_COMMANDS(handle_memory_map);
     const Ptr<void> addr = helper.pop<Ptr<void>>();
     const uint32_t size = helper.pop<uint32_t>();
-
+    TRACY_FUNC_COMMANDS_ARGS(addr, size)
     if (renderer.current_backend == Backend::Vulkan) {
         dynamic_cast<vulkan::VKState &>(renderer).map_memory(mem, addr, size);
     }
@@ -164,8 +165,8 @@ COMMAND(handle_memory_map) {
 
 COMMAND(handle_memory_unmap) {
     TRACY_FUNC_COMMANDS(handle_memory_unmap);
-
     const Ptr<void> addr = helper.pop<Ptr<void>>();
+    TRACY_FUNC_COMMANDS_ARGS(addr)
 
     if (renderer.current_backend == Backend::Vulkan) {
         dynamic_cast<vulkan::VKState &>(renderer).unmap_memory(mem, addr);
