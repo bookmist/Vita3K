@@ -133,7 +133,10 @@ COMMAND(handle_create_render_target) {
 COMMAND(handle_destroy_render_target) {
     TRACY_FUNC_COMMANDS(handle_destroy_render_target);
     std::unique_ptr<RenderTarget> *render_target = helper.pop<std::unique_ptr<RenderTarget> *>();
-
+#ifdef TRACY_ENABLE
+    const std::string arg_str = "render_target: " + to_debug_str(mem, render_target);
+    ___tracy_scoped_zone.Text(arg_str.c_str(), arg_str.size());
+#endif
     switch (renderer.current_backend) {
     case Backend::OpenGL:
         // nothing to do
