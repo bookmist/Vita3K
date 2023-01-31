@@ -171,9 +171,11 @@ void VoiceScheduler::update(KernelState &kern, const MemState &mem, const SceUID
             stop(voice);
         }
 
+		if (voice->rack->vdef) {
         for (size_t i = 0; i < voice->rack->vdef->output_count; i++) {
             if (voice->products[i].data)
                 deliver_data(mem, voice, static_cast<uint8_t>(i), voice->products[i]);
+        }
         }
 
         voice->frame_count++;
