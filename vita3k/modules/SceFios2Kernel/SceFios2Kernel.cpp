@@ -60,7 +60,19 @@ EXPORT(int, _sceFiosKernelOverlayGetInfoForProcess) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceFiosKernelOverlayGetList) {
+typedef int32_t SceFiosKernelOverlayID;
+
+struct SceFiosGetListSyscallArgs {
+    SceFiosKernelOverlayID *out_ids;
+    int data_0x04;
+    int data_0x08;
+    SceSize data_0x0C;
+    int data_0x10;
+    int data_0x14;
+};
+
+EXPORT(int, _sceFiosKernelOverlayGetList, SceUID pid, SceUInt8 min_order, SceUInt8 max_order, SceFiosGetListSyscallArgs *args) {
+    TRACY_FUNC(_sceFiosKernelOverlayGetList, pid, min_order, max_order, args);
     return UNIMPLEMENTED();
 }
 
@@ -100,7 +112,8 @@ EXPORT(int, _sceFiosKernelOverlayThreadIsDisabled) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceFiosKernelOverlayThreadSetDisabled) {
+EXPORT(int, _sceFiosKernelOverlayThreadSetDisabled, SceInt32 disabled) {
+    TRACY_FUNC(_sceFiosKernelOverlayThreadSetDisabled, disabled);
     return UNIMPLEMENTED();
 }
 
