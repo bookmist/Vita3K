@@ -224,8 +224,10 @@ EXPORT(SceUInt32, sceNgsRackInit, ngs::System *system, SceNgsBufferInfo *info, c
     if (!emuenv.cfg.current_config.ngs_enable) {
         return 0;
     }
-    assert(info);
-    assert(description);
+    if (!info || !system || !description) {// I'm not sure about description. I found no signs of check this parameter in disasmed code
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    }
+    
 
     if (!ngs::init_rack(emuenv.ngs, emuenv.mem, system, info, description)) {
         return RET_ERROR(SCE_NGS_ERROR);
