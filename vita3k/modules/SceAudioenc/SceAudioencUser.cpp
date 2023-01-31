@@ -17,11 +17,53 @@
 
 #include "SceAudioencUser.h"
 
+#include <util/tracy.h>
+TRACY_MODULE_NAME(SceAudioencUser);
+
 EXPORT(int, sceAudioencClearContext) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAudioencCreateEncoder) {
+typedef struct SceAudioencInfoCelp {
+    SceUInt32 size;
+    SceUInt32 excitationMode;
+    SceUInt32 samplingRate;
+    SceUInt32 bitRate;
+} SceAudioencInfoCelp;
+
+typedef union SceAudioencInfo {
+    SceUInt32 size;
+    SceAudioencInfoCelp celp;
+} SceAudioencInfo;
+
+typedef struct SceAudioencOptInfoCelp {
+    SceUInt32 size;
+    SceUInt8 header[32];
+    SceUInt32 headerSize;
+    SceUInt32 encoderVersion;
+} SceAudioencOptInfoCelp;
+
+typedef union SceAudioencOptInfo {
+    SceUInt32 size;
+    SceAudioencOptInfoCelp celp;
+} SceAudioencOptInfo;
+
+typedef struct SceAudioencCtrl {
+    SceUInt32 size;
+    SceInt32 handle;
+    SceUInt8 *pInputPcm;
+    SceUInt32 inputPcmSize;
+    SceUInt32 maxPcmSize;
+    void *pOutputEs;
+    SceUInt32 outputEsSize;
+    SceUInt32 maxEsSize;
+    SceUInt32 wordLength;
+    SceAudioencInfo *pInfo;
+    SceAudioencOptInfo *pOptInfo;
+} SceAudioencCtrl;
+
+EXPORT(int, sceAudioencCreateEncoder, SceAudioencCtrl *pCtrl, SceUInt32 codecType) {
+    TRACY_FUNC(sceAudioencCreateEncoder, pCtrl, codecType);
     return UNIMPLEMENTED();
 }
 
@@ -33,7 +75,7 @@ EXPORT(int, sceAudioencCreateEncoderResident) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAudioencDeleteEncoder) {
+EXPORT(int, sceAudioencDeleteEncoder, SceAudioencCtrl *pCtrl) {
     return UNIMPLEMENTED();
 }
 
@@ -45,7 +87,8 @@ EXPORT(int, sceAudioencDeleteEncoderResident) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAudioencEncode) {
+EXPORT(int, sceAudioencEncode, SceAudioencCtrl *pCtrl) {
+    TRACY_FUNC(sceAudioencEncode, pCtrl);
     return UNIMPLEMENTED();
 }
 
@@ -65,7 +108,18 @@ EXPORT(int, sceAudioencGetOptInfo) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAudioencInitLibrary) {
+struct SceAudioencInitStreamParam {
+    SceUInt32 size;
+    SceUInt32 totalStreams;
+};
+
+union SceAudioencInitParam {
+    SceUInt32 size;
+    SceAudioencInitStreamParam celp;
+};
+
+EXPORT(int, sceAudioencInitLibrary, SceUInt32 codecType, SceAudioencInitParam *pInitParam) {
+    TRACY_FUNC(sceAudioencInitLibrary, codecType, pInitParam);
     return UNIMPLEMENTED();
 }
 
