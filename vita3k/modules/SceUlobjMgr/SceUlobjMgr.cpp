@@ -17,7 +17,11 @@
 
 #include <module/module.h>
 
-EXPORT(int, _sceUlobjMgrRegisterLibultProtocolRevision) {
+#include <util/tracy.h>
+TRACY_MODULE_NAME(SceUlobjMgr);
+
+EXPORT(int, _sceUlobjMgrRegisterLibultProtocolRevision, SceUInt32 revision) {
+    TRACY_FUNC(_sceUlobjMgrRegisterLibultProtocolRevision, revision);
     return UNIMPLEMENTED();
 }
 
@@ -29,23 +33,26 @@ EXPORT(int, _sceUlobjMgrStopSupportingUserlevelObject) {
     return UNIMPLEMENTED();
 }
 
-//register something
+// register something
 EXPORT(int, SceUlobjDbg_D7F0F610, uint32_t param_1, uint32_t param_2, Ptr<uint32_t> param_3) {
+    TRACY_FUNC(SceUlobjDbg_D7F0F610, param_1, param_2, param_3);
     STUBBED("SceUlobjDbg_D7F0F610");
     if (!param_3) {
-        return 0x8001000e;
+        return 0x8001000e; // SCE_ERROR_ERRNO_EFAULT
     } else {
         if (((param_2 & 0xfffffffc) == 0) && ((param_1 & 7) == 0)) {
             *(param_3.get(emuenv.mem)) = 0x1fffffff;
-            return 0x8001000c;
+            return 0x8001000c; // SCE_ERROR_ERRNO_ENOMEM
         } else {
             *(param_3.get(emuenv.mem)) = 0x0DEADBEE;
-            return 0x80010016;
+            STUBBED("");
+            return 0x80010016; // SCE_ERROR_ERRNO_EINVAL
         }
     }
-    //return UNIMPLEMENTED();
+    // return UNIMPLEMENTED();
 }
-//unregister something
-EXPORT(int, SceUlobjDbg_F9C0F5DA) {
+// unregister something
+EXPORT(int, SceUlobjDbg_F9C0F5DA, uint32_t param_1) {
+    TRACY_FUNC(SceUlobjDbg_F9C0F5DA, param_1);
     return UNIMPLEMENTED();
 }
