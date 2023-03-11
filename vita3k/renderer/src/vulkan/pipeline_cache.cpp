@@ -629,12 +629,12 @@ vk::Pipeline PipelineCache::retrieve_pipeline(VKContext &context, SceGxmPrimitiv
 }
 
 bool PipelineCache::precompile_shader(const Sha256Hash &hash) {
+    {
+        const std::lock_guard<std::mutex> lock(shaders_mutex);
+        if (shaders.contains(hash))
+            return true;
+    }
     const auto shader_path{ fs::path(state.base_path) / "cache/shaders" / state.title_id / state.self_name };
-
-    auto it = shaders.find(hash);
-    if (it != shaders.end())
-        return true;
-
     if (!fs::exists(shader_path) || fs::is_empty(shader_path))
         return false;
 
@@ -653,8 +653,10 @@ bool PipelineCache::precompile_shader(const Sha256Hash &hash) {
     };
 
     vk::ShaderModule shader = state.device.createShaderModule(shader_info);
-    shaders[hash] = shader;
-
+    {
+        const std::lock_guard<std::mutex> lock(shaders_mutex);
+        shaders[hash] = shader;
+    }
     return true;
 }
 } // namespace renderer::vulkan

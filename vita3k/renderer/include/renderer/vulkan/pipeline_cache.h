@@ -50,11 +50,11 @@ private:
     static constexpr int pipeline_cache_save_delay = 30;
 
     vk::PipelineCache pipeline_cache;
-
     // first index: 1 if depth-stencil is force loaded, 0 otherwise
     // second index: 1 if depth-stencil is force stored, 0 otherwise
     std::map<vk::Format, vk::RenderPass> render_passes[2][2];
     std::map<Sha256Hash, vk::ShaderModule> shaders;
+    std::mutex shaders_mutex = {};
     std::unordered_map<uint64_t, vk::Pipeline> pipelines;
 
     // temp vars used to store the result computed by auxialiary functions before createPipeline is called
