@@ -35,3 +35,7 @@ std::string toupper(const std::string &s);
 std::string tolower(const std::string &s);
 
 } // namespace string_utils
+
+namespace CppCommon {
+std::string OSVersion();
+} // namespace CppCommon
