@@ -751,6 +751,11 @@ void GLState::set_anisotropic_filtering(int anisotropic_filtering) {
     texture_cache.anisotropic_filtering = anisotropic_filtering;
 }
 
+std::string GLState::get_gpu_name() {
+    const std::string gpu_name = reinterpret_cast<const GLchar *>(glGetString(GL_RENDERER));
+    return gpu_name;
+}
+
 void GLState::precompile_shader(const ShadersHash &hash) {
     pre_compile_program(*this, base_path, title_id, self_name, hash);
 }
