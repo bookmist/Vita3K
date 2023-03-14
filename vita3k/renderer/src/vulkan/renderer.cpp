@@ -849,6 +849,10 @@ std::vector<std::string> VKState::get_gpu_list() {
     return gpu_list;
 }
 
+std::string VKState::get_gpu_name() {
+    return std::string(physical_device_properties.deviceName.data());
+}
+
 void VKState::precompile_shader(const ShadersHash &hash) {
     Sha256Hash empty_hash{};
     if (hash.vert != empty_hash) {

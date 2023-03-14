@@ -93,6 +93,10 @@ struct State {
         return { "Automatic" };
     }
 
+    virtual std::string get_gpu_name() {
+        return "";
+    }
+
     virtual void precompile_shader(const ShadersHash &hash) = 0;
     virtual void preclose_action() = 0;
 
