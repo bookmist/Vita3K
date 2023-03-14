@@ -328,88 +328,88 @@ void draw_app_context_menu(GuiState &gui, EmuEnvState &emuenv, const std::string
                         open_path(compat_url);
                     }
                 } else {
-                    ImGui::Spacing();
-                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(compat_state_str.c_str()).x / 2));
-                    ImGui::TextColored(compat_state_color, "%s", compat_state_str.c_str());
-                    ImGui::Spacing();
+                ImGui::Spacing();
+                ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(compat_state_str.c_str()).x / 2));
+                ImGui::TextColored(compat_state_color, "%s", compat_state_str.c_str());
+                ImGui::Spacing();
                     if (has_state_report) {
-                        tm updated_at_tm = {};
-                        SAFE_LOCALTIME(&gui.compat.app_compat_db[title_id].updated_at, &updated_at_tm);
-                        auto UPDATED_AT = get_date_time(gui, emuenv, updated_at_tm);
-                        ImGui::Spacing();
-                        const auto updated_at_str = fmt::format("{} {} {} {}", lang["updated"].c_str(), UPDATED_AT[DateTime::DATE_MINI], UPDATED_AT[DateTime::CLOCK], is_12_hour_format ? UPDATED_AT[DateTime::DAY_MOMENT] : "");
-                        ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(updated_at_str.c_str()).x / 2));
-                        ImGui::TextColored(GUI_COLOR_TEXT, "%s", updated_at_str.c_str());
-                    }
+                    tm updated_at_tm = {};
+                    SAFE_LOCALTIME(&gui.compat.app_compat_db[title_id].updated_at, &updated_at_tm);
+                    auto UPDATED_AT = get_date_time(gui, emuenv, updated_at_tm);
                     ImGui::Spacing();
-                    ImGui::Separator();
-                    ImGui::Spacing();
+                    const auto updated_at_str = fmt::format("{} {} {} {}", lang["updated"].c_str(), UPDATED_AT[DateTime::DATE_MINI], UPDATED_AT[DateTime::CLOCK], is_12_hour_format ? UPDATED_AT[DateTime::DAY_MOMENT] : "");
+                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(updated_at_str.c_str()).x / 2));
+                    ImGui::TextColored(GUI_COLOR_TEXT, "%s", updated_at_str.c_str());
+                }
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
                     if (has_state_report) {
-                        const auto copy_vita3k_summary = [&]() {
-                            const auto vita3k_summary = fmt::format(
-                                "# Vita3K summary\n- Version: {}\n- Build number: {}\n- Commit hash: https://github.com/vita3k/vita3k/commit/{}\n- CPU backend: {}\n- GPU backend: {}",
-                                app_version, app_number, app_hash, get_cpu_backend(gui, emuenv, app_path), emuenv.cfg.backend_renderer);
-                            ImGui::LogToClipboard();
-                            ImGui::LogText("%s", vita3k_summary.c_str());
-                            ImGui::LogFinish();
-                        };
-                        if (ImGui::MenuItem(lang["copy_vita3k_summary"].c_str()))
-                            copy_vita3k_summary();
+                    const auto copy_vita3k_summary = [&]() {
+                        const auto vita3k_summary = fmt::format(
+                            "# Vita3K summary\n- Version: {}\n- Build number: {}\n- Commit hash: https://github.com/vita3k/vita3k/commit/{}\n- CPU backend: {}\n- GPU backend: {}",
+                            app_version, app_number, app_hash, get_cpu_backend(gui, emuenv, app_path), emuenv.cfg.backend_renderer);
+                        ImGui::LogToClipboard();
+                        ImGui::LogText("%s", vita3k_summary.c_str());
+                        ImGui::LogFinish();
+                    };
+                    if (ImGui::MenuItem(lang["copy_vita3k_summary"].c_str()))
+                        copy_vita3k_summary();
                         if (ImGui::MenuItem(lang["open_state_report"].c_str())) {
-                            copy_vita3k_summary();
-                            open_path(fmt::format("{}/{}", ISSUES_URL, gui.compat.app_compat_db[title_id].issue_id));
-                        }
-                    } else {
+                        copy_vita3k_summary();
+                        open_path(fmt::format("{}/{}", ISSUES_URL, gui.compat.app_compat_db[title_id].issue_id));
+                    }
+                } else {
                         if (ImGui::MenuItem(lang["create_state_report"].c_str())) {
                             // Create body of state repport
 
-                            // Encode title for URL
-                            const auto encode_title_url = [](std::string title) {
-                                const std::map<std::string, std::string> replace_map = {
-                                    { "#", "%23" },
-                                    { "&", "%26" },
+                        // Encode title for URL
+                        const auto encode_title_url = [](std::string title) {
+                            const std::map<std::string, std::string> replace_map = {
+                                { "#", "%23" },
+                                { "&", "%26" },
                                     { "+", "%2B" },
                                     { ";", "%3B" }
-                                    // Add other replacement associations here if necessary.
-                                };
-
-                                // Replace all occurences found in title
-                                for (const auto &[replace, with] : replace_map) {
-                                    boost::replace_all(title, replace, with);
-                                }
-
-                                return title;
+                                // Add other replacement associations here if necessary.
                             };
-                            const auto title = encode_title_url(APP_INDEX->title);
 
-                            // Create App summary
-                            const auto app_summary = fmt::format(
-                                "%23 App summary%0A- App name: {}%0A- App serial: {}%0A- App version: {}",
-                                title, title_id, APP_INDEX->app_ver);
+                            // Replace all occurences found in title
+                            for (const auto &[replace, with] : replace_map) {
+                                boost::replace_all(title, replace, with);
+                            }
 
-                            // Create Vita3K summary
-                            const auto vita3k_summary = fmt::format(
-                                "%23 Vita3K summary%0A- Version: {}%0A- Build number: {}%0A- Commit hash: https://github.com/vita3k/vita3k/commit/{}%0A- CPU backend: {}%0A- GPU backend: {}",
-                                app_version, app_number, app_hash, get_cpu_backend(gui, emuenv, app_path), emuenv.cfg.backend_renderer);
+                            return title;
+                        };
+                        const auto title = encode_title_url(APP_INDEX->title);
+
+                        // Create App summary
+                        const auto app_summary = fmt::format(
+                            "%23 App summary%0A- App name: {}%0A- App serial: {}%0A- App version: {}",
+                            title, title_id, APP_INDEX->app_ver);
+
+                        // Create Vita3K summary
+                        const auto vita3k_summary = fmt::format(
+                            "%23 Vita3K summary%0A- Version: {}%0A- Build number: {}%0A- Commit hash: https://github.com/vita3k/vita3k/commit/{}%0A- CPU backend: {}%0A- GPU backend: {}",
+                            app_version, app_number, app_hash, get_cpu_backend(gui, emuenv, app_path), emuenv.cfg.backend_renderer);
 
 #ifdef WIN32
-                            const auto user = std::getenv("USERNAME");
+                        const auto user = std::getenv("USERNAME");
 #else
-                            auto user = std::getenv("USER");
+                        auto user = std::getenv("USER");
 #endif // WIN32
 
-                            // Test environement summary
-                            const auto test_env_summary = fmt::format(
-                            "%23 Test environment summary%0A- Tested by: {} <!-- Change your username if is needed -->%0A- OS: Windows 10/macOS/Linux Distro, Kernel Version?%0A- CPU: AMD/Intel?%0A- GPU: {}%0A- RAM: {} GB",
-                            user ? user : "?", emuenv.renderer->get_gpu_name(), SDL_GetSystemRAM() / 1000);
+                        // Test environement summary
+                        const auto test_env_summary = fmt::format(
+                            "%23 Test environment summary%0A- Tested by: {} <!-- Change your username if is needed -->%0A- OS: {}%0A- CPU: {}%0A- GPU: {}%0A- RAM: {} GB",
+                            user ? user : "?", CppCommon::OSVersion(), "AMD/Intel?", emuenv.renderer->get_gpu_name(), SDL_GetSystemRAM() / 1000);
 
-                            const auto rest_of_body = "%23 Issues%0A<!-- Summary of problems -->%0A%0A%23 Screenshots%0A![image](https://?)%0A%0A%23 Log%0A%0A%23 Recommended labels%0A<!-- See https://github.com/Vita3K/compatibility/labels -->%0A- A?%0A- B?%0A- C?";
+                        const auto rest_of_body = "%23 Issues%0A<!-- Summary of problems -->%0A%0A%23 Screenshots%0A![image](https://?)%0A%0A%23 Log%0A%0A%23 Recommended labels%0A<!-- See https://github.com/Vita3K/compatibility/labels -->%0A- A?%0A- B?%0A- C?";
 
-                            open_path(fmt::format(
-                                "{}/new?title={} [{}]&body={}%0A%0A{}%0A%0A{}%0A%0A{}",
-                                ISSUES_URL, title, title_id, app_summary, vita3k_summary, test_env_summary, rest_of_body));
-                        }
+                        open_path(fmt::format(
+                            "{}/new?title={} [{}]&body={}%0A%0A{}%0A%0A{}%0A%0A{}",
+                            ISSUES_URL, title, title_id, app_summary, vita3k_summary, test_env_summary, rest_of_body));
                     }
+                }
                 }
                 if (is_commercial_app && ImGui::MenuItem(lang["update_database"].c_str()))
                     load_and_update_compat_user_apps(gui, emuenv);
