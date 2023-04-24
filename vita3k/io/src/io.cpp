@@ -57,7 +57,7 @@ static int io_error_impl(const int retval, const char *export_name, const char *
 #define IO_ERROR(retval) io_error_impl(retval, export_name, __func__)
 #define IO_ERROR_UNK() IO_ERROR(-1)
 
-constexpr bool log_file_op = true;
+constexpr bool log_file_op = false;
 constexpr bool log_file_read = false;
 constexpr bool log_file_seek = false;
 constexpr bool log_file_stat = false;
