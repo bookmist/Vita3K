@@ -31,6 +31,17 @@ endif()
 
 enable_testing()
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_supported_error)
+
+if( ipo_supported )
+    message(STATUS "IPO / LTO enabled")
+    set_property(GLOBAL PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+    message(STATUS "IPO / LTO not supported: <${ipo_supported_error}>")
+endif()
+
+
 ############################
 ########## Boost ###########
 ############################
