@@ -34,6 +34,8 @@
 #include <util/lock_and_find.h>
 #include <util/log.h>
 
+#include <util/tracy.h>
+
 #include <unordered_set>
 
 static constexpr bool LOG_UNK_NIDS_ALWAYS = false;
@@ -128,30 +130,51 @@ void call_import(EmuEnvState &emuenv, CPUState &cpu, uint32_t nid, SceUID thread
                 emuenv.missing_nids.insert(nid);
         }
     } else {
-        auto pc = read_pc(cpu);
+        if (true) {
+            auto pc = read_pc(cpu);
+#ifdef TRACY_ENABLE
+            const char *export_name = import_name(nid);
+            ZoneNamed(___tracy_scoped_zone, true); // Tracy - Track function scope
+            ZoneColorV(___tracy_scoped_zone, 0xFFF34C); // Tracy - Change color to yellow
+            ZoneNameV(___tracy_scoped_zone, export_name, strlen(export_name)); // Tracy - Edit scope name based on export_name
+#endif
+            /*
+            const ThreadStatePtr thread = lock_and_find(thread_id, emuenv.kernel.threads, emuenv.kernel.mutex);
+            auto res = thread->run_callback(export_pc, { read_reg(cpu, 0), read_reg(cpu, 1), read_reg(cpu, 2), read_reg(cpu, 3) });
+            write_reg(cpu, 0, res);
+            */
+            // const std::unordered_set<uint32_t> lle_nid_blacklist = {};
+            // log_import_call('L', nid, thread_id, lle_nid_blacklist, pc);
+            auto lr = read_lr(cpu);
+            LOG_TRACE("[LLE] TID: {:<3} FUNC: {} {} at {}  p1:{}; p2:{}; p3:{}; p4:{}", thread_id, log_hex(nid), export_name, log_hex(lr), log_hex(read_reg(cpu, 0)), log_hex(read_reg(cpu, 1)), log_hex(read_reg(cpu, 2)), log_hex(read_reg(cpu, 3)));
+            // LOG_TRACE("p1:{}; p2:{}; p3:{}; p4:{}", log_hex(read_reg(cpu, 0)), log_hex(read_reg(cpu, 1)), log_hex(read_reg(cpu, 2)), log_hex(read_reg(cpu, 3)));
+            write_pc(cpu, export_pc);
+        } else {
+            auto pc = read_pc(cpu);
 
-        assert((pc & 1) == 0);
+            assert((pc & 1) == 0);
 
-        pc -= 4; // Move back to SVC (SuperVisor Call) instruction
+            pc -= 4; // Move back to SVC (SuperVisor Call) instruction
 
-        uint32_t *const stub = Ptr<uint32_t>(Address(pc)).get(emuenv.mem);
+            uint32_t *const stub = Ptr<uint32_t>(Address(pc)).get(emuenv.mem);
 
-        stub[0] = encode_arm_inst(INSTRUCTION_MOVW, (uint16_t)export_pc, 12);
-        stub[1] = encode_arm_inst(INSTRUCTION_MOVT, (uint16_t)(export_pc >> 16), 12);
-        stub[2] = encode_arm_inst(INSTRUCTION_BRANCH, 0, 12);
+            stub[0] = encode_arm_inst(INSTRUCTION_MOVW, (uint16_t)export_pc, 12);
+            stub[1] = encode_arm_inst(INSTRUCTION_MOVT, (uint16_t)(export_pc >> 16), 12);
+            stub[2] = encode_arm_inst(INSTRUCTION_BRANCH, 0, 12);
 
-        // LLE - directly run ARM code imported from some loaded module
-        // TODO: resurrect this
-        /*if (is_returning(cpu)) {
-            LOG_TRACE("[LLE] TID: {:<3} FUNC: {} returned {}", thread_id, import_name(nid), log_hex(read_reg(cpu, 0)));
-            return;
-        }*/
+            // LLE - directly run ARM code imported from some loaded module
+            // TODO: resurrect this
+            /*if (is_returning(cpu)) {
+                LOG_TRACE("[LLE] TID: {:<3} FUNC: {} returned {}", thread_id, import_name(nid), log_hex(read_reg(cpu, 0)));
+                return;
+            }*/
 
-        const std::unordered_set<uint32_t> lle_nid_blacklist = {};
-        log_import_call('L', nid, thread_id, lle_nid_blacklist, pc);
-        write_pc(cpu, export_pc);
-        // TODO: invalidate cache for all threads. Now invalidate_jit_cache is not thread safe.
-        invalidate_jit_cache(cpu, pc, 4 * 3);
+            const std::unordered_set<uint32_t> lle_nid_blacklist = {};
+            log_import_call('L', nid, thread_id, lle_nid_blacklist, pc);
+            write_pc(cpu, export_pc);
+            // TODO: invalidate cache for all threads. Now invalidate_jit_cache is not thread safe.
+            invalidate_jit_cache(cpu, pc, 4 * 3);
+        }
     }
 }
 

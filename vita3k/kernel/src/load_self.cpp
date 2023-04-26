@@ -136,7 +136,7 @@ static bool load_func_imports(const uint32_t *nids, const Ptr<uint32_t> *entries
         }
         */
 
-        if (export_address == kernel.export_nids.end()) {
+        if (true) { //(export_address == kernel.export_nids.end()) {
             stub[0] = 0xef000000; // svc #0 - Call our interrupt hook.
             stub[1] = 0xe1a0f00e; // mov pc, lr - Return to the caller.
             stub[2] = nid; // Our interrupt hook will read this.
