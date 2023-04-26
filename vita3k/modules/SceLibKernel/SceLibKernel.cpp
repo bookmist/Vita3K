@@ -70,7 +70,7 @@ VAR_EXPORT(__sce_libcparam) {
 VAR_EXPORT(__stack_chk_guard) {
     auto ptr = Ptr<uint32_t>(alloc(emuenv.mem, 4, "__stack_chk_guard"));
     // Can be any random value
-    *ptr.get(emuenv.mem) = 0x0DEADBEE;
+    *ptr.get(emuenv.mem) = 0xDEADBEE;
     return ptr.address();
 }
 
