@@ -16,6 +16,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "SceNpTus.h"
+#include <util/tracy.h>
+TRACY_MODULE_NAME(SceNpTus);
 
 EXPORT(int, sceNpTssGetData) {
     return UNIMPLEMENTED();
@@ -33,11 +35,13 @@ EXPORT(int, sceNpTssGetDataNoLimitAsync) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceNpTssGetSmallStorage) {
+EXPORT(int, sceNpTssGetSmallStorage, SceInt32 reqId, void *data, SceSize maxSize, SceSize *contentLength, void *option) {
+    TRACY_FUNC(sceNpTssGetSmallStorage, reqId, data, maxSize, contentLength, option);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceNpTssGetSmallStorageAsync) {
+EXPORT(int, sceNpTssGetSmallStorageAsync, SceInt32 reqId, void *data, SceSize maxSize, SceSize *contentLength, void *option) {
+    TRACY_FUNC(sceNpTssGetSmallStorageAsync, reqId, data, maxSize, contentLength, option);
     return UNIMPLEMENTED();
 }
 
