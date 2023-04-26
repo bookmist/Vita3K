@@ -127,7 +127,6 @@ int ThreadState::start(SceSize arglen, const Ptr<void> argp, bool run_entry_call
         return SCE_KERNEL_ERROR_RUNNING;
     std::unique_lock<std::mutex> thread_lock(mutex);
 
-    run_start_callback = run_entry_callback;
     call_level = 1;
     load_context(*cpu, init_cpu_ctx);
     write_pc(*cpu, entry_point);

@@ -254,7 +254,7 @@ bool USSETranslatorVisitor::i8mad(
     spv::Id src2_mul = load(inst.opr.src2, 0b1111, src2_repeat_offset);
     spv::Id src0_add = load(inst.opr.src0, 0b1111, src0_repeat_offset);
 
-    spv::Id final_add = src0_add;
+    // spv::Id final_add = src0_add;
 
     usse::Swizzle3 add_swizz_rgb = SWIZZLE_CHANNEL_3_DEFAULT;
     bool add_swizz_rgb_src0 = true;
@@ -262,30 +262,30 @@ bool USSETranslatorVisitor::i8mad(
     if ((csel0 != 0) || (asel0 != 0)) {
         // We build source0 (the add component in this loop)
         // Using OpVectorShuffle to construct the final one.
-        std::vector<spv::Id> shuffle_ops = { src0_add, src1_mul };
+        // std::vector<spv::Id> shuffle_ops = { src0_add, src1_mul };
 
         switch (csel0) {
         case 0:
-            shuffle_ops.insert(shuffle_ops.end(), { 0, 1, 2 });
+            // shuffle_ops.insert(shuffle_ops.end(), { 0, 1, 2 });
             break;
 
         case 1:
             // Use src1 rgb
-            shuffle_ops.insert(shuffle_ops.end(), { 4, 5, 6 });
+            // shuffle_ops.insert(shuffle_ops.end(), { 4, 5, 6 });
             add_swizz_rgb_src0 = false;
 
             break;
 
         case 2:
             // Use src0 full alpha
-            shuffle_ops.insert(shuffle_ops.end(), { 3, 3, 3 });
+            // shuffle_ops.insert(shuffle_ops.end(), { 3, 3, 3 });
             add_swizz_rgb = { usse::SwizzleChannel::C_W, usse::SwizzleChannel::C_W, usse::SwizzleChannel::C_W };
 
             break;
 
         case 3:
             // Use src1 full alpha
-            shuffle_ops.insert(shuffle_ops.end(), { 7, 7, 7 });
+            // shuffle_ops.insert(shuffle_ops.end(), { 7, 7, 7 });
             add_swizz_rgb = { usse::SwizzleChannel::C_W, usse::SwizzleChannel::C_W, usse::SwizzleChannel::C_W };
             add_swizz_rgb_src0 = false;
 
@@ -299,12 +299,12 @@ bool USSETranslatorVisitor::i8mad(
         switch (asel0) {
         case 0:
             // Use src0 alpha
-            shuffle_ops.push_back(3);
+            // shuffle_ops.push_back(3);
             break;
 
         case 1:
             // Use src1 alpha
-            shuffle_ops.push_back(7);
+            // shuffle_ops.push_back(7);
             break;
 
         default:
@@ -312,9 +312,9 @@ bool USSETranslatorVisitor::i8mad(
             break;
         }
 
-        final_add = m_b.createOp(spv::OpVectorShuffle, m_b.getTypeId(src0_add), shuffle_ops);
+        // final_add = m_b.createOp(spv::OpVectorShuffle, m_b.getTypeId(src0_add), shuffle_ops);
     }
-
+    /**/
     spv::Id result = m_b.createBinOp(spv::OpIMul, m_b.getTypeId(src1_mul), src1_mul, src2_mul);
     result = m_b.createBinOp(src0_neg ? spv::OpISub : spv::OpIAdd, m_b.getTypeId(src1_mul), result, src0_add);
 

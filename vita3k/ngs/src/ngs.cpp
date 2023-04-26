@@ -409,7 +409,11 @@ bool init_rack(State &ngs, const MemState &mem, System *system, SceNgsBufferInfo
 
     // Alloc spaces for voice
     rack->voices.resize(description->voice_count);
+    if (!description->definition.valid(mem)) {
+        LOG_ERROR("invalid voice definition ptr:{}", log_hex(description->definition.address()));
+    } else {
     rack->vdef = description->definition.get(mem);
+    }
 
     for (auto &voice : rack->voices) {
         voice = rack->alloc<Voice>();

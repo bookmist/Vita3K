@@ -49,29 +49,22 @@ void CorenumAllocator::set_max_core_count(const std::size_t max) {
     alloc.set_maximum(max);
 }
 
-// TODO implement cross platform debug thread name setter and eliminate SDL thread
 struct ThreadParams {
     KernelState *kernel = nullptr;
     SceUID thid = SCE_KERNEL_ERROR_ILLEGAL_THREAD_ID;
     std::shared_ptr<std::binary_semaphore> host_may_destroy_params = std::make_shared<std::binary_semaphore>(0);
-    // std::shared_ptr<SDL_semaphore>(SDL_CreateSemaphore(0), SDL_DestroySemaphore);
 };
 
 static int thread_function(void *data) {
     assert(data != nullptr);
     const ThreadParams params = *static_cast<const ThreadParams *>(data);
     params.host_may_destroy_params->release();
-    // SDL_SemPost(params.host_may_destroy_params.get());
     const ThreadStatePtr thread = lock_and_find(params.thid, params.kernel->threads, params.kernel->mutex);
 #ifdef TRACY_ENABLE
-    std::string th_name;
-    if (!thread->name.empty()) {
-        th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
-    } else {
-        th_name = "TID:" + std::to_string(thread->id) + (!thread->name.empty() ? " " + thread->name : "");
-    }
+    std::string th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
     tracy::SetThreadName(th_name.c_str());
 #endif
+	/*
     if (thread->affinity_mask != 0x70000) {
         uint32_t affinity_mask = 0;
         if (thread->affinity_mask & 0x10000) {
@@ -83,8 +76,9 @@ static int thread_function(void *data) {
         if (thread->affinity_mask & 0x40000) {
             affinity_mask = affinity_mask | 16;
         }
-        // SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
+        SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
     };
+    */
     thread->run_loop();
     const uint32_t r0 = read_reg(*thread->cpu, 0);
 
@@ -170,8 +164,6 @@ ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<c
     params.host_may_destroy_params->acquire();
     th.detach();
 
-    // SDL_CreateThread(&thread_function, thread->name.c_str(), &params);
-    // SDL_SemWait(params.host_may_destroy_params.get());
     return thread;
 }
 
