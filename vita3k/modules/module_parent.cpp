@@ -48,7 +48,9 @@ static constexpr bool LOG_UNK_NIDS_ALWAYS = false;
 
 #define VAR_NID(name, nid) extern const ImportVarFactory import_##name;
 #define NID(name, nid) extern const ImportFn import_##name;
+#define NID_I(name, nid)
 #include <nids/nids.inc>
+#undef NID_I
 #undef NID
 #undef VAR_NID
 
@@ -56,13 +58,10 @@ struct EmuEnvState;
 
 static const ImportFn *resolve_import(uint32_t nid) {
     switch (nid) {
-#define VAR_NID(name, nid)
 #define NID(name, nid) \
     case nid:          \
         return &import_##name;
 #include <nids/nids.inc>
-#undef NID
-#undef VAR_NID
     default:
         return nullptr;
     }
@@ -75,15 +74,12 @@ struct VarExport {
 
 void init_exported_vars(EmuEnvState &emuenv) {
     const auto var_exports = std::to_array<VarExport>({
-#define NID(name, nid)
 #define VAR_NID(name, nid) \
     {                      \
         nid,               \
         import_##name      \
     },
 #include <nids/nids.inc>
-#undef VAR_NID
-#undef NID
     });
 
     for (const auto &var : var_exports) {
@@ -181,7 +177,7 @@ void call_import(EmuEnvState &emuenv, CPUState &cpu, uint32_t nid, SceUID thread
         write_reg(*thread->cpu, 0, 0);
 
         if (!emuenv.missing_nids.contains(nid) || LOG_UNK_NIDS_ALWAYS) {
-            LOG_ERROR("Import function for NID {} not found (thread name: {}, thread ID: {})", log_hex(nid), thread->name, thread_id);
+            LOG_ERROR("Import function for NID {} {} not found (thread name: {}, thread ID: {})", log_hex(nid), import_name(nid), thread->name, thread_id);
             if (!LOG_UNK_NIDS_ALWAYS)
                 emuenv.missing_nids.insert(nid);
         }

@@ -7,7 +7,7 @@ set(SOURCE_LIST
 	SceAppUtil/SceAppUtilBook.cpp
 	SceAppUtil/SceAppUtilCache.cpp
 	SceAppUtil/SceAppUtilExt.cpp
-	SceAtrac/SceAtrac.cpp
+	#SceAtrac/SceAtrac.cpp
 	SceAudio/SceAudio.cpp
 	SceAudiodec/SceAudiodecUser.cpp
 	SceAudioenc/SceAudioencUser.cpp
@@ -15,7 +15,7 @@ set(SOURCE_LIST
 	SceAvcodec/SceAvcodec.cpp
 	SceAvcodecUser/SceVideoencUser.cpp
 	SceAVConfig/SceAVConfig.cpp
-	SceAvPlayer/SceAvPlayer.cpp
+	#SceAvPlayer/SceAvPlayer.cpp
 	SceBbmc/SceBbmc.cpp
 	SceBgAppUtil/SceBgAppUtil.cpp
 	SceBt/SceBt.cpp
@@ -41,9 +41,9 @@ set(SOURCE_LIST
 	SceDriverUser/SceRtcUser.cpp
 	SceDTrace/SceDTrace.cpp
 	SceError/SceError.cpp
-	SceFace/SceFace.cpp
+	#SceFace/SceFace.cpp
 	SceFiber/SceFiber.cpp
-	SceFios2/SceFios2.cpp
+	#SceFios2/SceFios2.cpp
 	SceFios2Kernel/SceFios2Kernel.cpp
 	SceFios2Kernel/SceFios2Kernel02.cpp
 	SceFios2Kernel/SceFios2KernelForDriver.cpp
@@ -55,9 +55,9 @@ set(SOURCE_LIST
 	SceGxm/SceGxmInternalForGles.cpp
 	SceGxm/SceGxmInternalForReplay.cpp
 	SceGxm/SceGxmInternalForVsh.cpp
-	SceHandwriting/SceHandwriting.cpp
+	#SceHandwriting/SceHandwriting.cpp
 	SceHid/SceHid.cpp
-	SceHttp/SceHttp.cpp
+	#SceHttp/SceHttp.cpp
 	SceIme/SceIme.cpp
 	SceIpmi/SceIpmi.cpp
 	SceIncomingDialog/SceIncomingDialog.cpp
@@ -73,12 +73,12 @@ set(SOURCE_LIST
 	SceKernelThreadMgr/SceThreadmgrCoredumpTime.cpp
 	SceKernelThreadMgr/SceThreadmgrForDriver.cpp
 	SceKernelThreadMgr/SceThreadmgrForKernel.cpp
-	SceLibc/SceLibc.cpp
-	SceLibc/SceLibm.cpp
-	SceLibc/SceLibstdcxx.cpp
+	#SceLibc/SceLibc.cpp
+	#SceLibc/SceLibm.cpp
+	#SceLibc/SceLibstdcxx.cpp
 	SceLibDbg/SceDbg.cpp
-	SceLibft2/SceFt2.cpp
-	SceLibJson/SceLibJson.cpp
+	#SceLibft2/SceFt2.cpp
+	#SceLibJson/SceLibJson.cpp
 	SceLibKernel/SceKernelForMono.cpp
 	SceLibKernel/SceKernelForVM.cpp
 	SceLibKernel/SceLibGcc.cpp
@@ -86,17 +86,17 @@ set(SOURCE_LIST
 	SceLibKernel/SceLibRng.cpp
 	SceLibKernel/SceLibSsp.cpp
 	SceLibKernel/SceRtabi.cpp
-	SceLibMono/SceLibMono.cpp
-	SceLibMonoBridge/SceLibMonoBridge.cpp
+	#SceLibMono/SceLibMono.cpp
+	#SceLibMonoBridge/SceLibMonoBridge.cpp
 	SceLibMp4Recorder/SceLibMp4Recorder.cpp
 	SceLibMtp/SceLibMtp.cpp
-	SceLibXml/SceLibXml.cpp
+	#SceLibXml/SceLibXml.cpp
 	SceLiveArea/SceLiveAreaUtil.cpp
 	SceLocation/SceLibLocation.cpp
 	SceLocationExtension/SceLibLocationExtension.cpp
 	SceLsdb/SceLsdb.cpp
 	SceMotionDev/SceMotionDev.cpp
-	SceMp4/SceMp4.cpp
+	#SceMp4/SceMp4.cpp
 	SceMtpIfDriver/SceMtpIf.cpp
 	SceMusicExport/SceMusicExport.cpp
 	SceNearDialogUtil/SceNearDialogUtil.cpp
@@ -135,14 +135,14 @@ set(SOURCE_LIST
 	ScePaf/ScePafWidget.cpp
 	ScePamgr/ScePamgr.cpp
 	ScePerf/ScePerf.cpp
-	ScePgf/ScePgf.cpp
+	#ScePgf/ScePgf.cpp
 	ScePhotoExport/ScePhotoExport.cpp
 	ScePower/ScePower.cpp
 	SceProcessmgr/SceProcessmgr.cpp
 	SceProcessmgr/SceProcessmgrForDriver.cpp
 	ScePromoterUtil/ScePromoterUtil.cpp
 	ScePspnetAdhoc/ScePspnetAdhoc.cpp
-	ScePvf/ScePvf.cpp
+	#ScePvf/ScePvf.cpp
 	SceRazorCapture/SceRazorCapture.cpp
 	SceRazorHud/SceRazorHud.cpp
 	SceRegistryMgr/SceRegMgr.cpp
@@ -152,7 +152,7 @@ set(SOURCE_LIST
 	SceRtc/SceRtc.cpp
 	SceRtc/SceRtcForDriver.cpp
 	SceRudp/SceLibRudp.cpp
-	SceSas/SceSas.cpp
+	#SceSas/SceSas.cpp
 	SceSblACMgr/SceSblACMgr.cpp
 	SceSblGcAuthMgr/SceSblGcAuthMgr.cpp
 	SceSblPostSsMgr/SceSblLicMgr.cpp
@@ -170,10 +170,10 @@ set(SOURCE_LIST
 	SceShellSvc/SceShellUtil.cpp
 	SceShellSvc/SceShellUtilLaunchApp.cpp
 	SceShutterSound/SceShutterSound.cpp
-	SceSmart/SceSmart.cpp
-	SceSqlite/SceSqlite.cpp
-	SceSsl/SceSsl.cpp
-	SceSsl/SceSslInternal.cpp
+	#SceSmart/SceSmart.cpp
+	#SceSqlite/SceSqlite.cpp
+	#SceSsl/SceSsl.cpp
+	#SceSsl/SceSslInternal.cpp
 	SceStdio/SceStdio.cpp
 	SceSulpha/SceSulpha.cpp
 	SceSysmem/SceCpu.cpp
@@ -187,7 +187,7 @@ set(SOURCE_LIST
 	SceSysmem/SceSysmem.cpp
 	SceSysmem/SceSysmemForDriver.cpp
 	SceSysmodule/SceSysmodule.cpp
-	SceSystemGesture/SceSystemGesture.cpp
+	#SceSystemGesture/SceSystemGesture.cpp
 	SceTeleportClient/SceTeleportClient.cpp
 	SceTeleportServer/SceTeleportServer.cpp
 	SceTouch/SceTouch.cpp
@@ -195,7 +195,7 @@ set(SOURCE_LIST
 	SceUdcd/SceUdcd.cpp
 	SceUlobjDbg/SceUlobjDbg.cpp
 	SceUlobjMgr/SceUlobjMgr.cpp
-	SceUlt/SceUlt.cpp
+	#SceUlt/SceUlt.cpp
 	SceUsbd/SceUsbdForUser.cpp
 	SceUsbPspcm/SceUsbPspcm.cpp
 	SceUsbSerial/SceUsbSerial.cpp
@@ -203,7 +203,7 @@ set(SOURCE_LIST
 	SceUsbstorVStorDriver/SceUsbstorVStor.cpp
 	SceVideodec/SceVideodecUser.cpp
 	SceVideoExport/SceVideoExport.cpp
-	SceVoice/SceVoice.cpp
+	#SceVoice/SceVoice.cpp
 	SceVoiceQoS/SceVoiceQoS.cpp
 	SceVshBridge/SceDrmBridge.cpp
 	SceVshBridge/SceVshBridge.cpp
