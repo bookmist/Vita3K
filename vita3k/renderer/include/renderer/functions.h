@@ -19,7 +19,6 @@
 
 #include <renderer/commands.h>
 #include <renderer/types.h>
-#include <renderer/types.h>
 #include <util/log.h>
 
 struct MemState;
