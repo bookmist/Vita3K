@@ -137,6 +137,11 @@ public:
                 LOG_CRITICAL("PC is 0x{:x}", pc);
             else
                 LOG_ERROR("Executing: {}", disassemble(*parent, pc, nullptr));
+            if constexpr (sizeof(T) == 4) {
+                if (ptr.address() == 0 && pc == 0) {
+                    return 0xe1a0f00e; // mov pc, lr - Return to the caller.
+                }
+            }
             return 0;
         }
 
