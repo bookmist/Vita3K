@@ -68,16 +68,16 @@
 			<saved_data_delete>Удалить эти сохранённые данные?</saved_data_delete>
 		</delete>
 		<info>
-			<eligible>Допущен</eligible>
-			<ineligible>Не допущен</ineligible>
+		<eligible>Доступно</eligible>
+		<ineligible>Не доступно</ineligible>	
 			<level>Уровень</level>
-			<name>Название</name>
-			<trophy_earning>Полученные призы</trophy_earning>
+		<name>Назв.</name>		
+		<trophy_earning>Получение призов</trophy_earning>	
 			<parental_controls>Родительский контроль</parental_controls>
-			<updated>Обновлен</updated>
+		<updated>Обновлено</updated>		
 			<size>Размер</size>
 			<version>Версия</version>
-			<last_time_used>Время последнего использования</last_time_used>
+		<last_time_used>Время послед. использования</last_time_used>
 			<time_used>Время использования</time_used>
 			<never>Никогда</never>
 		</info>
@@ -89,7 +89,7 @@
 		<cancel>Отмена</cancel>
 		<close>Закрыть</close>
 		<delete>Удалить</delete>
-		<file_corrupted>Файл поврежден.</file_corrupted>
+		<file_corrupted>Файл повреждён.</file_corrupted>
 		<microphone_disabled>Включите микрофон.</microphone_disabled>
 		<no>Нет</no>
 		<please_wait>Подождите...</please_wait>
@@ -237,16 +237,16 @@
 	</compile_shaders>
 
 	<content_manager name="Управление данными">
-		<application name="Приложения">
-			<delete>Выбранные приложения и все связанные с ними данные, в том числе сохраненные данные, будут удалены.</delete>
+		<application name="Приложение">
+			<delete>Выбранные приложения и все связанные с ними данные, в том числе сохранённые данные, будут удалены.</delete>
 			<no_item>Отсутствуют элементы данных.</no_item>
 		</application>
-		<saved_data name="Сохраненные данные">
-			<delete>Выбранные сохраненные данные будут удалены.</delete>
-			<no_saved_data>Отсутствуют сохраненные данные.</no_saved_data>
+		<saved_data name="Сохранённые данные">
+			<delete>Выбранные сохранённые данные будут удалены.</delete>
+			<no_saved_data>Отсутствуют сохранённые данные.</no_saved_data>
 		</saved_data>
 		<theme>Тема</theme>
-		<free_space>Cвободное</free_space>
+		<free_space>Cвободно</free_space>
 		<clear_all>Очистить все</clear_all>
 	</content_manager>
 
@@ -305,7 +305,7 @@
 			<delete>
 				<cancel_deleting>Отменить удаление?</cancel_deleting>
 				<deletion_complete>Удаление завершено.</deletion_complete>
-				<delete_saved_data>Удалить эти сохраненные данные?</delete_saved_data>
+				<delete_saved_data>Удалить эти сохранённые данные?</delete_saved_data>
 			</delete>
 			<info>
 				<details>Подробности</details>
@@ -313,23 +313,23 @@
 			</info>
 			<load name="Загрузить">
 				<cancel_loading>Отменить загрузку?</cancel_loading>
-				<no_saved_data>Отсутствуют сохраненные данные.</no_saved_data>
+				<no_saved_data>Отсутствуют сохранённые данные.</no_saved_data>
 				<load_complete>Загрузка завершена.</load_complete>
-				<loading>Идет загрузка...</loading>
-				<load_saved_data>Загрузить эти сохраненные данные?</load_saved_data>
+				<loading>Идёт загрузка...</loading>
+				<load_saved_data>Загрузить эти сохранённые данные?</load_saved_data>
 			</load>
 			<save name="Сохранить">
 				<cancel_saving>Отменить сохранение?</cancel_saving>
 				<could_not_save>Не удалось сохранить файл.
 На карте памяти недостаточно свободного места.</could_not_save>
 				<not_free_space>На карте памяти недостаточно свободного места.</not_free_space>
-				<new_saved_data>Новые сохраненные данные</new_saved_data>
+				<new_saved_data>Новые сохранённые данные</new_saved_data>
 				<saving_complete>Сохранение завершено.</saving_complete>
 				<save_the_data>Сохранить данные?</save_the_data>
-				<saving>Идет сохранение...</saving>
-				<warning_saving>Идет сохранение...
+				<saving>Идёт сохранение...</saving>
+				<warning_saving>Идёт сохранение...
 Не выключайте систему и не закрывайте приложение.</warning_saving>
-				<overwrite_saved_data>Перезаписать сохраненные данные?</overwrite_saved_data>
+				<overwrite_saved_data>Перезаписать сохранённые данные?</overwrite_saved_data>
 			</save>
 		</save_data>
 	</dialog>
@@ -365,14 +365,14 @@
 		<notif_deleted>Уведомления будут удалены.</notif_deleted>
 		<install_failed>Не удалось выполнить установку.</install_failed>
 		<install_complete>Установка завершена.</install_complete>
-		<installing>Идет установка...</installing>
+		<installing>Идёт установка...</installing>
 		<no_notif>Уведомления отсутствуют.</no_notif>
 		<trophy_earned>Вы получили приз!</trophy_earned>
 	</indicator>
 
 	<initial_setup>
 		<back>Назад</back>
-		<completed_setup>Теперь начальная установка завершена.
+		<completed_setup>Начальная настройка завершена.
 Ваша система Vita3K готова!</completed_setup>
 		<select_language>Выбрать язык.</select_language>
 		<install_firmware>Установить прошивку.</install_firmware>
@@ -388,7 +388,7 @@
 	<install_dialog>
 		<firmware_install>
 			<firmware_installation>Установка прошивки</firmware_installation>
-			<firmware_installing>Идет установка, пожалуйста, подождите...</firmware_installing>
+			<firmware_installing>Идёт установка, пожалуйста, подождите...</firmware_installing>
 			<successed_install_firmware>Прошивка успешно установлена.</successed_install_firmware>
 			<firmware_version>Версия прошивки:</firmware_version>
 			<no_font_exist>Пакет шрифтов прошивки отсутствует, пожалуйста, скачайте и установите его.</no_font_exist>
@@ -483,7 +483,7 @@
 				</information>
 				<delete>Эта тема будет удалена.</delete>
 			</theme>
-			<start_screen name="Экран запуска">
+			<start_screen name="Начальный экран">
 				<image>Изображение</image>
 				<add_image>Добавить
 изображение</add_image>
@@ -500,8 +500,8 @@
 				<mm_dd_yyyy>ММ/ДД/ГГГГ</mm_dd_yyyy>
 			</date_format>
 			<time_format name="Формат времени">
-				<clock_12_hour>12-часовой формат</clock_12_hour>
-				<clock_24_hour>24-часовой формат</clock_24_hour>
+				<clock_12_hour>12-часовой форм.</clock_12_hour>
+				<clock_24_hour>24-часовой форм.</clock_24_hour>
 			</time_format>
 		</date_time>
 		<language name="Язык">
@@ -509,22 +509,22 @@
 			<input_language name="Языки ввода">
 				<keyboards name="Клавиатуры">
 					<ime_languages>
-						<lang id="1">Датский</lang>
-						<lang id="2">Немецкий</lang>
-						<lang id="262144">Английский (Великобритания)</lang>
-						<lang id="4">Английский (США)</lang>
-						<lang id="8">Испанский</lang>
-						<lang id="16">Французский</lang>
-						<lang id="32">Итальянский</lang>
-						<lang id="64">Голландский</lang>
-						<lang id="128">Норвежский</lang>
-						<lang id="256">Польский</lang>
-						<lang id="131072">Португальский (Бразилия)</lang>
-						<lang id="512">Португальский (Португалия)</lang>
-						<lang id="1024">Русский</lang>
-						<lang id="2048">Финский</lang>
-						<lang id="4096">Шведский</lang>
-						<lang id="524288">турецкий</lang>
+						<lang id="1">Датская</lang>
+						<lang id="2">Немецкая</lang>
+						<lang id="262144">Английская (Великобритания)</lang>
+						<lang id="4">Английская (США)</lang>
+						<lang id="8">Испанская</lang>
+						<lang id="16">Французская</lang>
+						<lang id="32">Итальянская</lang>
+						<lang id="64">Голландская</lang>
+						<lang id="128">Норвежская</lang>
+						<lang id="256">Польская</lang>
+						<lang id="131072">Португальская (Бразилия)</lang>
+						<lang id="512">Португальская (Португалия)</lang>
+						<lang id="1024">Русская</lang>
+						<lang id="2048">Финская</lang>
+						<lang id="4096">Шведская</lang>
+						<lang id="524288">Турецкая</lang>
 					</ime_languages>
 				</keyboards>
 			</input_language>
@@ -559,17 +559,17 @@
 		<locked>Не
 разбл.</locked>
 		<details>Подробности</details>
-		<earned>Получены</earned>
+		<earned>Получено</earned>
 		<name>Название</name>
 		<no_trophies>Призы отсутствуют.
 Можно получать призы, используя приложение, поддерживающее функцию призов.</no_trophies>
-		<not_earned>Не получен</not_earned>
+		<not_earned>Не получено</not_earned>
 		<original>Исходный</original>
 		<sort>Сортировка</sort>
 		<trophies>Призы</trophies>
 		<grade>Категория</grade>
 		<progress>Выполнено</progress>
-		<updated>Обновлен</updated>
+		<updated>Новые</updated>
 	</trophy_collection>
 
 	<user_management>
@@ -593,13 +593,13 @@
 		<automatic_user_login>Автоматический вход в систему</automatic_user_login>
 	</user_management>
 
-	<vita3k_update name="Обновление Vita3K">
+	<vita3k_update name="Обновить Vita3K">
  		<new_version_available>Доступна новая версия Vita3K.</new_version_available>
 		<back>Назад</back>
 		<cancel_update_resume>Отменить обновление?
 Если отменить обновление, то при следующем его запуске Vita3K начнет загрузку с этой точки.</cancel_update_resume>
-		<downloading>Идет загрузка...
-После завершения загрузки Vita3K автоматически перезапустится и установит новое обновление.</downloading>
+		<downloading>Идёт загрузка...
+После завершения загрузки Vita3K автоматически перезапустится и установит новую версию.</downloading>
 		<not_complete_update>Не удалось завершить обновление.</not_complete_update>
 		<minutes_left>Осталось минут: {}</minutes_left>
 		<next>Далее</next>
