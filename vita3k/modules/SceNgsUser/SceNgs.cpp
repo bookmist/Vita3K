@@ -672,10 +672,10 @@ EXPORT(SceInt32, sceNgsVoiceGetStateData, ngs::Voice *voice, const SceUInt32 mod
     if (mem) {
         memcpy(mem, storage->voice_state_data.data(), std::min<std::size_t>(mem_size, storage->voice_state_data.size()));
 
-	    if (mem_size > 128) {
+    if (mem_size > 128) {
         std::string file_name = fmt::format("soundlog/ngs_voice_{}_module_{}.dat", log_hex(voice_handle.address()), module);
         log_to_file(file_name, reinterpret_cast<char *>(mem), mem_size);
-	    }
+    }
 	}
     return SCE_NGS_OK;
 }
