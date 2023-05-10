@@ -19,6 +19,7 @@
 
 #include <module/module.h>
 
+struct SceGxmInitializeParams;
 struct SceGxmRenderTargetParams;
 struct SceGxmRenderTarget;
 struct SceGxmInitializeParams;
