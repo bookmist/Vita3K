@@ -67,7 +67,7 @@ EXPORT(int, _sceKernelOpenModule) {
 EXPORT(int, _sceKernelStartModule, SceUID uid, SceSize args, const Ptr<void> argp, SceUInt32 flags, const Ptr<SceKernelStartModuleOpt> pOpt, int *pRes) {
     TRACY_FUNC(_sceKernelStartModule, uid, args, argp, flags, pOpt, pRes);
 
-    return start_module(emuenv, uid, args, argp, pRes);
+    return start_module(emuenv.kernel, thread_id, module, args, argp, pRes);
 }
 
 EXPORT(int, _sceKernelStopModule) {
