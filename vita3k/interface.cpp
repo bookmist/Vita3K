@@ -817,7 +817,7 @@ ExitCode run_app(EmuEnvState &emuenv, int32_t main_module_id) {
     }
     const SceUID main_thread_id = thread->id;
 
-    const ThreadStatePtr main_thread = util::find(main_thread_id, emuenv.kernel.threads);
+    const ThreadStatePtr main_thread = emuenv.kernel.get_thread(main_thread_id);
 
     // Run `module_start` export (entry point) of loaded libraries
     for (auto &[_, module] : emuenv.kernel.loaded_modules) {

@@ -25,22 +25,32 @@
 
 TRACY_MODULE_NAME(SceAudiodecUser);
 #ifdef TRACY_ENABLE
-ENUM_TO_STRING_GEN(DecoderQuery,
-    WIDTH,
-    HEIGHT,
-    CHANNELS,
-    BIT_RATE,
-    SAMPLE_RATE,
-    AT9_SAMPLE_PER_FRAME,
-    AT9_SAMPLE_PER_SUPERFRAME,
-    AT9_FRAMES_IN_SUPERFRAME,
-    AT9_SUPERFRAME_SIZE)
+template <>
+inline std::string to_debug_str<DecoderQuery>(const MemState &mem, DecoderQuery type) {
+    switch (type) {
+    case DecoderQuery::WIDTH: return "WIDTH";
+    case DecoderQuery::HEIGHT: return "HEIGHT";
+    case DecoderQuery::CHANNELS: return "CHANNELS";
+    case DecoderQuery::BIT_RATE: return "BIT_RATE";
+    case DecoderQuery::SAMPLE_RATE: return "SAMPLE_RATE";
+    case DecoderQuery::AT9_SAMPLE_PER_FRAME: return "AT9_SAMPLE_PER_FRAME";
+    case DecoderQuery::AT9_SAMPLE_PER_SUPERFRAME: return "AT9_SAMPLE_PER_SUPERFRAME";
+    case DecoderQuery::AT9_FRAMES_IN_SUPERFRAME: return "AT9_FRAMES_IN_SUPERFRAME";
+    case DecoderQuery::AT9_SUPERFRAME_SIZE: return "AT9_SUPERFRAME_SIZE";
+    default: return std::to_string(static_cast<typename std::underlying_type<DecoderQuery>::type>(type));
+    }
+}
 
-ENUM_TO_STRING_GEN(SceAudiodecCodec,
-    SCE_AUDIODEC_TYPE_AT9,
-    SCE_AUDIODEC_TYPE_MP3,
-    SCE_AUDIODEC_TYPE_AAC,
-    SCE_AUDIODEC_TYPE_CELP)
+template <>
+inline std::string to_debug_str<SceAudiodecCodec>(const MemState &mem, SceAudiodecCodec type) {
+    switch (type) {
+    case SceAudiodecCodec::SCE_AUDIODEC_TYPE_AT9: return "SCE_AUDIODEC_TYPE_AT9";
+    case SceAudiodecCodec::SCE_AUDIODEC_TYPE_MP3: return "SCE_AUDIODEC_TYPE_MP3";
+    case SceAudiodecCodec::SCE_AUDIODEC_TYPE_AAC: return "SCE_AUDIODEC_TYPE_AAC";
+    case SceAudiodecCodec::SCE_AUDIODEC_TYPE_CELP: return "SCE_AUDIODEC_TYPE_CELP";
+    default: return std::to_string(static_cast<typename std::underlying_type<SceAudiodecCodec>::type>(type));
+    }
+}
 
 #endif // TRACY_ENABLE
 

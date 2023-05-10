@@ -2560,7 +2560,7 @@ EXPORT(int, sceGxmInitialize, const SceGxmInitializeParams *params) {
     const uint32_t max_queue_size = std::min(std::max(params->displayQueueMaxPendingCount, 2U), 3U) - 1;
     emuenv.gxm.display_queue.maxPendingCount_ = max_queue_size;
 
-    const ThreadStatePtr main_thread = util::find(thread_id, emuenv.kernel.threads);
+    const ThreadStatePtr main_thread = emuenv.kernel.get_thread(thread_id);
     int affinity_flag = SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT;
     if (params->flags == 0) {
         affinity_flag = (0x01 << 16);
