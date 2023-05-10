@@ -79,15 +79,14 @@ inline std::string to_debug_str(const MemState &mem) {
 #include <boost/preprocessor/variadic/to_seq.hpp>
 #define __ENUM_TO_STRING_GEN_CASE_ITEM(r, enum_name, enum_item) \
     case enum_name::enum_item:                                  \
-        return BOOST_PP_STRINGIZE(enum_item);                   \
-        break;
+        return BOOST_PP_STRINGIZE(enum_item);
 
 #define ENUM_TO_STRING_GEN(enum_name, ...)                                                                          \
     template <>                                                                                                     \
-    inline std::string to_debug_str<enum_name>(const MemState &mem, enum_name data) {                               \
-        switch (data) {                                                                                             \
+    inline std::string to_debug_str<enum_name>(const MemState &mem, enum_name type) {                               \
+        switch (type) {                                                                                             \
             BOOST_PP_SEQ_FOR_EACH(__ENUM_TO_STRING_GEN_CASE_ITEM, enum_name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-        default: return to_debug_str(mem, static_cast<typename std::underlying_type<enum_name>::type>(data));       \
+        default: return std::to_string(static_cast<typename std::underlying_type<enum_name>::type>(type));          \
         }                                                                                                           \
     }
 
