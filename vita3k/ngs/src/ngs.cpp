@@ -108,7 +108,7 @@ SceNgsBufferInfo *ModuleData::lock_params(const MemState &mem) {
 bool ModuleData::unlock_params(const MemState &mem) {
     const std::lock_guard<std::mutex> guard(*parent->voice_mutex);
 
-    parent->rack->modules[index]->on_param_change(mem, *this);
+        parent->rack->modules[index]->on_param_change(mem, *this);
 
     if (flags & PARAMS_LOCK) {
         flags &= ~PARAMS_LOCK;
@@ -240,7 +240,7 @@ void Voice::transition(const VoiceState new_state) {
     state = new_state;
 
     for (size_t i = 0; i < datas.size(); i++) {
-        rack->modules[i]->on_state_change(datas[i], old);
+            rack->modules[i]->on_state_change(datas[i], old);
     }
 }
 
@@ -405,7 +405,11 @@ bool init_rack(State &ngs, const MemState &mem, System *system, SceNgsBufferInfo
 
     // Alloc spaces for voice
     rack->voices.resize(description->voice_count);
+    if (!description->definition.valid(mem)) {
+        LOG_ERROR("invalid voice definition ptr:{}", log_hex(description->definition.address()));
+    } else {
     rack->vdef = description->definition.get(mem);
+    }
 
     for (auto &voice : rack->voices) {
         voice = rack->alloc<Voice>();
