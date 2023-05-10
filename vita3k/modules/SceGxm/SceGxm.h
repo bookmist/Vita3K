@@ -19,8 +19,13 @@
 
 #include <module/module.h>
 
+struct SceGxmRenderTargetParams;
+struct SceGxmRenderTarget;
 struct SceGxmInitializeParams;
+
 EXPORT(int, sceGxmInitialize, const SceGxmInitializeParams *params);
+EXPORT(int, sceGxmCreateRenderTarget, const SceGxmRenderTargetParams *params, Ptr<SceGxmRenderTarget> *renderTarget);
+EXPORT(int, sceGxmGetRenderTargetMemSize, const SceGxmRenderTargetParams *params, uint32_t *hostMemSize);
 
 BRIDGE_DECL(_sceGxmBeginScene)
 BRIDGE_DECL(_sceGxmMidSceneFlush)
