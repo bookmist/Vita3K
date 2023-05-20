@@ -1051,10 +1051,11 @@ std::string OSVersion() {
     }
 
     // Windows Service Pack version
-    std::wstring sp_version(osvi.szCSDVersion);
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-    if (std::wcslen(osvi.szCSDVersion) > 0)
+    if (osvi.szCSDVersion && osvi.szCSDVersion[0] != 0) {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+        std::wstring sp_version(osvi.szCSDVersion);
         os << " " << convert.to_bytes(sp_version.data(), sp_version.data() + sp_version.size());
+    }
 
     // Windows build
     os << " (build " << osvi.dwBuildNumber << ")";
