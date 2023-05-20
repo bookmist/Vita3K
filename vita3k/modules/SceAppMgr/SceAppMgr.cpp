@@ -76,7 +76,7 @@ EXPORT(int, _sceAppMgrAppParamGetInt) {
 EXPORT(SceInt32, _sceAppMgrAppParamGetString, int pid, int param, char *string, int length) {
     TRACY_FUNC(_sceAppMgrAppParamGetString, pid, param, string, length);
     LOG_CONSOLE(_sceAppMgrAppParamGetString, pid, param, string, length);
-    if (emuenv.sfo_handle.entries.size() == 0) {
+    if (emuenv.sfo_handle.entries.empty()) {
         vfs::FileBuffer params;
         if (vfs::read_file(VitaIoDevice::ux0, params, emuenv.pref_path, "app/" + emuenv.io.title_id + "/sce_sys/param.sfo")) {
             // SfoFile sfo_handle;

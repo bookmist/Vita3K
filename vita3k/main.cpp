@@ -390,17 +390,16 @@ int main(int argc, char *argv[]) {
         SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, compiling shaders...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
         BS::thread_pool pool;
         for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
-            pool.push_task([&]() { emuenv.renderer->precompile_shader(hash); });
+            pool.push_task([&renderer = emuenv.renderer, hash]() { renderer->precompile_shader(hash); });
         }
         /*
         for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
-            std::thread th([&]() { emuenv.renderer->precompile_shader(hash); });
+            std::thread th([&renderer = emuenv.renderer, hash]() { emuenv.renderer->precompile_shader(hash); });
             th.detach();
         }*/
         // uint32_t totals = uint32_t(emuenv.renderer->shaders_cache_hashs.size());
         //  while (totals < emuenv.renderer->programs_count_pre_compiled) {
-        while (pool.get_tasks_total() > 0) {
-            handle_events(emuenv, gui);
+        while (handle_events(emuenv, gui) && pool.get_tasks_total() > 0) {
             gui::draw_begin(gui, emuenv);
             draw_app_background(gui, emuenv);
 

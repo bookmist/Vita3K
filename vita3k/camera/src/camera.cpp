@@ -25,8 +25,10 @@
 
 class Camera::CameraImpl {};
 
-Camera::Camera(){};
-Camera::~Camera(){};
+Camera::Camera() = default;
+;
+Camera::~Camera() = default;
+;
 
 int Camera::get_attribute(CameraAttributes attribute) {
     switch (attribute) {

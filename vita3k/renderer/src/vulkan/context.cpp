@@ -450,8 +450,13 @@ void VKContext::stop_recording(const SceGxmNotification &notif1, const SceGxmNot
 
     vk::SubmitInfo submit_info{};
     submit_info.setCommandBuffers(cmdbuffers_to_submit);
-
-    state.general_queue.submit(submit_info, fence);
+    try {
+        state.general_queue.submit(submit_info, fence);
+    } catch (vk::SystemError &e) {
+        LOG_ERROR("Could not submit command buffers: {}", e.what());
+        // assert(false);
+        // return;
+    }
     cmdbuffers_to_submit.clear();
     state.frame().rendered_fences.push_back(fence);
 

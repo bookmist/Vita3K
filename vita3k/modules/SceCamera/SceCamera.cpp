@@ -290,7 +290,7 @@ inline std::string to_debug_str<SceCameraDataRange>(const MemState &mem, SceCame
 }
 
 template <typename T>
-    requires std::is_enum<T>::value
+    requires std::is_enum_v<T>
 std::string to_debug_str(const MemState &mem, T type) {
     auto name = enum_name(type);
     if (name.empty())

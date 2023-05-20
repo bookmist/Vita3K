@@ -556,9 +556,9 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
             last_time["home"] += emuenv.cfg.delay_background;
 
             if (gui.users[emuenv.io.user_id].use_theme_bg)
-                gui.current_theme_bg = ++gui.current_theme_bg % uint64_t(gui.theme_backgrounds.size());
+                gui.current_theme_bg = (gui.current_theme_bg+1) % uint64_t(gui.theme_backgrounds.size());
             else if (gui.user_backgrounds.size() > 1)
-                gui.current_user_bg = ++gui.current_user_bg % uint64_t(gui.user_backgrounds.size());
+                gui.current_user_bg = (gui.current_user_bg+1) % uint64_t(gui.user_backgrounds.size());
         }
     }
 

@@ -410,7 +410,7 @@ EXPORT(SceUID, taiHookFunctionExportForUser, tai_hook_ref_t *p_hook, tai_hook_ar
 }
 EXPORT(SceUID, taiHookFunctionImportForUser, tai_hook_ref_t *p_hook, tai_hook_args_t *args) {
     TRACY_FUNC(taiHookFunctionImportForUser, p_hook, args);
-    LOG_CONSOLE(taiHookFunctionImportForUser, p_hook, args->module, args->library_nid, args->func_nid, args->hook_func);
+    // LOG_CONSOLE(taiHookFunctionImportForUser, p_hook, args->module, args->library_nid, args->func_nid, args->hook_func);
     auto name = import_name(args->func_nid);
     LOG_TRACE("try to patch {} (nid:{})", name, log_hex(args->func_nid));
     return UNIMPLEMENTED();
@@ -430,7 +430,7 @@ EXPORT(SceUID, taiHookFunctionOffsetForUser, tai_hook_ref_t *p_hook, tai_offset_
  *             `TAI_IGNORE_MODULE_NID` then the first module loaded for the
  *             process will be returned.
  *
- * @param[in]  pid   The pid
+ * @param[in]  pid      The pid
  * @param[in]  name  The name to lookup. Can be NULL.
  * @param[in]  nid   The nid to lookup. Can be `TAI_IGNORE_MODULE_NID`.
  * @param[out] info  The information
@@ -449,7 +449,7 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
     LOG_CONSOLE(taiGetModuleInfo, module_name, info);
     if (info->size != sizeof(tai_module_info_t)) {
         LOG_ERROR("Structure size too small: %d", info->size);
-        return TAI_ERROR_SYSTEM;
+ return TAI_ERROR_SYSTEM;
     }
 
     int module_id = 0;
@@ -459,11 +459,11 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
                 module_id = module_id_;
             }
         }
-    } else {
+ } else {
         for (auto &[module_id_, module] : emuenv.kernel.loaded_modules) {
             if (strncmp(module->info.module_name, module_name, sizeof(module->info.module_name)) == 0) {
                 module_id = module_id_;
-            }
+ }
         }
     }
     if (module_id == 0) {
@@ -471,7 +471,7 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
     }
     auto &module_info = emuenv.kernel.loaded_modules[module_id];
     const sce_module_info_raw *int_mod_info = reinterpret_cast<const sce_module_info_raw *>(module_info->info_segment_address.get(emuenv.mem) + module_info->info_offset);
-    info->modid = module_id;
+                info->modid = module_id;
     info->module_nid = int_mod_info->module_nid;
     info->exports_start = int_mod_info->export_top;
     info->exports_end = int_mod_info->export_end;
@@ -479,7 +479,7 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
     info->imports_end = int_mod_info->import_end;
     strncpy(info->name, int_mod_info->name, 27);
     info->name[26] = '\0';
-    // LOG_TRACE("taiGetModuleInfo,module:{}",module);
+    // LOG_TRACE("taiGetModuleInfo,module:{}",module_name);
     return 0; // UNIMPLEMENTED();
 }
 EXPORT(int, taiHookRelease, SceUID tai_uid, tai_hook_ref_t hook) {

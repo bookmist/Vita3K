@@ -139,7 +139,7 @@ bool Atrac9Module::decode_more_data(KernelState &kern, const MemState &mem, cons
             return true;
         }
         // make the byte position negative, will be positive at the end
-        state->current_byte_position_in_buffer = -old_size;
+        state->current_byte_position_in_buffer = -(int32_t)old_size;
         input = temp_buffer.data();
     }
 

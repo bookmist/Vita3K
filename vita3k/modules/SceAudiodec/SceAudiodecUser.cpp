@@ -39,7 +39,7 @@ inline std::string to_debug_str<DecoderQuery>(const MemState &mem, DecoderQuery 
     case DecoderQuery::AT9_SAMPLE_PER_SUPERFRAME: return "AT9_SAMPLE_PER_SUPERFRAME";
     case DecoderQuery::AT9_FRAMES_IN_SUPERFRAME: return "AT9_FRAMES_IN_SUPERFRAME";
     case DecoderQuery::AT9_SUPERFRAME_SIZE: return "AT9_SUPERFRAME_SIZE";
-    default: return std::to_string(static_cast<typename std::underlying_type<DecoderQuery>::type>(type));
+    default: return std::to_string(static_cast<std::underlying_type_t<DecoderQuery>>(type));
     }
 }
 
@@ -70,7 +70,7 @@ inline std::string to_debug_str<SceAudiodecCodec>(const MemState &mem, SceAudiod
     case SceAudiodecCodec::SCE_AUDIODEC_TYPE_MP3: return "SCE_AUDIODEC_TYPE_MP3";
     case SceAudiodecCodec::SCE_AUDIODEC_TYPE_AAC: return "SCE_AUDIODEC_TYPE_AAC";
     case SceAudiodecCodec::SCE_AUDIODEC_TYPE_CELP: return "SCE_AUDIODEC_TYPE_CELP";
-    default: return std::to_string(static_cast<typename std::underlying_type<SceAudiodecCodec>::type>(type));
+    default: return std::to_string(static_cast<std::underlying_type_t<SceAudiodecCodec>>(type));
     }
 }
 
