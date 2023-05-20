@@ -112,3 +112,5 @@ struct P2PSocket : public Socket {
     int listen(int backlog) override;
     int get_socket_address(SceNetSockaddr *name, unsigned int *namelen) override;
 };
+
+int translate_return_value(int retval);
