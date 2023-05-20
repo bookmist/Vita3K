@@ -166,7 +166,7 @@ void upload_bound_texture(SceGxmTextureBaseFormat base_format, uint32_t width, u
 }
 
 // Dumps bound texture to a file
-void dump(const SceGxmTexture &gxm_texture, const MemState &mem, const std::string &parameter_name, const std::string &base_path, const std::string &title_id, Sha256Hash program_hash) {
+void dump(const SceGxmTexture &gxm_texture, const MemState &mem, const std::string &parameter_name, const std::string &base_path, const std::string &title_id, const Sha256Hash &program_hash) {
     static uint32_t g_tex_index = 0;
     static std::vector<uint8_t> g_pixels; // re-use the same vector instead of allocating one every time
     static std::map<TextureCacheHash, uint32_t> g_dumped_hashes;
