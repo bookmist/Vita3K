@@ -626,9 +626,10 @@ void draw_settings(GuiState &gui, EmuEnvState &emuenv) {
                 ImGui::Columns(3, nullptr, false);
                 ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 1.0f));
                 for (const auto &background : gui.users[emuenv.io.user_id].backgrounds) {
+                    const auto &user_backgrounds_info = gui.user_backgrounds_infos[background];
                     const auto IMAGE_POS = ImGui::GetCursorPos();
-                    const auto PREVIEW_POS = ImVec2(IMAGE_POS.x + (gui.user_backgrounds_infos[background].prev_pos.x * SCALE.x), IMAGE_POS.y + (gui.user_backgrounds_infos[background].prev_pos.y * SCALE.y));
-                    const auto PREVIEW_SIZE = ImVec2(gui.user_backgrounds_infos[background].prev_size.x * SCALE.x, gui.user_backgrounds_infos[background].prev_size.y * SCALE.y);
+                    const auto PREVIEW_POS = ImVec2(IMAGE_POS.x + (user_backgrounds_info.prev_pos.x * SCALE.x), IMAGE_POS.y + (user_backgrounds_info.prev_pos.y * SCALE.y));
+                    const auto PREVIEW_SIZE = ImVec2(user_backgrounds_info.prev_size.x * SCALE.x, user_backgrounds_info.prev_size.y * SCALE.y);
                     ImGui::SetCursorPos(PREVIEW_POS);
                     ImGui::Image(gui.user_backgrounds[background], PREVIEW_SIZE);
                     ImGui::SetCursorPosY(IMAGE_POS.y);
