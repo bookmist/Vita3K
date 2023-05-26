@@ -1102,5 +1102,5 @@ void decrypt_fself(const fs::path &file_path, KeyStore &SCE_KEYS, unsigned char 
 bool is_self(const fs::path &file_path) {
     const auto extension = file_path.filename().extension();
     const auto is_self = ((extension == ".suprx") || (extension == ".skprx") || (extension == ".self"));
-    return ((file_path.filename() == "eboot.bin") || is_self);
+    return (is_self || (file_path.filename() == "eboot.bin"));
 }

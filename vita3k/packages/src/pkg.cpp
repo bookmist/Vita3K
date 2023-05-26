@@ -97,11 +97,8 @@ bool decrypt_install_nonpdrm(EmuEnvState &emuenv, std::string &drmlicpath, const
     std::vector<uint8_t> temp_klicensee = get_temp_klicensee(zRIF);
 
     for (const auto &file : fs::recursive_directory_iterator(title_id_src)) {
-        if ((file.path().extension() == ".suprx") || (file.path().extension() == ".self") || (file.path().filename() == "eboot.bin")) {
-            self2elf(file.path().string(), file.path().string() + "elf", SCE_KEYS, temp_klicensee.data());
-            fs::rename(file.path().string() + "elf", file.path().string());
-            make_fself(file.path().string(), file.path().string() + "fself");
-            fs::rename(file.path().string() + "fself", file.path().string());
+        if (is_self(file.path())) {
+            decrypt_fself(file.path(), SCE_KEYS, temp_klicensee.data());
             LOG_INFO("Decrypted {} with klicensee {}", file.path().string(), byte_array_to_string(temp_klicensee.data(), 16));
         }
     }
