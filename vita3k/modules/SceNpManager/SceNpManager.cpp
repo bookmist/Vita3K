@@ -96,8 +96,10 @@ EXPORT(int, sceNpInit, np::CommunicationConfig *comm_config, void *dontcare) {
     return 0;
 }
 
-EXPORT(int, sceNpManagerGetAccountRegion) {
-    TRACY_FUNC(sceNpManagerGetAccountRegion);
+EXPORT(int, sceNpManagerGetAccountRegion, char *countryCode, int *language) {
+    TRACY_FUNC(sceNpManagerGetAccountRegion, countryCode, language);
+    strcpy(countryCode, "gb");
+    *language = 1; // english
     return UNIMPLEMENTED();
 }
 

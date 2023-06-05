@@ -64,21 +64,21 @@ static int thread_function(void *data) {
     std::string th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
     tracy::SetThreadName(th_name.c_str());
 #endif
-	/*
-    if (thread->affinity_mask != 0x70000) {
-        uint32_t affinity_mask = 0;
-        if (thread->affinity_mask & 0x10000) {
-            affinity_mask = affinity_mask | 1;
-        }
-        if (thread->affinity_mask & 0x20000) {
-            affinity_mask = affinity_mask | 4;
-        }
-        if (thread->affinity_mask & 0x40000) {
-            affinity_mask = affinity_mask | 16;
-        }
-        SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
-    };
-    */
+    /*
+if (thread->affinity_mask != 0x70000) {
+    uint32_t affinity_mask = 0;
+    if (thread->affinity_mask & 0x10000) {
+        affinity_mask = affinity_mask | 1;
+    }
+    if (thread->affinity_mask & 0x20000) {
+        affinity_mask = affinity_mask | 4;
+    }
+    if (thread->affinity_mask & 0x40000) {
+        affinity_mask = affinity_mask | 16;
+    }
+    SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
+};
+*/
     thread->run_loop();
     const uint32_t r0 = read_reg(*thread->cpu, 0);
 
