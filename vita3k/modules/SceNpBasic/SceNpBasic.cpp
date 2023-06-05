@@ -16,6 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "SceNpBasic.h"
+#include <np/common.h>
 
 EXPORT(int, sceNpBasicCheckCallback) {
     return UNIMPLEMENTED();
@@ -93,7 +94,25 @@ EXPORT(int, sceNpBasicRecordPlaySessionLog) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceNpBasicRegisterHandler) {
+struct SceNpBasicEventHandlers {
+    SceUInt32 sdkVersion;
+    Ptr<void> friendListEventHandler;
+    Ptr<void> friendOnlineStatusEventHandler;
+    Ptr<void> blockListEventHandler;
+    Ptr<void> friendGamePresenceEventHandler;
+    Ptr<void> inGameDataMessageEventHandler;
+    Ptr<void> friendContextEventHandler;
+    Ptr<void> friendRequestEventHandler;
+};
+EXPORT(int, sceNpBasicRegisterHandler, SceNpBasicEventHandlers *handlers, np::CommunicationID *context, void *userdata) {
+    LOG_TRACE("sdkVersion: {}", handlers->sdkVersion);
+    LOG_TRACE("friendListEventHandler: {}", log_hex(handlers->friendListEventHandler.address()));
+    LOG_TRACE("friendOnlineStatusEventHandler: {}", log_hex(handlers->friendOnlineStatusEventHandler.address()));
+    LOG_TRACE("blockListEventHandler: {}", log_hex(handlers->blockListEventHandler.address()));
+    LOG_TRACE("friendGamePresenceEventHandler: {}", log_hex(handlers->friendGamePresenceEventHandler.address()));
+    LOG_TRACE("inGameDataMessageEventHandler: {}", log_hex(handlers->inGameDataMessageEventHandler.address()));
+    LOG_TRACE("friendContextEventHandler: {}", log_hex(handlers->friendContextEventHandler.address()));
+    LOG_TRACE("friendRequestEventHandler: {}", log_hex(handlers->friendRequestEventHandler.address()));
     return UNIMPLEMENTED();
 }
 

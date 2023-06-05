@@ -57,8 +57,8 @@ EXPORT(int, sceNpCheckCallback) {
     emuenv.np.state = emuenv.cfg.current_config.psn_status;
 
     const ThreadStatePtr thread = lock_and_find(thread_id, emuenv.kernel.threads, emuenv.kernel.mutex);
-    for (auto &callback : emuenv.np.cbs) {
-        thread->run_callback(callback.second.pc, { (uint32_t)emuenv.np.state, 0, callback.second.data });
+    for (auto &[_, callback] : emuenv.np.cbs) {
+        thread->run_callback(callback.pc, { (uint32_t)emuenv.np.state, 0, callback.data });
     }
 
     return STUBBED("Stub");
@@ -86,8 +86,10 @@ EXPORT(int, sceNpInit, np::CommunicationConfig *comm_config, void *dontcare) {
     return 0;
 }
 
-EXPORT(int, sceNpManagerGetAccountRegion) {
-    TRACY_FUNC(sceNpManagerGetAccountRegion);
+EXPORT(int, sceNpManagerGetAccountRegion, char *countryCode, int *language) {
+    TRACY_FUNC(sceNpManagerGetAccountRegion, countryCode, language);
+    strcpy(countryCode, "gb");
+    *language = 1; // english
     return UNIMPLEMENTED();
 }
 
