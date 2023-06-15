@@ -180,7 +180,6 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                 auto *input = params->buffer_params[state->current_buffer].buffer.cast<uint8_t>().get(mem);
 
                 DecoderSize samples_count;
-
                 // we need to know how many samples (not bytes!) we need to send (just enough for the system granularity)
                 uint32_t samples_needed = granularity - state->decoded_samples_pending;
 
@@ -234,6 +233,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                     int src_sample_rate = static_cast<int>(params->playback_frequency);
                     if (params->playback_scalar != 1.0)
                         src_sample_rate = static_cast<int>(src_sample_rate * params->playback_scalar);
+
+                    if (src_sample_rate == 0)
+                        src_sample_rate = sample_rate;
 
                     if (!state->swr || state->reset_swr) {
                         if (state->swr)
