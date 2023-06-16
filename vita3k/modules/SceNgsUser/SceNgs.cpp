@@ -107,13 +107,13 @@ EXPORT(int, sceNgsAT9GetSectionDetails, uint32_t samples_start, const uint32_t n
     return 0;
 }
 
-EXPORT(int, sceNgsModuleGetNumPresets) {
-    TRACY_FUNC(sceNgsModuleGetNumPresets);
+EXPORT(int, sceNgsModuleGetNumPresets, ngs::System *system, const SceUInt32 module, SceUInt32 *num_presets) {
+    TRACY_FUNC(sceNgsModuleGetNumPresets, system, module, num_presets);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceNgsModuleGetPreset) {
-    TRACY_FUNC(sceNgsModuleGetPreset);
+EXPORT(int, sceNgsModuleGetPreset, ngs::System *system, const SceUInt32 module, const SceUInt32 preset_index, void *params_buffer) {
+    TRACY_FUNC(sceNgsModuleGetPreset, system, module, preset_index, params_buffer);
     return UNIMPLEMENTED();
 }
 
@@ -225,10 +225,9 @@ EXPORT(SceUInt32, sceNgsRackInit, ngs::System *system, SceNgsBufferInfo *info, c
     if (!emuenv.cfg.current_config.ngs_enable) {
         return 0;
     }
-    if (!info || !system || !description) {// I'm not sure about description. I found no signs of check this parameter in disasmed code
+    if (!info || !system || !description) { // I'm not sure about description. I found no signs of check this parameter in disasmed code
         return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
     }
-    
 
     if (!ngs::init_rack(emuenv.ngs, emuenv.mem, system, info, description)) {
         return RET_ERROR(SCE_NGS_ERROR);
@@ -619,9 +618,17 @@ EXPORT(SceInt32, sceNgsVoiceGetModuleBypass, ngs::Voice *voice, const SceUInt32 
     return SCE_NGS_OK;
 }
 
-EXPORT(int, sceNgsVoiceGetModuleType) {
-    TRACY_FUNC(sceNgsVoiceGetModuleType);
-    return UNIMPLEMENTED();
+EXPORT(int, sceNgsVoiceGetModuleType, ngs::Voice *voice, const SceUInt32 module, SceUInt32 *module_type) {
+    TRACY_FUNC(sceNgsVoiceGetModuleType, voice, module, module_type);
+    if (!emuenv.cfg.current_config.ngs_enable)
+        return SCE_NGS_OK;
+
+    if (!voice)
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    if (module >= voice->rack->modules.size())
+        return RET_ERROR(SCE_NGS_ERROR_INVALID_ARG);
+    *module_type = voice->rack->modules[module]->module_id();
+    return SCE_NGS_OK;
 }
 
 EXPORT(SceInt32, sceNgsVoiceGetOutputPatch, ngs::Voice *voice, const SceInt32 output_index, const SceInt32 output_subindex, Ptr<ngs::Patch> *patch) {
@@ -672,11 +679,11 @@ EXPORT(SceInt32, sceNgsVoiceGetStateData, ngs::Voice *voice, const SceUInt32 mod
     if (mem) {
         memcpy(mem, storage->voice_state_data.data(), std::min<std::size_t>(mem_size, storage->voice_state_data.size()));
 
-    if (mem_size > 128) {
-        std::string file_name = fmt::format("soundlog/ngs_voice_{}_module_{}.dat", log_hex(voice_handle.address()), module);
-        log_to_file(file_name, reinterpret_cast<char *>(mem), mem_size);
+        if (mem_size > 128) {
+            std::string file_name = fmt::format("soundlog/ngs_voice_{}_module_{}.dat", log_hex(Ptr<ngs::Voice>(voice, emuenv.mem).address()), module);
+            log_to_file(file_name, static_cast<char *>(mem), mem_size);
+        }
     }
-	}
     return SCE_NGS_OK;
 }
 
