@@ -4175,6 +4175,8 @@ EXPORT(void, sceGxmSetViewport, SceGxmContext *context, float xOffset, float xSc
     // Set viewport to enable, enable more offset and scale to set
     if (context->state.viewport.offset.x != xOffset || (context->state.viewport.offset.y != yOffset) || (context->state.viewport.offset.z != zOffset)
         || (context->state.viewport.scale.x != xScale) || (context->state.viewport.scale.y != yScale) || (context->state.viewport.scale.z != zScale)) {
+        if (xOffset == 0 && xScale == 0 && yOffset == 0 && yScale == 0 && zOffset == 0 && zScale == 0)
+            return;
         context->state.viewport.offset.x = xOffset;
         context->state.viewport.offset.y = yOffset;
         context->state.viewport.offset.z = zOffset;
