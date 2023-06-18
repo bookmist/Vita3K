@@ -291,13 +291,12 @@ uint32_t ThreadState::run_callback(Address callback_address, const std::vector<u
     return returned_value;
 }
 
-uint32_t ThreadState::run_guest_function(KernelState &kernel, Address callback_address, uint32_t arg) {
+uint32_t ThreadState::run_guest_function(KernelState &kernel, Address callback_address, SceSize args, const Ptr<void> argp) {
     // save the previous entry point, just in case
     const auto old_entry_point = entry_point;
     entry_point = callback_address;
 
-    // this puts arg in the first register
-    start(kernel, arg, Ptr<void>(0));
+    start(kernel, args, argp);
     {
         // wait for the function to return
         std::unique_lock<std::mutex> lock(mutex);

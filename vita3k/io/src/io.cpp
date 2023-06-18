@@ -783,7 +783,7 @@ bool copy_directories(const fs::path &src_path, const fs::path &dst_path) {
     }
 }
 
-bool copy_path(const fs::path src_path, std::wstring pref_path, std::string app_title_id, std::string app_category) {
+bool copy_path(const fs::path &src_path, const std::wstring &pref_path, const std::string &app_title_id, const std::string &app_category) {
     // Check if is path
     if (app_category.find("gp") != std::string::npos) {
         const auto app_path{ fs::path(pref_path) / "ux0/app" / app_title_id };
@@ -862,7 +862,7 @@ int remove_dir(IOState &io, const char *dir, const std::wstring &pref_path, cons
     return 0;
 }
 
-static std::string standardize_path(std::string_view path) {
+static std::string standardize_path(const std::string_view path) {
     // replace app0:... by app0:/...
     bool start_with_app0 = path.starts_with("app0:");
     if (start_with_app0 && path.size() >= 6 && path[5] != '/')
@@ -884,7 +884,7 @@ SceUID create_overlay(IOState &io, SceFiosProcessOverlay *fios_overlay) {
     };
 
     // find location where to put it
-    int overlay_index = 0;
+    size_t overlay_index = 0;
     // lower order first and in case of equality, last one inserted first
     while (overlay_index < io.overlays.size() && overlay.order < io.overlays[overlay_index].order)
         overlay_index++;
@@ -899,7 +899,7 @@ std::string resolve_path(IOState &io, const char *input, const bool is_write, co
 
     std::string curr_path = input;
 
-    int overlay_idx = 0;
+    size_t overlay_idx = 0;
     while (overlay_idx < io.overlays.size() && io.overlays[overlay_idx].order < min_order)
         overlay_idx++;
 
