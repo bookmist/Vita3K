@@ -15,6 +15,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#include "camera/include/camera/state.h"
+
 #include <emuenv/state.h>
 
 #include <audio/state.h>
@@ -81,7 +83,9 @@ EmuEnvState::EmuEnvState()
     , _gdb(new GDBState)
     , gdb(*_gdb)
     , _http(new HTTPState)
-    , http(*_http) {
+    , http(*_http)
+    , _camera(new CameraState)
+    , camera(*_camera) {
 }
 
 // this is necessary to forward declare unique_ptrs (so that they can call the appropriate destructor)
