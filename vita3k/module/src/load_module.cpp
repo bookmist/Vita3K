@@ -29,7 +29,7 @@ bool is_lle_module(SceSysmoduleModuleId module_id, EmuEnvState &emuenv) {
     const bool have_paths = !paths.empty();
 
     // Current modules works for loading
-    const auto auto_lle_modules = {
+    static constexpr auto auto_lle_modules = {
         SCE_SYSMODULE_SAS,
         SCE_SYSMODULE_PGF,
         SCE_SYSMODULE_SYSTEM_GESTURE,
@@ -41,6 +41,8 @@ bool is_lle_module(SceSysmoduleModuleId module_id, EmuEnvState &emuenv) {
         SCE_SYSMODULE_HTTP,
         SCE_SYSMODULE_SSL,
         SCE_SYSMODULE_HTTPS,
+        SCE_SYSMODULE_SMART,
+        SCE_SYSMODULE_FACE
     };
 
     if (have_paths) {

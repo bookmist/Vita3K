@@ -20,6 +20,7 @@
 #include <cpu/functions.h>
 #include <emuenv/state.h>
 #include <io/device.h>
+#include <io/state.h>
 #include <io/vfs.h>
 #include <kernel/load_self.h>
 #include <kernel/state.h>
@@ -157,15 +158,22 @@ void call_import(EmuEnvState &emuenv, CPUState &cpu, uint32_t nid, SceUID thread
 bool load_module(EmuEnvState &emuenv, SceUID thread_id, SceSysmoduleModuleId module_id) {
     LOG_INFO("Loading module ID: {}", log_hex(module_id));
 
-    const auto module_paths = sysmodule_paths[module_id];
+    const auto &module_paths = sysmodule_paths[module_id];
 
     for (std::string module_path : module_paths) {
-        module_path = "sys/external/" + module_path + ".suprx";
-
         vfs::FileBuffer module_buffer;
-        Ptr<const void> lib_entry_point;
+        bool file_readed;
+        // todo: move loading SCE_SYSMODULE_ULT from module preload to here
+        if (module_id == SCE_SYSMODULE_SMART || module_id == SCE_SYSMODULE_FACE) {
+            module_path = "sce_module/" + module_path + ".suprx";
+            file_readed = vfs::read_app_file(module_buffer, emuenv.pref_path, emuenv.io.app_path, module_path);
+        } else {
+            module_path = "sys/external/" + module_path + ".suprx";
+            file_readed = vfs::read_file(VitaIoDevice::vs0, module_buffer, emuenv.pref_path, module_path);
+        }
 
-        if (vfs::read_file(VitaIoDevice::vs0, module_buffer, emuenv.pref_path, module_path)) {
+        if (file_readed) {
+            Ptr<const void> lib_entry_point;
             SceUID loaded_module_uid = load_self(lib_entry_point, emuenv.kernel, emuenv.mem, module_buffer.data(), module_path);
             if (loaded_module_uid < 0) {
                 LOG_ERROR("Error when loading module at \"{}\"", module_path);
