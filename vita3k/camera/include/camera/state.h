@@ -17,10 +17,20 @@
 
 #pragma once
 
-#include <camera/camera.h>
+#include "camera.h"
 
 #include <SDL_gamecontroller.h>
 
 struct CameraState {
     // Put variable used by app here
+    SceCameraDevice active_camera{ SCE_CAMERA_DEVICE_UNKNOWN };
+    Camera front_camera;
+    Camera back_camera;
+    Camera &get_camera(SceCameraDevice devnum);
+    int open(SceCameraDevice devnum, SceCameraInfo *pInfo);
+    int close(SceCameraDevice devnum);
+    int start(SceCameraDevice devnum);
+    int stop(SceCameraDevice devnum);
+    int read(SceCameraDevice devnum, SceCameraRead *pRead);
+    int is_active(SceCameraDevice devnum);
 };
