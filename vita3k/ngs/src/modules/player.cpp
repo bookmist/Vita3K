@@ -26,6 +26,8 @@ extern "C" {
 #include <cassert>
 #include <cstring>
 
+#define assert(condition) LOG_ERROR_IF(!(condition), "assertion failed " #condition)
+
 namespace ngs {
 
 void PlayerModule::on_state_change(ModuleData &data, const VoiceState previous) {
@@ -216,7 +218,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
 
                 // Get the amount of samples about to be received from the decoder and dump the value in samples_count
                 decoder->receive(nullptr, &samples_count);
-
+                if (isnan(params->playback_scalar)) {
+                    params->playback_scalar = 1;
+                }
                 // Playback rate scaling
                 if (params->playback_scalar != 1 || static_cast<int>(round(params->playback_frequency)) != sample_rate) {
                     static bool LOG_PLAYBACK_SCALING = true;
