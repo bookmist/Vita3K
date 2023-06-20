@@ -27,8 +27,13 @@ bool deliver_data(const MemState &mem, Voice *source, const uint8_t output_port,
         return false;
     }
 
-    for (size_t i = 0; i < source->patches[output_port].size(); i++) {
-        Patch *patch = source->patches[output_port][i].get(mem);
+    if (output_port >= source->patches.size()) {
+        LOG_ERROR("Wrong output port : {}", output_port);
+        return false;
+    }
+
+    for (auto i : source->patches[output_port]) {
+        Patch *patch = i.get(mem);
 
         if (!patch || patch->output_sub_index == -1) {
             continue;
