@@ -585,6 +585,8 @@ struct SceKernelModuleInfo {
     SceUInt state; //!< see:SceKernelModuleState
 };
 
+typedef std::shared_ptr<SceKernelModuleInfo> SceKernelModuleInfoPtr;
+
 struct SceKernelStartModuleOpt {
     SceSize size;
     SceUInt32 flags;

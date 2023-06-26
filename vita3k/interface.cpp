@@ -415,34 +415,15 @@ uint32_t install_contents(EmuEnvState &emuenv, GuiState *gui, const fs::path &pa
 
 static auto pre_load_module(EmuEnvState &emuenv, const std::vector<std::string> &lib_load_list, const VitaIoDevice &device) {
     for (const auto &module_path : lib_load_list) {
-        vfs::FileBuffer module_buffer;
-        Ptr<const void> lib_entry_point;
-        bool res;
-        const auto MODULE_PATH_ABS = fmt::format("{}:{}", device._to_string(), module_path);
-
-        if (device == VitaIoDevice::app0)
-            res = vfs::read_app_file(module_buffer, emuenv.pref_path, emuenv.io.app_path, module_path);
-        else
-            res = vfs::read_file(device, module_buffer, emuenv.pref_path, module_path);
-
-        if (res) {
-            SceUID module_id = load_self(lib_entry_point, emuenv.kernel, emuenv.mem, module_buffer.data(), MODULE_PATH_ABS);
-            if (module_id >= 0) {
-                const auto module = emuenv.kernel.loaded_modules[module_id];
-
-                LOG_INFO("Pre-load module {} (at \"{}\") loaded", module->module_name, module_path);
-            } else
-                return FileNotFound;
-        } else {
-            LOG_DEBUG("Pre-load module at \"{}\" not present", module_path);
+        const auto module_path_abs = fmt::format("{}:{}", device._to_string(), module_path);
+        auto res = load_module(emuenv, module_path_abs);
+        if (res < 0)
             return FileNotFound;
-        }
     }
-
     return Success;
 }
 
-static ExitCode load_app_impl(Ptr<const void> &entry_point, EmuEnvState &emuenv, const std::wstring &path) {
+static ExitCode load_app_impl(EmuEnvState &emuenv, SceUID &main_module_id, const std::wstring &path) {
     if (path.empty())
         return InvalidApplicationPath;
 
@@ -532,15 +513,10 @@ static ExitCode load_app_impl(Ptr<const void> &entry_point, EmuEnvState &emuenv,
 
     // Load main executable
     emuenv.self_path = !emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : EBOOT_PATH;
-    vfs::FileBuffer eboot_buffer;
-    if (vfs::read_app_file(eboot_buffer, emuenv.pref_path, emuenv.io.app_path, emuenv.self_path)) {
-        SceUID module_id = load_self(entry_point, emuenv.kernel, emuenv.mem, eboot_buffer.data(), "app0:" + emuenv.self_path);
-        if (module_id >= 0) {
-            const auto module = emuenv.kernel.loaded_modules[module_id];
-
-            LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
-        } else
-            return FileNotFound;
+    main_module_id = load_module(emuenv, "app0:" + emuenv.self_path);
+    if (main_module_id >= 0) {
+        const auto module = emuenv.kernel.loaded_modules[main_module_id];
+        LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
     } else
         return FileNotFound;
 
@@ -800,8 +776,8 @@ bool handle_events(EmuEnvState &emuenv, GuiState &gui) {
     return true;
 }
 
-ExitCode load_app(Ptr<const void> &entry_point, EmuEnvState &emuenv, const std::wstring &path) {
-    if (load_app_impl(entry_point, emuenv, path) != Success) {
+ExitCode load_app(EmuEnvState &emuenv, int32_t &main_module_id, const std::wstring &path) {
+    if (load_app_impl(emuenv, main_module_id, path) != Success) {
         std::string message = "Failed to load \"";
         message += string_utils::wide_to_utf(path);
         message += "\"";
@@ -834,7 +810,8 @@ static std::vector<std::string> split(const std::string &input, const std::strin
     return { first, last };
 }
 
-ExitCode run_app(EmuEnvState &emuenv, Ptr<const void> &entry_point) {
+ExitCode run_app(EmuEnvState &emuenv, int32_t main_module_id) {
+    auto entry_point = emuenv.kernel.loaded_modules[main_module_id]->start_entry;
     const ThreadStatePtr thread = emuenv.kernel.create_thread(emuenv.mem, emuenv.io.title_id.c_str(), entry_point, SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, static_cast<int>(SCE_KERNEL_STACK_SIZE_USER_MAIN), nullptr);
     if (!thread) {
         app::error_dialog("Failed to init main thread.", emuenv.window.get());
@@ -845,22 +822,10 @@ ExitCode run_app(EmuEnvState &emuenv, Ptr<const void> &entry_point) {
     const ThreadStatePtr main_thread = util::find(main_thread_id, emuenv.kernel.threads);
 
     // Run `module_start` export (entry point) of loaded libraries
-    for (auto &mod : emuenv.kernel.loaded_modules) {
-        const auto module = mod.second;
-        const auto module_start = module->start_entry;
-        const auto module_name = module->module_name;
-
-        if (!module_start || (std::string(module->path) == "app0:" + emuenv.self_path))
+    for (auto &[_, module] : emuenv.kernel.loaded_modules) {
+        if (module->modid == main_module_id)
             continue;
-
-        LOG_DEBUG("Running module_start of library: {} at address {}", module_name, log_hex(module_start.address()));
-
-        // TODO: why does fios need separate thread its stack freed anyways?
-        const ThreadStatePtr module_thread = emuenv.kernel.create_thread(emuenv.mem, module_name);
-        const auto ret = module_thread->run_guest_function(emuenv.kernel, module_start.address());
-        module_thread->exit_delete();
-
-        LOG_INFO("Module {} (at \"{}\") module_start returned {}", module_name, module->path, log_hex(ret));
+        start_module(emuenv, module);
     }
 
     emuenv.main_thread_id = main_thread_id;

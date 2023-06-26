@@ -352,8 +352,8 @@ int main(int argc, char *argv[]) {
             gui::draw_background(gui, emuenv);
     };
 
-    Ptr<const void> entry_point;
-    if (const auto err = load_app(entry_point, emuenv, string_utils::utf_to_wide(emuenv.io.app_path)) != Success)
+    int32_t main_module_id;
+    if (const auto err = load_app(emuenv, main_module_id, string_utils::utf_to_wide(emuenv.io.app_path)) != Success)
         return err;
 
     gui.vita_area.information_bar = false;
@@ -377,7 +377,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (const auto err = run_app(emuenv, entry_point) != Success)
+    if (const auto err = run_app(emuenv, main_module_id) != Success)
         return err;
 
     SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, loading...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
