@@ -486,7 +486,6 @@ static ExitCode load_app_impl(EmuEnvState &emuenv, SceUID &main_module_id, const
         const std::vector<std::string> lib_load_list = {
             "sce_module/libc.suprx",
             "sce_module/libfios2.suprx",
-            "sce_module/libult.suprx",
         };
 
         pre_load_module(emuenv, lib_load_list, VitaIoDevice::app0);
@@ -503,7 +502,6 @@ static ExitCode load_app_impl(EmuEnvState &emuenv, SceUID &main_module_id, const
         const std::vector<std::string> lib_load_list_to_add = {
             "sys/external/libc.suprx",
             "sys/external/libfios2.suprx",
-            "sys/external/libult.suprx"
         };
 
         lib_load_list.insert(lib_load_list.begin(), lib_load_list_to_add.begin(), lib_load_list_to_add.end());

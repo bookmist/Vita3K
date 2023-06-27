@@ -42,7 +42,8 @@ bool is_lle_module(SceSysmoduleModuleId module_id, EmuEnvState &emuenv) {
         SCE_SYSMODULE_SSL,
         SCE_SYSMODULE_HTTPS,
         SCE_SYSMODULE_SMART,
-        SCE_SYSMODULE_FACE
+        SCE_SYSMODULE_FACE,
+        SCE_SYSMODULE_ULT
     };
 
     if (have_paths) {

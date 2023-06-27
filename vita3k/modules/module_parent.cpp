@@ -211,18 +211,24 @@ uint32_t start_module(EmuEnvState &emuenv, const std::shared_ptr<SceKernelModule
  */
 bool load_sys_module(EmuEnvState &emuenv, SceSysmoduleModuleId module_id) {
     const auto &module_paths = sysmodule_paths[module_id];
-    for (std::string module_path : module_paths) {
-        // todo: move loading SCE_SYSMODULE_ULT from module preload to here
-        if (module_id == SCE_SYSMODULE_SMART || module_id == SCE_SYSMODULE_FACE) {
-            module_path = "app0:sce_module/" + module_path + ".suprx";
+    for (const auto module_filename : module_paths) {
+        std::string module_path;
+        if (module_id == SCE_SYSMODULE_SMART || module_id == SCE_SYSMODULE_FACE || module_id == SCE_SYSMODULE_ULT) {
+            module_path = fmt::format("app0:sce_module/{}.suprx", module_filename);
         } else {
-            module_path = "vs0:sys/external/" + module_path + ".suprx";
+            module_path = fmt::format("vs0:sys/external/{}.suprx", module_filename);
         }
 
         auto loaded_module_uid = load_module(emuenv, module_path);
 
         if (loaded_module_uid < 0) {
-                return false;
+            if (module_id == SCE_SYSMODULE_ULT && loaded_module_uid == SCE_ERROR_ERRNO_ENOENT) {
+                module_path = fmt::format("vs0:sys/external/{}.suprx", module_filename);
+                loaded_module_uid = load_module(emuenv, module_path);
+                if (loaded_module_uid < 0)
+                    return false;
+            } else
+            return false;
         }
         const auto module = emuenv.kernel.loaded_modules[loaded_module_uid];
         start_module(emuenv, module);
