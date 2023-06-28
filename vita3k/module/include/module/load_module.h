@@ -118,6 +118,7 @@ inline SysmodulePaths init_sysmodule_paths() {
 inline SysmoduleInternalPaths init_sysmodule_internal_paths() {
     SysmoduleInternalPaths p;
 
+    p[SCE_SYSMODULE_INTERNAL_JPEG_ENC_ARM] = { "libscejpegencarm" };
     p[SCE_SYSMODULE_INTERNAL_AUDIOCODEC] = { "audiocodec" };
     p[SCE_SYSMODULE_INTERNAL_BXCE] = { "bXCe" };
     p[SCE_SYSMODULE_INTERNAL_INI_FILE_PROCESSOR] = { "ini_file_processor" };
@@ -127,6 +128,8 @@ inline SysmoduleInternalPaths init_sysmodule_internal_paths() {
     p[SCE_SYSMODULE_INTERNAL_DBUTIL] = { "dbutil" };
     p[SCE_SYSMODULE_INTERNAL_ACTIVITY_DB] = { "activity_db" };
     p[SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG] = { "common_gui_dialog" };
+    p[SCE_SYSMODULE_INTERNAL_DB_RECOVERY_UTILITY] = { "dbrecovery_utility" };
+    p[SCE_SYSMODULE_INTERNAL_LOCATION_INTERNAL] = { "liblocation_internal" };
 
     return p;
 }
