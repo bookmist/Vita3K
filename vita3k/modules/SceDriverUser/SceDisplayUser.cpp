@@ -67,7 +67,7 @@ EXPORT(int, sceDisplaySetFrameBufInternal, uint32_t maybe_buffer_idx, uint32_t u
         return 0;
     // size does not match (is 4 bytes larger)
     pFrameBuf->size = 0x18;
-    return CALL_EXPORT(_sceDisplaySetFrameBuf, pFrameBuf, sync);
+    return CALL_EXPORT(_sceDisplaySetFrameBuf, pFrameBuf, sync, nullptr);
 }
 
 BRIDGE_IMPL(sceDisplayGetFrameBuf)
