@@ -338,10 +338,13 @@ uint32_t System::get_required_memspace_size(SceNgsSystemInitParams *parameters) 
 
 uint32_t Rack::get_required_memspace_size(MemState &mem, SceNgsRackDescription *description) {
     uint32_t buffer_size = 0;
-    if (description->definition)
+    if (description->definition) {
         buffer_size = get_voice_definition_size(description->definition.get(mem));
 
-    return sizeof(ngs::Rack) + description->voice_count * (sizeof(ngs::Voice) + buffer_size + description->patches_per_output * description->definition.get(mem)->output_count * sizeof(ngs::Patch));
+        return sizeof(ngs::Rack) + description->voice_count * (sizeof(ngs::Voice) + buffer_size + description->patches_per_output * description->definition.get(mem)->output_count * sizeof(ngs::Patch));
+    } else {
+        return sizeof(ngs::Rack) + description->voice_count * (sizeof(ngs::Voice) + buffer_size + description->patches_per_output * 4 * sizeof(ngs::Patch));
+    }
 }
 
 bool init(State &ngs, MemState &mem) {
