@@ -36,6 +36,7 @@ namespace renderer::gl {
 struct GLState : public renderer::State {
     GLContextPtr context;
 
+    std::mutex shaders_mutex = {};
     ShaderCache fragment_shader_cache;
     ShaderCache vertex_shader_cache;
     ProgramCache program_cache;
