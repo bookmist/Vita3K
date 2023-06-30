@@ -74,7 +74,7 @@ struct State {
 
     // on Vulkan, this is actually the number of pipelines compiled
     uint32_t shaders_count_compiled = 0;
-    uint32_t programs_count_pre_compiled = 0;
+    volatile uint32_t programs_count_pre_compiled = 0;
 
     bool should_display;
 
