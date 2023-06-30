@@ -116,7 +116,7 @@ static std::string convert_hash_to_hex(const Sha256Hash &hash) {
     return ss.str();
 }
 
-static SharedGLObject compile_program(ProgramCache &program_cache, const SharedGLObject frag_shader, const SharedGLObject vert_shader, const ProgramHashes &hashes) {
+static SharedGLObject compile_program(ProgramCache &program_cache, const SharedGLObject frag_shader, const SharedGLObject vert_shader, const ProgramHashes &hashes, std::mutex *cache_mutex) {
     const SharedGLObject program = std::make_shared<GLObject>();
     if (!program->init(glCreateProgram(), glDeleteProgram)) {
         return SharedGLObject();
@@ -148,13 +148,18 @@ static SharedGLObject compile_program(ProgramCache &program_cache, const SharedG
     glDetachShader(program->get(), frag_shader->get());
     glDetachShader(program->get(), vert_shader->get());
 
-    program_cache.emplace(hashes, program);
+    if (cache_mutex) {
+        const std::lock_guard<std::mutex> lock(*cache_mutex);
+        program_cache.emplace(hashes, program);
+    } else {
+        program_cache.emplace(hashes, program);
+    }
 
     return program;
 }
 
 static SharedGLObject compile_shader(const char *base_path, const char *title_id, const char *self_name, const std::string &shader_version, const std::string &hash_hex,
-    const char *type_str, const GLenum type, ShaderCache &cache, const Sha256Hash &hash) {
+    const char *type_str, const GLenum type, ShaderCache &cache, const Sha256Hash &hash, std::mutex *cache_mutex) {
     // Set Shader version with hash
     const std::string hash_hex_ver = shader_version + "-" + hash_hex;
 
@@ -173,7 +178,12 @@ static SharedGLObject compile_shader(const char *base_path, const char *title_id
     }
 
     // Push shader Compiled
-    cache.emplace(hash, obj);
+    if (cache_mutex) {
+        const std::lock_guard<std::mutex> lock(*cache_mutex);
+        cache.emplace(hash, obj);
+    } else {
+        cache.emplace(hash, obj);
+    }
     LOG_INFO("{} shader compiled: {}", type_str, hash_hex);
 
     return obj;
@@ -193,7 +203,7 @@ void pre_compile_program(GLState &renderer, const char *base_path, const char *t
         // Compile Fragment Shader
         const auto frag_hash_hex = convert_hash_to_hex(hash.frag);
         const SharedGLObject frag_shader = compile_shader(base_path, title_id, self_name, renderer.shader_version,
-            frag_hash_hex, "frag", GL_FRAGMENT_SHADER, renderer.fragment_shader_cache, hash.frag);
+            frag_hash_hex, "frag", GL_FRAGMENT_SHADER, renderer.fragment_shader_cache, hash.frag, &renderer.shaders_mutex);
         if (!frag_shader) {
             return;
         }
@@ -201,14 +211,14 @@ void pre_compile_program(GLState &renderer, const char *base_path, const char *t
         // Compile Vertex Shader
         const auto vert_hash_hex = convert_hash_to_hex(hash.vert);
         const SharedGLObject vert_shader = compile_shader(base_path, title_id, self_name, renderer.shader_version,
-            vert_hash_hex, "vert", GL_VERTEX_SHADER, renderer.vertex_shader_cache, hash.vert);
+            vert_hash_hex, "vert", GL_VERTEX_SHADER, renderer.vertex_shader_cache, hash.vert, &renderer.shaders_mutex);
         if (!vert_shader) {
             return;
         }
 
         // Compile Program
         const ProgramHashes hashes(hash.frag, hash.vert);
-        compile_program(renderer.program_cache, frag_shader, vert_shader, hashes);
+        compile_program(renderer.program_cache, frag_shader, vert_shader, hashes, &renderer.shaders_mutex);
         renderer.programs_count_pre_compiled++;
         LOG_INFO("Program Compiled {}/{}", renderer.programs_count_pre_compiled, renderer.shaders_cache_hashs.size());
     }
@@ -284,7 +294,7 @@ SharedGLObject compile_program(GLState &renderer, GLContext &context, const GxmR
         return SharedGLObject();
     }
 
-    const SharedGLObject program = compile_program(renderer.program_cache, fragment_shader, vertex_shader, hashes);
+    SharedGLObject program = compile_program(renderer.program_cache, fragment_shader, vertex_shader, hashes, nullptr);
 
     // Save shader cache haches
     const auto shader_cache_hash_index = get_shaders_hash_index(renderer.shaders_cache_hashs, fragment_program.hash, vertex_program.hash);

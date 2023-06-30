@@ -66,7 +66,7 @@ struct State {
     int last_scene_id = 0;
 
     uint32_t shaders_count_compiled = 0;
-    uint32_t programs_count_pre_compiled = 0;
+    volatile uint32_t programs_count_pre_compiled = 0;
 
     bool should_display;
 
