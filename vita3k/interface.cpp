@@ -532,17 +532,20 @@ static ExitCode load_app_impl(Ptr<const void> &entry_point, EmuEnvState &emuenv,
 
     // Load main executable
     emuenv.self_path = !emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : EBOOT_PATH;
-    vfs::FileBuffer eboot_buffer;
-    if (vfs::read_app_file(eboot_buffer, emuenv.pref_path, emuenv.io.app_path, emuenv.self_path)) {
-        SceUID module_id = load_self(entry_point, emuenv.kernel, emuenv.mem, eboot_buffer.data(), "app0:" + emuenv.self_path);
+    vfs::FileBuffer self_buffer;
+    const auto res = emuenv.io.app_path == "NPXS19999" ? vfs::read_file(VitaIoDevice::vs0, self_buffer, emuenv.pref_path, emuenv.self_path) : vfs::read_app_file(self_buffer, emuenv.pref_path, emuenv.io.app_path, emuenv.self_path);
+    if (res) {
+        SceUID module_id = load_self(entry_point, emuenv.kernel, emuenv.mem, self_buffer.data(), "app0:" + emuenv.self_path);
         if (module_id >= 0) {
             const auto module = emuenv.kernel.loaded_modules[module_id];
 
             LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
         } else
             return FileNotFound;
-    } else
+    } else {
+        LOG_ERROR("Failed to load main executable {}", emuenv.self_path);
         return FileNotFound;
+    }
 
     // Set self name from self path, can contain folder, get file name only
     emuenv.self_name = fs::path(emuenv.self_path).filename().string();
@@ -849,7 +852,7 @@ ExitCode run_app(EmuEnvState &emuenv, Ptr<const void> &entry_point) {
         const auto module = mod.second;
         const auto module_start = module->start_entry;
         const auto module_name = module->module_name;
-
+        LOG_DEBUG("module->path: {}", module->path);
         if (!module_start || (std::string(module->path) == "app0:" + emuenv.self_path))
             continue;
 

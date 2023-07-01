@@ -92,7 +92,7 @@ Address resolve_export(KernelState &kernel, uint32_t nid) {
     return export_address->second;
 }
 
-Ptr<void> create_vtable(const std::vector<uint32_t>& nids, MemState& mem) {
+Ptr<void> create_vtable(const std::vector<uint32_t> &nids, MemState &mem) {
     // we need 4 bytes for the function pointer and 12 bytes for the syscall
     const uint32_t vtable_size = nids.size() * 4 * sizeof(uint32_t);
     Ptr<void> vtable = Ptr<void>(alloc(mem, vtable_size, "vtable"));

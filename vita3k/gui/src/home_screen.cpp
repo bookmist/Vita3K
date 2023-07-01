@@ -176,9 +176,12 @@ void pre_run_app(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path
             }
 
             gui.vita_area.settings = true;
-        } else {
+        } else if (app_path == "NPXS10026") {
             init_content_manager(gui, emuenv);
             gui.vita_area.content_manager = true;
+        } else {
+            emuenv.io.app_path = app_path;
+            emuenv.cfg.self_path = "vsh/shell/shell.self";
         }
     }
 }
@@ -413,7 +416,7 @@ static std::string get_label_name(GuiState &gui, const SortType &type) {
     return label;
 }
 
-static int32_t first_visible_app_index = -4, current_selected_app_index = -5;
+static int32_t first_visible_app_index = -5, current_selected_app_index = -6;
 static std::vector<int32_t> apps_list_filtered;
 void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t button) {
     if (apps_list_filtered.empty())
@@ -424,7 +427,7 @@ void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t bu
         gui.is_nav_button = true;
 
         // When the current selected app index have not any selected, set it to the first visible app index
-        if (current_selected_app_index < -4)
+        if (current_selected_app_index < -5)
             current_selected_app_index = first_visible_app_index;
 
         return;
@@ -485,7 +488,7 @@ void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t bu
         gui.vita_area.home_screen = !gui.vita_area.live_area_screen;
         break;
     case SCE_CTRL_CROSS: {
-        const auto &selected_app = current_selected_app_index < 0 ? gui.app_selector.sys_apps[current_selected_app_index + 4] : gui.app_selector.user_apps[current_selected_app_index];
+        const auto &selected_app = current_selected_app_index < 0 ? gui.app_selector.sys_apps[current_selected_app_index + 5] : gui.app_selector.user_apps[current_selected_app_index];
         pre_load_app(gui, emuenv, emuenv.cfg.show_live_area_screen, selected_app.path);
     } break;
     default: break;
@@ -777,7 +780,7 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
 
             // Get the current app index off the apps list.
             const auto app_index = static_cast<int>(&app - &apps_list[0]);
-            const auto current_app_index = is_not_sys_app ? app_index : app_index - 4;
+            const auto current_app_index = is_not_sys_app ? app_index : app_index - 5;
             apps_list_filtered.push_back(current_app_index);
 
             // Check if the current app is selected.

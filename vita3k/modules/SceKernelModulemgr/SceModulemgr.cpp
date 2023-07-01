@@ -101,7 +101,6 @@ EXPORT(SceUID, _sceKernelLoadModule, char *path, int flags, SceKernelLMOption *o
     SceUID mod_id;
     Ptr<const void> entry_point;
     SceKernelModuleInfoPtr module;
-
     int error_val;
     if (!load_module(mod_id, entry_point, module, emuenv, export_name, path, error_val))
         return error_val;

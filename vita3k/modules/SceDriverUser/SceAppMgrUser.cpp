@@ -21,6 +21,8 @@
 #include <io/device.h>
 #include <io/functions.h>
 #include <io/io.h>
+#include <kernel/state.h>
+#include <kernel/thread/thread_state.h>
 #include <packages/functions.h>
 
 #include <modules/module_parent.h>
@@ -200,9 +202,20 @@ EXPORT(int, sceAppMgrForceUmount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrGameDataMount) {
-    TRACY_FUNC(sceAppMgrGameDataMount);
-    return UNIMPLEMENTED();
+EXPORT(int, sceAppMgrGameDataMount, const char *app_path, const char *patch_path, const char *rif_path, char *mount_point) {
+    TRACY_FUNC(sceAppMgrGameDataMount, app_path, patch_path, rif_path, mount_point);
+    STUBBED("Using strncpy");
+    if (strlen(app_path) > 0) {
+        LOG_DEBUG("app_path: {}", app_path);
+        fmt::format_to(mount_point, "{}/{}", app_path, '\0');
+        // strcpy(mount_point, app_path);
+    } else if (strlen(patch_path) > 0)
+        fmt::format_to(mount_point, "{}/", patch_path);
+    else if (strlen(rif_path) > 0)
+        fmt::format_to(mount_point, "{}", rif_path);
+
+    LOG_DEBUG("mount_point: {}", mount_point);
+    return 0;
 }
 
 EXPORT(int, sceAppMgrGetAppInfo) {
@@ -517,14 +530,18 @@ EXPORT(int, sceAppMgrPspSaveDataRootMount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrReceiveEvent) {
-    TRACY_FUNC(sceAppMgrReceiveEvent);
+std::map<SceUID, int> event_count;
+EXPORT(int, sceAppMgrReceiveEvent, SceAppMgrEvent *mgrEvent) {
+    TRACY_FUNC(sceAppMgrReceiveEvent, mgrEvent);
+    mgrEvent->mgrEvent = SCE_APPMGR_EVENT_ON_RESUME;
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrReceiveEventNum) {
+EXPORT(int, sceAppMgrReceiveEventNum, int *eventNum) {
     TRACY_FUNC(sceAppMgrReceiveEventNum);
-    return UNIMPLEMENTED();
+    STUBBED("Set eventNum to 0");
+    *eventNum = 0;
+    return 0;
 }
 
 EXPORT(int, sceAppMgrReceiveNotificationRequestForShell) {
@@ -532,8 +549,10 @@ EXPORT(int, sceAppMgrReceiveNotificationRequestForShell) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrReceiveShellEvent) {
-    TRACY_FUNC(sceAppMgrReceiveShellEvent);
+EXPORT(int, sceAppMgrReceiveShellEvent, SceAppMgrEvent *mgrEvent) {
+    TRACY_FUNC(sceAppMgrReceiveEvent, mgrEvent);
+    // mgrEvent->mgrEvent = SCE_APPMGR_EVENT_ON_RESUME;
+    LOG_DEBUG("call shell event");
     return UNIMPLEMENTED();
 }
 
@@ -778,6 +797,7 @@ EXPORT(int, sceAppMgrUpdateSaveDataParam) {
     return UNIMPLEMENTED();
 }
 
+#include <util/lock_and_find.h>
 EXPORT(int, sceAppMgrWorkDirMount, int mountId, char *mountPoint) {
     TRACY_FUNC(sceAppMgrWorkDirMount, mountId, mountPoint);
     STUBBED("using strcpy");
@@ -801,7 +821,8 @@ EXPORT(int, sceAppMgrWorkDirMount, int mountId, char *mountPoint) {
         LOG_WARN("Unknown mount id: {}", log_hex(mountId));
         break;
     }
-
+    LOG_DEBUG("Mount point: {}", mountPoint);
+ 
     return 0;
 }
 

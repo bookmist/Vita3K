@@ -565,6 +565,7 @@ EXPORT(int, sceIoGetstatByFd, const SceUID fd, SceIoStat *stat) {
 
 EXPORT(int, sceIoIoctl, SceUID fd, int cmd, const void *argp, SceSize arglen, void *bufp, SceSize buflen) {
     TRACY_FUNC(sceIoIoctl, fd, cmd, argp, arglen, bufp, buflen);
+    LOG_DEBUG("fd: {}, cmd: {}, argp: {}, arglen: {}, bufp: {}, buflen: {}", fd, cmd, argp, arglen, bufp, buflen);
     return UNIMPLEMENTED();
 }
 
@@ -693,8 +694,9 @@ EXPORT(int, sceIoRmdirAsync) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceIoSync) {
+EXPORT(int, sceIoSync, const char *devname, int flag) {
     TRACY_FUNC(sceIoSync);
+    LOG_DEBUG("devname: {}, flag: {}", devname, flag);
     return UNIMPLEMENTED();
 }
 
