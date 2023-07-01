@@ -237,6 +237,7 @@ static void decrypt_pup_packages(const std::wstring &src, const std::wstring &de
     join_files(dest, "os0-", dest + L"/os0.img");
     join_files(dest, "vs0-", dest + L"/vs0.img");
     join_files(dest, "sa0-", dest + L"/sa0.img");
+    join_files(dest, "pd0-", dest + L"/pd0.img");
 }
 
 void install_pup(const std::wstring &pref_path, const std::string &pup_path, const std::function<void(uint32_t)> &progress_callback) {
@@ -274,6 +275,12 @@ void install_pup(const std::wstring &pref_path, const std::string &pup_path, con
             }
         }
     }
+
+    if (fs::file_size(pup_dec + L"/pd0.img") > 0) {
+        LOG_DEBUG("found file");
+        extract_exfat(pup_dec, "pd0.img", pref_path);
+    }
+
     if (fs::file_size(pup_dec + L"/sa0.img") > 0)
         extract_fat(pup_dec, "sa0.img", pref_path);
     if (fs::file_size(pup_dec + L"/vs0.img") > 0) {
