@@ -26,6 +26,8 @@
 #include <packages/sce_types.h>
 #include <util/string_utils.h>
 
+#include <windows.h>
+
 #include <self.h>
 
 #include <fstream>
@@ -655,6 +657,145 @@ static void traverse_directory(Fat16::Image &img, Fat16::Entry mee, const std::w
             extract_file(img, mee, dir_path + L"/");
         }
     }
+}
+
+#include <Windows.h>
+#include <string>
+#include <vector>
+
+// Définition des structures exFAT
+#pragma pack(push, 1)
+
+struct ExfatDirectoryEntry {
+    DWORD entryType;
+    BYTE secondaryCount;
+    WCHAR name[15];
+    WORD attributes;
+    WORD reserved1;
+    WORD createdTime;
+    WORD createdDate;
+    WORD accessedDate;
+    WORD clusterHigh;
+    WORD modifiedTime;
+    WORD modifiedDate;
+    WORD clusterLow;
+    DWORD fileSize;
+};
+
+struct ExfatSecondaryEntry {
+    DWORD entryType;
+    BYTE secondaryCount;
+    WCHAR name[15];
+    DWORD reserved2;
+};
+
+#pragma pack(pop)
+
+void extract_exfat(const std::wstring &partition_path, const std::string &partition, const std::wstring &pref_path) {
+    // Créer le chemin d'accès à l'image
+    const std::wstring imageFilePath = partition_path + L"\\" + string_utils::utf_to_wide(partition);
+    const std::wstring output_dir = pref_path + L"\\" + string_utils::utf_to_wide(partition.substr(0, 3));
+    HANDLE imageHandle = CreateFileW(imageFilePath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (imageHandle == INVALID_HANDLE_VALUE) {
+        // Gestion des erreurs
+        DWORD errorCode = GetLastError();
+        // Traitez l'erreur selon vos besoins
+        return;
+    }
+
+    // Positionner le pointeur de fichier à l'offset du premier répertoire exFAT (512 bytes)
+    if (SetFilePointer(imageHandle, 512, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+        // Gestion des erreurs
+        DWORD errorCode = GetLastError();
+        CloseHandle(imageHandle);
+        // Traitez l'erreur selon vos besoins
+        return;
+    }
+
+    std::vector<ExfatDirectoryEntry> entries;
+
+    // Parcourir les répertoires exFAT
+    while (true) {
+        ExfatDirectoryEntry entry;
+        DWORD bytesRead;
+
+        if (!ReadFile(imageHandle, &entry, sizeof(entry), &bytesRead, NULL) || bytesRead != sizeof(entry)) {
+            break;
+        }
+
+        entries.push_back(entry);
+
+        // Lire les entrées secondaires s'il y en a
+        for (int i = 0; i < entry.secondaryCount; ++i) {
+            ExfatSecondaryEntry secondaryEntry;
+            if (!ReadFile(imageHandle, &secondaryEntry, sizeof(secondaryEntry), &bytesRead, NULL) || bytesRead != sizeof(secondaryEntry)) {
+                break;
+            }
+        }
+
+        // Votre logique de traitement supplémentaire des entrées de répertoire exFAT ici (si nécessaire)
+    }
+
+    // Extraire les fichiers
+    for (const auto &entry : entries) {
+        if (entry.attributes & FILE_ATTRIBUTE_DIRECTORY) { // Répertoire
+            if (entry.name[0] != 0x05) {
+                std::wstring dirName(entry.name, 15);
+                dirName.erase(dirName.find_last_not_of(L' ') + 1);
+                if (dirName.empty() || dirName == L"." || dirName == L"..") {
+                    continue;
+                }
+                std::wstring dirPath = output_dir + L"\\" + dirName;
+                CreateDirectoryW(dirPath.c_str(), NULL);
+            }
+        } else { // Fichier
+            if (entry.name[0] != 0xE5 && entry.name[0] != 0x00) {
+                std::wstring fileName(entry.name, 15);
+                fileName.erase(fileName.find_last_not_of(L' ') + 1);
+                if (fileName.empty()) {
+                    continue;
+                }
+                std::wstring filePath = output_dir + L"\\" + fileName;
+                HANDLE outputHandle = CreateFileW(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+                if (outputHandle != INVALID_HANDLE_VALUE) {
+                    const DWORD bufferSize = 4096;
+                    std::vector<BYTE> buffer(bufferSize);
+
+                    DWORD bytesToRead = entry.fileSize;
+                    while (bytesToRead > 0) {
+                        DWORD bytesRead;
+                        DWORD bytesToReadThisTime = std::min(bufferSize, bytesToRead);
+
+                        if (!ReadFile(imageHandle, buffer.data(), bytesToReadThisTime, &bytesRead, NULL) || bytesRead != bytesToReadThisTime) {
+                            // Gestion des erreurs de lecture
+                            DWORD errorCode = GetLastError();
+                            CloseHandle(outputHandle);
+                            DeleteFileW(filePath.c_str());
+                            // Traitez l'erreur selon vos besoins
+                            break;
+                        }
+
+                        DWORD bytesWritten;
+                        if (!WriteFile(outputHandle, buffer.data(), bytesRead, &bytesWritten, NULL)) {
+                            // Gestion des erreurs d'écriture
+                            DWORD errorCode = GetLastError();
+                            CloseHandle(outputHandle);
+                            DeleteFileW(filePath.c_str());
+                            // Traitez l'erreur selon vos besoins
+                            break;
+                        }
+
+                        bytesToRead -= bytesWritten;
+                    }
+
+                    CloseHandle(outputHandle);
+                }
+            }
+        }
+    }
+
+    CloseHandle(imageHandle);
 }
 
 void extract_fat(const std::wstring &partition_path, const std::string &partition, const std::wstring &pref_path) {

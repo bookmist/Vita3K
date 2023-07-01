@@ -128,6 +128,10 @@ inline SysmoduleInternalPaths init_sysmodule_internal_paths() {
     p[SCE_SYSMODULE_INTERNAL_DBUTIL] = { "dbutil" };
     p[SCE_SYSMODULE_INTERNAL_ACTIVITY_DB] = { "activity_db" };
     p[SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG] = { "common_gui_dialog" };
+    p[SCE_SYSMODULE_INTERNAL_MSG_DIALOG] = { "libcdlg_msg" };
+    p[SCE_SYSMODULE_INTERNAL_SAVEDATA_DIALOG] = { "libcdlg_savedata" };
+    p[SCE_SYSMODULE_INTERNAL_IME_DIALOG] = { "libcdlg_ime" };
+    p[SCE_SYSMODULE_INTERNAL_COMMON_DIALOG_MAIN] = { "libcdlg_main" };
     p[SCE_SYSMODULE_INTERNAL_DB_RECOVERY_UTILITY] = { "dbrecovery_utility" };
     p[SCE_SYSMODULE_INTERNAL_LOCATION_INTERNAL] = { "liblocation_internal" };
 

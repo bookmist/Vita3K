@@ -656,6 +656,7 @@ public:
 };
 
 void register_keys(KeyStore &SCE_KEYS, int type);
+void extract_exfat(const std::wstring &partition_path, const std::string &partition, const std::wstring &pref_path);
 void extract_fat(const std::wstring &partition_path, const std::string &partition, const std::wstring &pref_path);
 std::string decompress_segments(const std::vector<uint8_t> &decrypted_data, const uint64_t &size);
 void self2elf(const fs::path &infile, const fs::path &outfile, KeyStore &SCE_KEYS, unsigned char *klictxt);
