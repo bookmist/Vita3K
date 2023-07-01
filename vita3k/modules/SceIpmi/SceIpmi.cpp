@@ -105,7 +105,7 @@ EXPORT(int, _ZN4IPMI6Client6getMsgEjPvPjjS2_) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client7connectEPKvjPi, void* client, void const* params, SceSize params_size, SceInt32* error) {
+EXPORT(int, _ZN4IPMI6Client7connectEPKvjPi, void *client, void const *params, SceSize params_size, SceInt32 *error) {
     *error = 0;
     return UNIMPLEMENTED();
 }

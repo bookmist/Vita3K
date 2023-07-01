@@ -27,6 +27,8 @@
 #include <util/lock_and_find.h>
 #include <util/types.h>
 
+#include "io/state.h"
+
 #include <util/tracy.h>
 TRACY_MODULE_NAME(SceDisplay);
 

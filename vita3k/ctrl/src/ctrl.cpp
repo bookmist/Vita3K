@@ -134,7 +134,7 @@ static void apply_keyboard(uint32_t *buttons, float axes[4], bool ext, EmuEnvSta
         *buttons |= SCE_CTRL_CROSS;
     if (keys[emuenv.cfg.keyboard_button_square])
         *buttons |= SCE_CTRL_SQUARE;
-    if (keys[emuenv.cfg.keyboard_button_psbutton])
+    if (keys[emuenv.cfg.keyboard_button_psbutton_shell])
         *buttons |= SCE_CTRL_PSBUTTON;
 
     axes[0] += keys_to_axis(keys, static_cast<SDL_Scancode>(emuenv.cfg.keyboard_leftstick_left), static_cast<SDL_Scancode>(emuenv.cfg.keyboard_leftstick_right));

@@ -421,8 +421,9 @@ EXPORT(int, sceAppMgrIsCameraActive) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrLaunchAppByName) {
+EXPORT(int, sceAppMgrLaunchAppByName, int flags, const char *name, const char *param) {
     TRACY_FUNC(sceAppMgrLaunchAppByName);
+    LOG_DEBUG("flags: {}, name: {}, param: {}", flags, name, param);
     return UNIMPLEMENTED();
 }
 
@@ -446,8 +447,9 @@ EXPORT(int, sceAppMgrLaunchAppByNameForShell) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrLaunchAppByPath4) {
+EXPORT(int, sceAppMgrLaunchAppByPath4, const char *path, const char *titleid, int a3, const char *app_param, int a5, void *opt) {
     TRACY_FUNC(sceAppMgrLaunchAppByPath4);
+    LOG_DEBUG("path: {}, titleid: {}, a3: {}, app param: {}, a5: {}", path, titleid, a3, app_param, a5);
     return UNIMPLEMENTED();
 }
 
@@ -526,8 +528,9 @@ EXPORT(int, sceAppMgrPspSaveDataRootMount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrReceiveEvent) {
-    TRACY_FUNC(sceAppMgrReceiveEvent);
+EXPORT(int, sceAppMgrReceiveEvent, SceAppMgrEvent *mgrEvent) {
+    TRACY_FUNC(sceAppMgrReceiveEvent, mgrEvent);
+    mgrEvent->mgrEvent = SCE_APPMGR_EVENT_ON_RESUME;
     return UNIMPLEMENTED();
 }
 
@@ -545,8 +548,10 @@ EXPORT(int, sceAppMgrReceiveNotificationRequestForShell) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrReceiveShellEvent) {
-    TRACY_FUNC(sceAppMgrReceiveShellEvent);
+EXPORT(int, sceAppMgrReceiveShellEvent, SceAppMgrEvent *mgrEvent) {
+    TRACY_FUNC(sceAppMgrReceiveEvent, mgrEvent);
+    // mgrEvent->mgrEvent = SCE_APPMGR_EVENT_ON_RESUME;
+    LOG_DEBUG("call shell event");
     return UNIMPLEMENTED();
 }
 

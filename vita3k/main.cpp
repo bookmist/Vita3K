@@ -344,7 +344,8 @@ int main(int argc, char *argv[]) {
         gui.imgui_state->do_clear_screen = false;
     }
 
-    gui::init_app_background(gui, emuenv, emuenv.io.app_path);
+    if (emuenv.io.app_path != "NPXS19999")
+        gui::init_app_background(gui, emuenv, emuenv.io.app_path);
     gui::update_last_time_app_used(gui, emuenv, emuenv.io.app_path);
 
     const auto draw_app_background = [](GuiState &gui, EmuEnvState &emuenv) {

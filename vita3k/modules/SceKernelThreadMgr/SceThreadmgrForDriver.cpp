@@ -18,6 +18,11 @@
 #include "SceThreadmgrForDriver.h"
 #include "../SceLibKernel/SceLibKernel.h"
 
+#include <kernel/callback.h>
+#include <kernel/state.h>
+#include <kernel/sync_primitives.h>
+#include <kernel/types.h>
+
 EXPORT(int, ksceKernelCancelCallback) {
     return UNIMPLEMENTED();
 }
@@ -62,16 +67,21 @@ EXPORT(int, ksceKernelCreateCond) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelCreateEventFlag) {
-    return UNIMPLEMENTED();
+EXPORT(SceUID, ksceKernelCreateEventFlag, const char *pName, SceUInt32 attr, SceUInt32 initPattern, const SceKernelEventFlagOptParam *pOptParam) {
+    return eventflag_create(emuenv.kernel, export_name, thread_id, pName, attr, initPattern);
 }
 
 EXPORT(int, ksceKernelCreateMsgPipe) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelCreateMutex) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelCreateMutex, const char *name, SceUInt attr, int init_count, SceKernelMutexOptParam *opt_param) {
+    SceUID uid;
+
+    if (auto error = mutex_create(&uid, emuenv.kernel, emuenv.mem, export_name, name, thread_id, attr, init_count, Ptr<SceKernelLwMutexWork>(0), SyncWeight::Heavy)) {
+        return error;
+    }
+    return uid;
 }
 
 EXPORT(int, ksceKernelCreateSema) {
@@ -94,8 +104,8 @@ EXPORT(int, ksceKernelDeleteCond) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelDeleteEventFlag) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelDeleteEventFlag, SceUID event_id) {
+    return eventflag_delete(emuenv.kernel, export_name, thread_id, event_id);
 }
 
 EXPORT(int, ksceKernelDeleteFastMutex) {
@@ -194,8 +204,8 @@ EXPORT(int, ksceKernelLockFastMutex) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelLockMutex) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelLockMutex, SceUID mutexid, int lock_count, unsigned int *timeout) {
+    return mutex_lock(emuenv.kernel, emuenv.mem, export_name, thread_id, mutexid, lock_count, timeout, SyncWeight::Heavy);
 }
 
 EXPORT(int, ksceKernelLockMutexCB_089) {
@@ -350,8 +360,8 @@ EXPORT(int, ksceKernelWaitEventCB) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelWaitEventFlag) {
-    return UNIMPLEMENTED();
+EXPORT(SceInt32, ksceKernelWaitEventFlag, SceUID evfId, SceUInt32 bitPattern, SceUInt32 waitMode, SceUInt32 *pResultPat, SceUInt32 *pTimeout) {
+    return eventflag_wait(emuenv.kernel, export_name, thread_id, evfId, bitPattern, waitMode, pResultPat, pTimeout);
 }
 
 EXPORT(int, ksceKernelWaitEventFlagCB) {

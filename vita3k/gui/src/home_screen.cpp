@@ -29,6 +29,8 @@
 
 #include <io/VitaIoDevice.h>
 
+#include <regmgr/functions.h>
+
 #include <util/log.h>
 #include <util/safe_time.h>
 #include <util/string_utils.h>
@@ -146,7 +148,7 @@ void pre_load_app(GuiState &gui, EmuEnvState &emuenv, bool live_area, const std:
 }
 
 void pre_run_app(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path) {
-    if (app_path.find("NPXS") == std::string::npos) {
+    if ((app_path == "NPXS19999") || (app_path.find("NPXS") == std::string::npos)) {
         if (emuenv.io.app_path != app_path) {
             if (!emuenv.io.app_path.empty())
                 gui.vita_area.app_close = true;
@@ -245,11 +247,12 @@ void draw_app_close(GuiState &gui, EmuEnvState &emuenv) {
     ImGui::SetWindowFontScale(1.4f * RES_SCALE.x);
     ImGui::SetCursorPos(ImVec2(50.f * SCALE.x, 108.f * SCALE.y));
     ImGui::TextColored(GUI_COLOR_TEXT, "%s", gui.lang.game_data["app_close"].c_str());
-    if (gui.app_selector.user_apps_icon.contains(emuenv.io.app_path)) {
+    const auto APP_ICON = get_app_icon(gui, emuenv.io.app_path);
+    if (APP_ICON->second) {
         const auto ICON_POS_SCALE = ImVec2(50.f * SCALE.x, (WINDOW_SIZE.y / 2.f) - (ICON_SIZE.y / 2.f) - (10.f * SCALE.y));
         ImGui::SetCursorPos(ICON_POS_SCALE);
         const auto POS_MIN = ImGui::GetCursorScreenPos();
-        ImGui::GetWindowDrawList()->AddImageRounded(get_app_icon(gui, emuenv.io.app_path)->second, POS_MIN, ImVec2(POS_MIN.x + ICON_SIZE.x, POS_MIN.y + ICON_SIZE.y), ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, ICON_SIZE.x, ImDrawCornerFlags_All);
+        ImGui::GetWindowDrawList()->AddImageRounded(APP_ICON->second, POS_MIN, ImVec2(POS_MIN.x + ICON_SIZE.x, POS_MIN.y + ICON_SIZE.y), ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, ICON_SIZE.x, ImDrawCornerFlags_All);
     }
     ImGui::SetCursorPos(ImVec2(ICON_SIZE.x + (72.f * SCALE.x), (WINDOW_SIZE.y / 2.f) - ImGui::CalcTextSize(emuenv.current_app_title.c_str()).y + (4.f * SCALE.y)));
     ImGui::TextColored(GUI_COLOR_TEXT, "%s", emuenv.current_app_title.c_str());
@@ -413,7 +416,7 @@ static std::string get_label_name(GuiState &gui, const SortType &type) {
     return label;
 }
 
-static int32_t first_visible_app_index = -4, current_selected_app_index = -5;
+static int32_t first_visible_app_index = -5, current_selected_app_index = -6;
 static std::vector<int32_t> apps_list_filtered;
 void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t button) {
     if (apps_list_filtered.empty())
@@ -424,7 +427,7 @@ void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t bu
         gui.is_nav_button = true;
 
         // When the current selected app index have not any selected, set it to the first visible app index
-        if (current_selected_app_index < -4)
+        if (current_selected_app_index < -5)
             current_selected_app_index = first_visible_app_index;
 
         return;
@@ -485,7 +488,7 @@ void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t bu
         gui.vita_area.home_screen = !gui.vita_area.live_area_screen;
         break;
     case SCE_CTRL_CROSS: {
-        const auto &selected_app = current_selected_app_index < 0 ? gui.app_selector.sys_apps[current_selected_app_index + 4] : gui.app_selector.user_apps[current_selected_app_index];
+        const auto &selected_app = current_selected_app_index < 0 ? gui.app_selector.sys_apps[current_selected_app_index + 5] : gui.app_selector.user_apps[current_selected_app_index];
         pre_load_app(gui, emuenv, emuenv.cfg.show_live_area_screen, selected_app.path);
     } break;
     default: break;
@@ -777,7 +780,7 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
 
             // Get the current app index off the apps list.
             const auto app_index = static_cast<int>(&app - &apps_list[0]);
-            const auto current_app_index = is_not_sys_app ? app_index : app_index - 4;
+            const auto current_app_index = is_not_sys_app ? app_index : app_index - 5;
             apps_list_filtered.push_back(current_app_index);
 
             // Check if the current app is selected.

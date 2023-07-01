@@ -176,15 +176,16 @@ void init_live_area(GuiState &gui, EmuEnvState &emuenv, const std::string &app_p
         const auto live_area_path{ fs::path("sce_sys") / ((sku_flag[app_path] == 3) && fs::exists(APP_PATH / "sce_sys/retail/livearea") ? "retail/livearea" : "livearea") };
         auto template_xml{ APP_PATH / live_area_path / "contents/template.xml" };
 
-        pugi::xml_document doc;
+        const auto is_ps_vita_os = (app_path == "NPXS19999");
 
+        pugi::xml_document doc;
         if (!doc.load_file(template_xml.c_str())) {
-            if (is_ps_app || is_sys_app)
+            if (!is_ps_vita_os && (is_ps_app || is_sys_app))
                 LOG_WARN("Live Area Contents is corrupted or missing for title: {} '{}' in path: {}.", APP_INDEX->title_id, APP_INDEX->title, template_xml.string());
             if (doc.load_file(default_fw_contents.c_str())) {
                 template_xml = default_fw_contents;
                 default_contents = true;
-                LOG_INFO("Using default firmware contents.");
+                LOG_INFO_IF(!is_ps_vita_os, "Using default firmware contents.");
             } else {
                 type[app_path] = "a1";
                 LOG_WARN("Default firmware contents is corrupted or missing, install firmware for fix it.");

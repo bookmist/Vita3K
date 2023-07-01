@@ -22,24 +22,25 @@
 #include <kernel/load_self.h>
 #include <kernel/state.h>
 
-// Current modules works for loading
+    // Current modules works for loading
 static constexpr auto auto_lle_modules = {
-    SCE_SYSMODULE_SAS,
-    SCE_SYSMODULE_PGF,
-    SCE_SYSMODULE_SYSTEM_GESTURE,
-    SCE_SYSMODULE_XML,
-    SCE_SYSMODULE_MP4,
-    SCE_SYSMODULE_ATRAC,
-    SCE_SYSMODULE_AVPLAYER,
-    SCE_SYSMODULE_JSON,
-    SCE_SYSMODULE_HTTP,
-    SCE_SYSMODULE_SSL,
-    SCE_SYSMODULE_HTTPS,
+        SCE_SYSMODULE_SAS,
+        SCE_SYSMODULE_PGF,
+        SCE_SYSMODULE_SYSTEM_GESTURE,
+        SCE_SYSMODULE_XML,
+        SCE_SYSMODULE_LIVEAREA,
+        SCE_SYSMODULE_MP4,
+        SCE_SYSMODULE_ATRAC,
+        SCE_SYSMODULE_AVPLAYER,
+        SCE_SYSMODULE_JSON,
+        SCE_SYSMODULE_HTTP,
+        SCE_SYSMODULE_SSL,
+        SCE_SYSMODULE_HTTPS,
     SCE_SYSMODULE_SMART,
     SCE_SYSMODULE_FACE,
     SCE_SYSMODULE_ULT,
     SCE_SYSMODULE_FIOS2
-};
+    };
 
 bool is_lle_module(SceSysmoduleModuleId module_id, EmuEnvState &emuenv) {
     const auto &paths = sysmodule_paths[module_id];
