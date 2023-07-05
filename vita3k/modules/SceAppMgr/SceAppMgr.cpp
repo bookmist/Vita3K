@@ -903,7 +903,8 @@ EXPORT(int, sceAppMgrQuitForNonSuspendableApp) {
 
 EXPORT(int, sceAppMgrReceiveShellEventNum) {
     TRACY_FUNC(sceAppMgrReceiveShellEventNum);
-    return UNIMPLEMENTED();
+    STUBBED("STUB");
+    return 0;
 }
 
 EXPORT(int, sceAppMgrReleaseBgmPort) {

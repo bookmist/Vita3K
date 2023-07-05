@@ -25,11 +25,25 @@ EXPORT(int, sceRegMgrSystemParamGetBin) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceRegMgrSystemParamGetInt) {
-    return UNIMPLEMENTED();
+EXPORT(int, sceRegMgrSystemParamGetInt, const int id, int *buf) {
+    switch (id) {
+    case 0x00023fc2: // /CONFIG/ACCESSIBILITY/large_text
+    case 0x00611DC9: // /CONFIG/ACCESSIBILITY/bold_text
+    case 0x008A2AD7: // /CONFIG/ACCESSIBILITY/contrast
+        *buf = 0;
+        LOG_WARN("Using default value");
+        break;
+    default:
+        LOG_DEBUG("Unknown id: {}", log_hex(id));
+        break;
+    }
+
+    return 0;
 }
 
-EXPORT(int, sceRegMgrSystemParamGetStr) {
+EXPORT(int, sceRegMgrSystemParamGetStr, const int id, SceChar8 *buf, const SceSize bufSize) {
+    // LOG_DEBUG("paramId: {}, bufSize: {}", log_hex(id), bufSize);
+    //  0x00186122: /CONFIG/SECURITY/PARENTAL/passcode
     return UNIMPLEMENTED();
 }
 

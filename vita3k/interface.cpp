@@ -418,7 +418,7 @@ static auto pre_load_module(EmuEnvState &emuenv, const std::vector<std::string> 
         const auto module_path_abs = fmt::format("{}:{}", device._to_string(), module_path);
         auto res = load_module(emuenv, module_path_abs);
         if (res < 0)
-            return FileNotFound;
+                return FileNotFound;
     }
     return Success;
 }
@@ -514,9 +514,11 @@ static ExitCode load_app_impl(EmuEnvState &emuenv, SceUID &main_module_id, const
     main_module_id = load_module(emuenv, "app0:" + emuenv.self_path);
     if (main_module_id >= 0) {
         const auto module = emuenv.kernel.loaded_modules[main_module_id];
-        LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
-    } else
-        return FileNotFound;
+            LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
+        } else {
+        	LOG_ERROR("Failed to load main executable {}", emuenv.self_path);
+            return FileNotFound;
+		}
 
     // Set self name from self path, can contain folder, get file name only
     emuenv.self_name = fs::path(emuenv.self_path).filename().string();

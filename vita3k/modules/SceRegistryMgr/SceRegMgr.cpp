@@ -40,8 +40,9 @@ EXPORT(int, sceRegMgrGetInitVals) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceRegMgrGetKeyBin) {
+EXPORT(int, sceRegMgrGetKeyBin, const char *category, const char *name, void *buf, int size) {
     TRACY_FUNC(sceRegMgrGetKeyBin);
+    LOG_DEBUG("category: {}, name: {}, size: {}", category, name, size);
     return UNIMPLEMENTED();
 }
 
@@ -52,22 +53,93 @@ EXPORT(int, sceRegMgrGetKeyInt, const char *category, const char *name, int *buf
         *buf = 1;
 
         return 0;
-    } else
-        return UNIMPLEMENTED();
+    } else if (std::string(category) == "/CONFIG/SYSTEM") {
+        if (std::string(name) == "initialize") {
+            LOG_WARN("Using init done");
+            *buf = 1;
+            return 0;
+        } else if (std::string(name) == "language") {
+            LOG_WARN("using Cfg value of: {}/{}", category, name);
+            *buf = emuenv.cfg.sys_lang;
+            return 0;
+        }
+    } else if (std::string(category) == "/CONFIG/SHELL") {
+        if (std::string(name) == "shell_auto_create_folder") {
+            *buf = 0;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        } else if (std::string(name) == "playlog_clock") {
+            *buf = 0;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        }
+    } else if (std::string(category) == "/CONFIG/DATE") {
+        if (std::string(name) == "time_zone") {
+            *buf = 12;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        } else if (std::string(name) == "date_format") {
+            *buf = emuenv.cfg.sys_date_format;
+            LOG_WARN("using cfg value of date_format");
+            return 0;
+        } else if (std::string(name) == "time_format") {
+            *buf = emuenv.cfg.sys_time_format;
+            LOG_WARN("using cfg value of time_format");
+            return 0;
+        } else if (std::string(name) == "auto_summer_time") {
+            *buf = 1;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        } else if (std::string(name) == "summer_time") {
+            *buf = 0;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        }
+    } else if (std::string(category) == "/CONFIG/ACCESSIBILITY") {
+        if (std::string(name) == "invert_color") {
+            *buf = 0;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        } else if (std::string(name) == "keyremap_enable") {
+            *buf = 0;
+            LOG_WARN("using default value of: {}/{}", category, name);
+            return 0;
+        }
+    }
+
+    LOG_WARN("Unknow value of category: {}, name: {}", category, name);
+
+    return 0;
 }
 
-EXPORT(int, sceRegMgrGetKeyStr) {
+EXPORT(int, sceRegMgrGetKeyStr, const char *category, const char *name, char *buf, const int size) {
     TRACY_FUNC(sceRegMgrGetKeyStr);
+    LOG_DEBUG("category: {}, name: {}, size: {}", category, name, size);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceRegMgrGetKeys) {
-    TRACY_FUNC(sceRegMgrGetKeys);
+EXPORT(int, sceRegMgrGetKeys, const char *category, char *buf, const int elements_number) {
+    TRACY_FUNC(sceRegMgrGetKeys, category, buf, elements_number);
+    LOG_DEBUG("category: {}, elements number: {}", category, elements_number);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceRegMgrGetKeysInfo) {
+struct KeyInfo {
+    int size; // sizeof(this)
+    Ptr<const char> key;
+    int type; // probably type - cba to RE
+    int key_size; // probably size - cba to RE
+};
+
+EXPORT(int, sceRegMgrGetKeysInfo, const char *category, KeyInfo *keys, int num_keys) {
     TRACY_FUNC(sceRegMgrGetKeysInfo);
+    for (int i = 0; i < num_keys; i++) {
+        LOG_DEBUG("key: {}/{}", category, keys[i].key.get(emuenv.mem));
+        // std::string target = category + '/' + keys[i].key;
+        // keys[i].type = get_type_of_key(category, keys[i].key); // code it yourself or hardcode 0
+        // keys[i].key_size = get_size_of_key(category, keys[i].key); // code it yourself or hardcode 4
+    }
+    return 0;
     return UNIMPLEMENTED();
 }
 
@@ -103,11 +175,13 @@ EXPORT(int, sceRegMgrSetKeyBin) {
 
 EXPORT(int, sceRegMgrSetKeyInt, const char *category, const char *name, int buf) {
     TRACY_FUNC(sceRegMgrSetKeyInt, category, name, buf);
+    LOG_DEBUG("category: {}, name: {}, buf: {}", category, name, buf);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceRegMgrSetKeyStr) {
+EXPORT(int, sceRegMgrSetKeyStr, const char *category, const char *name, char *buf, int size) {
     TRACY_FUNC(sceRegMgrSetKeyStr);
+    LOG_DEBUG("category: {}, name: {}, buf: {}, size: {}", category, name, buf, size);
     return UNIMPLEMENTED();
 }
 
