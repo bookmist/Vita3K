@@ -393,7 +393,7 @@ int read_file(void *data, IOState &io, const SceUID fd, const SceSize size, cons
     if (tty_file != io.tty_files.end()) {
         if (tty_file->second == TTY_IN) {
             std::cin.read(reinterpret_cast<char *>(data), size);
-            LOG_TRACE_IF(log_file_op && log_file_read, "{}: Reading terminal fd: {}, size: {}", export_name, log_hex(fd), size);
+            LOG_TRACE_IF(true && true, "{}: Reading terminal fd: {}, size: {}", export_name, log_hex(fd), size);
             return size;
         }
         return IO_ERROR_UNK();
@@ -422,7 +422,7 @@ int write_file(SceUID fd, const void *data, const SceSize size, const IOState &i
             } else {
                 if (s.back() == '\n')
                     s.pop_back();
-                LOG_TRACE_IF(log_file_op, "*** TTY: {}", s);
+                LOG_TRACE_IF(true, "*** TTY: {}", s);
             }
 
             return size;

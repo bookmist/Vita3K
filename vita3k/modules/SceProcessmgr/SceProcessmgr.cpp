@@ -111,6 +111,8 @@ EXPORT(int, sceKernelGetCurrentProcess) {
 
 EXPORT(int, sceKernelGetExtraTty) {
     TRACY_FUNC(sceKernelGetExtraTty);
+    // auto res = open_file(emuenv.io, "tty0:", SCE_O_RDWR, emuenv.pref_path, export_name);
+    // return res;
     return UNIMPLEMENTED();
 }
 

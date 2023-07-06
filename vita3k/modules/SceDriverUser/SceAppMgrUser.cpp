@@ -226,7 +226,7 @@ EXPORT(int, sceAppMgrGameDataMount, const char *app_path, const char *patch_path
     TRACY_FUNC(sceAppMgrGameDataMount, app_path, patch_path, rif_path, mount_point);
     if (app_path && strlen(app_path) > 0) {
         emuenv.io.device_paths.gamedata0 = app_path;
-        strcpy(mount_point, "gamedata0:");
+    strcpy(mount_point, "gamedata0:");
     }
 
     if (patch_path || rif_path) {
@@ -663,7 +663,7 @@ EXPORT(int, sceAppMgrReceiveEvent, SceAppMgrEvent *mgrEvent) {
 EXPORT(int, sceAppMgrReceiveEventNum, SceUInt32 *eventNum) {
     TRACY_FUNC(sceAppMgrReceiveEventNum, eventNum);
 
-    // Vita3K does not yet manage events    
+    // Vita3K does not yet manage events
     *eventNum = 0;
 
     return STUBBED("Set eventNum to 0");

@@ -542,6 +542,23 @@ EXPORT(int, vshIoUmount) {
 EXPORT(int, vshKernelCheckModelCapability, int flag) {
     // LOG_DEBUG("unk: {}", unk);
     STUBBED("Return");
+    /**
+     *Only bits in the range 0-255 are supported.
+Bits:
+    0: unknown
+    1: Multi-controllers support
+    2: unknown
+    4: unknown
+    5: unknown
+    6: unknown
+    7: unknown, ?OLED display?
+    8: unknown, ?LCD display?
+    9: unknown, set on almost all models
+    10: unknown
+    11: SD card support
+    12: unknown
+    13: unknown
+     **/
 
     switch (flag) {
     case 0:
