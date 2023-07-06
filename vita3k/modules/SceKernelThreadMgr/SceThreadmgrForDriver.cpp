@@ -145,7 +145,9 @@ EXPORT(int, ksceKernelGetProcessIdFromTLS) {
 }
 
 EXPORT(int, ksceKernelGetSystemTimeLow) {
-    return UNIMPLEMENTED();
+    STUBBED("use sceKernelGetProcessTimeLow");
+    return static_cast<SceUInt32>(rtc_get_ticks(emuenv.kernel.base_tick.tick) - emuenv.kernel.start_tick);
+    // return UNIMPLEMENTED();
 }
 
 EXPORT(int, ksceKernelGetTLSAddr) {

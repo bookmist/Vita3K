@@ -301,8 +301,9 @@ EXPORT(bool, sceKernelIsPSVitaTV) {
     return emuenv.cfg.current_config.pstv_mode;
 }
 
-EXPORT(int, sceKernelOpenMemBlock) {
-    TRACY_FUNC(sceKernelOpenMemBlock);
+EXPORT(int, sceKernelOpenMemBlock, const char *name, int flags) {
+    TRACY_FUNC(sceKernelOpenMemBlock, name, flags);
+    LOG_DEBUG("name:{},flags:{}", name, flags);
     return UNIMPLEMENTED();
 }
 

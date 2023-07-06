@@ -373,8 +373,27 @@ EXPORT(int, sceAppMgrGetStatusById) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrGetStatusByName) {
-    TRACY_FUNC(sceAppMgrGetStatusByName);
+struct _sceAppMgrGetStatusByName_opt { // size is 0x10 on FW 0.990
+    SceSize appNameSize; // max value is 32
+    SceSize appStatusSize;
+    uint32_t reserved1;
+    uint32_t reserved2;
+};
+
+struct SceAppMgrAppStatus { // size is 0x40 on FW 0.990
+    SceUInt32 unk_0; // 0x0
+    SceUInt32 launchMode; // 0x4
+    SceUInt32 bgm_priority_or_status; // 0x8
+    char appName[32]; // 0xC
+    SceUInt32 unk_2C; // 0x2C
+    SceUID appId; // 0x30 - Application ID
+    SceUID processId; // 0x34 - Process ID
+    SceUInt32 status_related_1; // 0x38
+    SceUInt32 status_related_2; // 0x3C
+};
+
+EXPORT(int, sceAppMgrGetStatusByName, const char *appName, SceAppMgrAppStatus *appStatus, _sceAppMgrGetStatusByName_opt *opt) {
+    TRACY_FUNC(sceAppMgrGetStatusByName, appName, appStatus, opt);
     return UNIMPLEMENTED();
 }
 
