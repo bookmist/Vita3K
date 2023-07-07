@@ -273,43 +273,23 @@ bool load_sys_module(EmuEnvState &emuenv, SceSysmoduleModuleId module_id) {
 bool load_module_internal_with_arg(EmuEnvState &emuenv, SceUID thread_id, SceSysmoduleInternalModuleId module_id, SceSize args, Ptr<void> argp, int *retcode) {
     LOG_INFO("Loading internal module ID: {}", log_hex(module_id));
 
-    if (sysmodule_internal_paths.count(module_id) == 0)
+    if (!sysmodule_internal_paths.contains(module_id))
         return false;
 
-    const auto module_paths = sysmodule_internal_paths.at(module_id);
+    const auto &module_paths = sysmodule_internal_paths.at(module_id);
+    for (const auto module_filename : module_paths) {
+        std::string module_path = fmt::format("vs0:sys/external/{}.suprx", module_filename);
 
-    for (std::string module_path : module_paths) {
-        module_path = "sys/external/" + module_path + ".suprx";
-
-        vfs::FileBuffer module_buffer;
-        Ptr<const void> lib_entry_point;
-
-        if (vfs::read_file(VitaIoDevice::vs0, module_buffer, emuenv.pref_path, module_path)) {
-            SceUID loaded_module_uid = load_self(lib_entry_point, emuenv.kernel, emuenv.mem, module_buffer.data(), module_path);
+        auto loaded_module_uid = load_module(emuenv, module_path);
             if (loaded_module_uid < 0) {
                 LOG_ERROR("Error when loading module at \"{}\"", module_path);
                 return false;
             }
             const auto module = emuenv.kernel.loaded_modules[loaded_module_uid];
-            const auto module_name = module->module_name;
-            LOG_INFO("Module {} (at \"{}\") loaded", module_name, module_path);
-
-            if (lib_entry_point) {
-                LOG_DEBUG("Running module_start of module: {}", module_name);
-
-                const auto thread = emuenv.kernel.get_thread(thread_id);
-                const auto ret = thread->run_callback(lib_entry_point.address(), { args, argp.address() });
-                LOG_INFO("Module {} (at \"{}\") module_start returned {}", module_name, module->path, log_hex(ret));
-
+        auto ret = start_module(emuenv, module, args, argp);
                 if (retcode)
                     *retcode = static_cast<int>(ret);
             }
-
-        } else {
-            LOG_ERROR("Module at \"{}\" not present", module_path);
-            // ignore and assume it was loaded
-        }
-    }
 
     return true;
 }

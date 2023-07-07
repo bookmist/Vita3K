@@ -209,7 +209,7 @@ EXPORT(int, sceSysmoduleLoadModuleInternal, SceSysmoduleInternalModuleId module_
 
     bool loaded = load_module_internal_with_arg(emuenv, thread_id, module_id, 0, Ptr<void>(), nullptr);
     return loaded ? SCE_SYSMODULE_LOADED : RET_ERROR(SCE_SYSMODULE_ERROR_FATAL);
-    //return SCE_SYSMODULE_LOADED;
+    // return SCE_SYSMODULE_LOADED;
 }
 
 EXPORT(int, sceSysmoduleLoadModuleInternalWithArg, SceSysmoduleInternalModuleId module_id, SceSize args, Ptr<void> argp, const SceSysmoduleOpt *option) {
