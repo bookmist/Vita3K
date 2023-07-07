@@ -124,11 +124,10 @@ void ThreadState::raise_waiting_threads() {
     waiting_threads.clear();
 }
 
-int ThreadState::start(KernelState &kernel, SceSize arglen, const Ptr<void> &argp) {
+int ThreadState::start(KernelState &kernel, SceSize arglen, const Ptr<void> argp) {
     if (status == ThreadStatus::run || call_level > 0)
         return SCE_KERNEL_ERROR_RUNNING;
     std::unique_lock<std::mutex> thread_lock(mutex);
-
     call_level = 1;
     load_context(*cpu, init_cpu_ctx);
     write_pc(*cpu, entry_point);
@@ -137,12 +136,9 @@ int ThreadState::start(KernelState &kernel, SceSize arglen, const Ptr<void> &arg
 
     // Copy data to stack
     if (argp && arglen > 0) {
-        const Address stack_top = stack.get() + stack_size;
-        const int aligned_size = align(arglen, 8);
-        const Address data_addr = stack_top - aligned_size;
+        const Address data_addr = stack_alloc(*cpu, align(arglen, 8));
         memcpy(Ptr<uint8_t>(data_addr).get(mem), argp.get(mem), arglen);
         write_reg(*cpu, 1, data_addr);
-        write_sp(*cpu, data_addr);
     } else {
         write_reg(*cpu, 1, 0);
     }
