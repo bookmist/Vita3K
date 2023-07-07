@@ -21,3 +21,6 @@
 
 BRIDGE_DECL(sceNetInternalIcmConnect)
 BRIDGE_DECL(sceNetInternalInetPton)
+BRIDGE_DECL(SceNetInternal_8157DE3E)
+BRIDGE_DECL(SceNetInternalPrintf)
+BRIDGE_DECL(SceNetInternalIoctl)
