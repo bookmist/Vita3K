@@ -73,8 +73,8 @@ static void run_execv(char *argv[], EmuEnvState &emuenv) {
                 args[11] = NULL;
             } else
                 args[9] = NULL;
-        } else
-            args[7] = NULL;
+            } else
+                args[7] = NULL;
     } else
         args[3] = NULL;
 
@@ -322,14 +322,14 @@ int main(int argc, char *argv[]) {
     gui::set_config(gui, emuenv, emuenv.io.app_path);
 
     const auto set_app_info = [&](std::vector<gui::App>::iterator APP_INDEX) {
-        emuenv.app_info.app_version = APP_INDEX->app_ver;
-        emuenv.app_info.app_category = APP_INDEX->category;
-        emuenv.app_info.app_content_id = APP_INDEX->content_id;
-        emuenv.io.addcont = APP_INDEX->addcont;
-        emuenv.io.savedata = APP_INDEX->savedata;
-        emuenv.current_app_title = APP_INDEX->title;
-        emuenv.app_info.app_short_title = APP_INDEX->stitle;
-        emuenv.io.title_id = APP_INDEX->title_id;
+    emuenv.app_info.app_version = APP_INDEX->app_ver;
+    emuenv.app_info.app_category = APP_INDEX->category;
+    emuenv.app_info.app_content_id = APP_INDEX->content_id;
+    emuenv.io.addcont = APP_INDEX->addcont;
+    emuenv.io.savedata = APP_INDEX->savedata;
+    emuenv.current_app_title = APP_INDEX->title;
+    emuenv.app_info.app_short_title = APP_INDEX->stitle;
+    emuenv.io.title_id = APP_INDEX->title_id;
 	};
 
     if (emuenv.io.app_path == "NPXS19999" || (emuenv.io.app_path == "NPXS10062"))
