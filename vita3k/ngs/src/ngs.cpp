@@ -411,7 +411,7 @@ bool init_rack(State &ngs, const MemState &mem, System *system, SceNgsBufferInfo
     if (!description->definition.valid(mem)) {
         LOG_ERROR("invalid voice definition ptr:{}", log_hex(description->definition.address()));
     } else {
-    rack->vdef = description->definition.get(mem);
+        rack->vdef = description->definition.get(mem);
     }
 
     for (auto &voice : rack->voices) {

@@ -363,7 +363,7 @@ int main(int argc, char *argv[]) {
     {
         const auto err = load_app(main_module_id, emuenv, string_utils::utf_to_wide(emuenv.io.app_path));
         if (err != Success)
-        return err;
+            return err;
     }
     gui.vita_area.information_bar = false;
 
