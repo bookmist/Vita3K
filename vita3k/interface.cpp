@@ -473,6 +473,8 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv, const
     if (emuenv.io.app_path == "NPXS19999") {
         emuenv.io.app_device = "vs0";
         emuenv.self_path = "vsh/shell/shell.self";
+    else if (emuenv.io.app_path == "NPXS10062")
+        emuenv.self_path = "vs0:vsh/initialsetup/initialsetup.self";
     } else {
         LOG_DEBUG("self path: {}", emuenv.cfg.self_path);
         emuenv.self_path = !emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : (fs::path("app") / emuenv.io.app_path / EBOOT_PATH).string();
@@ -570,7 +572,7 @@ bool handle_events(EmuEnvState &emuenv, GuiState &gui) {
     const auto close_and_run_new_app = [&gui, &emuenv](const uint32_t button) {
         const auto cancel = [&]() {
             gui.vita_area.app_close = false;
-        };
+    };
         const auto confirm = [&]() {
             const auto app_device = gui.vita_area.live_area_screen ? gui.live_area_current_open_apps_list[gui.live_area_app_current_open].first : emuenv.app_device;
             const auto app_path = gui.vita_area.live_area_screen ? gui.live_area_current_open_apps_list[gui.live_area_app_current_open].second : emuenv.app_path;

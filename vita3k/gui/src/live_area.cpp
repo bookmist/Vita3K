@@ -176,7 +176,7 @@ void init_live_area(GuiState &gui, EmuEnvState &emuenv, const std::string &app_d
         const auto live_area_path{ fs::path("sce_sys") / ((sku_flag[app_path] == 3) && fs::exists(APP_PATH / "sce_sys/retail/livearea") ? "retail/livearea" : "livearea") };
         auto template_xml{ APP_PATH / live_area_path / "contents/template.xml" };
 
-        const auto is_ps_vita_os = (app_path == "NPXS19999");
+        const auto is_ps_vita_os = (app_path == "NPXS19999") || (app_path == "NPXS10062");
 
         pugi::xml_document doc;
         if (!doc.load_file(template_xml.c_str())) {
