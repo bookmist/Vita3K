@@ -148,7 +148,7 @@ void pre_load_app(GuiState &gui, EmuEnvState &emuenv, bool live_area, const std:
 }
 
 void pre_run_app(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path) {
-    if ((app_path == "NPXS19999") || (app_path.find("NPXS") == std::string::npos)) {
+    if ((app_path == "NPXS19999") || (app_path == "NPXS10062") || (app_path.find("NPXS") == std::string::npos)) {
         if (emuenv.io.app_path != app_path) {
             if (!emuenv.io.app_path.empty())
                 gui.vita_area.app_close = true;

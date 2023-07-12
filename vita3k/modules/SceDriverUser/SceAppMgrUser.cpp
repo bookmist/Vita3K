@@ -180,8 +180,9 @@ EXPORT(int, sceAppMgrDeclareShellProcess2) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrDestroyAppByName) {
-    TRACY_FUNC(sceAppMgrDestroyAppByName);
+EXPORT(int, sceAppMgrDestroyAppByName, const char *name) {
+    TRACY_FUNC(sceAppMgrDestroyAppByName, name);
+    LOG_DEBUG("name:{}", to_debug_str(emuenv.mem, name));
     return UNIMPLEMENTED();
 }
 
@@ -467,8 +468,8 @@ EXPORT(int, sceAppMgrLaunchAppByNameForShell) {
 }
 
 EXPORT(int, sceAppMgrLaunchAppByPath4, const char *path, const char *titleid, int a3, const char *app_param, int a5, void *opt) {
-    TRACY_FUNC(sceAppMgrLaunchAppByPath4);
-    LOG_DEBUG("path: {}, titleid: {}, a3: {}, app param: {}, a5: {}", path, titleid, a3, app_param, a5);
+    TRACY_FUNC(sceAppMgrLaunchAppByPath4, path, titleid, a3, app_param, a5, opt);
+    LOG_DEBUG("path: {}, titleid: {}, a3: {}, app param: {}, a5: {}", to_debug_str(emuenv.mem, path), to_debug_str(emuenv.mem, titleid), a3, to_debug_str(emuenv.mem, app_param), a5);
     return UNIMPLEMENTED();
 }
 
