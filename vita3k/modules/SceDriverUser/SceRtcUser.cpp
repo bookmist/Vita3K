@@ -22,6 +22,7 @@
 #include <util/safe_time.h>
 
 #include <chrono>
+#include <ctime>
 
 #include <util/tracy.h>
 TRACY_MODULE_NAME(SceRtcUser);
@@ -173,9 +174,18 @@ EXPORT(int, sceRtcFormatRFC3339) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceRtcFormatRFC3339LocalTime) {
-    TRACY_FUNC(sceRtcFormatRFC3339LocalTime);
-    return UNIMPLEMENTED();
+EXPORT(int, sceRtcFormatRFC3339LocalTime, char *timeStr, const SceRtcTick *utcTime) {
+    TRACY_FUNC(sceRtcFormatRFC3339LocalTime, timeStr, utcTime);
+    if (!timeStr)
+        return RET_ERROR(SCE_RTC_ERROR_INVALID_VALUE);
+    time_t dateTime;
+    if (utcTime)
+        dateTime = utcTime->tick;
+    else
+        dateTime = time(nullptr);
+    constexpr auto len = sizeof "2011-10-08T07:07:09Z";
+    strftime(timeStr, len, "%FT%TZ", gmtime(&dateTime));
+    return 0;
 }
 
 EXPORT(int, sceRtcGetCurrentClock, SceDateTime *datePtr, int iTimeZone) {

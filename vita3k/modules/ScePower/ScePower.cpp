@@ -20,7 +20,13 @@
 #include <util/tracy.h>
 #include <util/types.h>
 
+#include <SDL.h>
+#include <SDL_keyboard.h>
 #include <SDL_power.h>
+
+#include <kernel/callback.h>
+#include <kernel/state.h>
+#include <util/lock_and_find.h>
 
 #include <climits>
 
@@ -214,8 +220,100 @@ EXPORT(int, scePowerIsSuspendRequired) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, scePowerRegisterCallback) {
-    TRACY_FUNC(scePowerRegisterCallback);
+enum ScePowerCallbackType {
+    SCE_POWER_CB_AFTER_SYSTEM_RESUME = 0x00000080, /* TODO: confirm */
+    SCE_POWER_CB_BATTERY_ONLINE = 0x00000100,
+    SCE_POWER_CB_THERMAL_SUSPEND = 0x00000200, /* TODO: confirm */
+    SCE_POWER_CB_LOW_BATTERY_SUSPEND = 0x00000400, /* TODO: confirm */
+    SCE_POWER_CB_LOW_BATTERY = 0x00000800,
+    SCE_POWER_CB_POWER_ONLINE = 0x00001000,
+    SCE_POWER_CB_SYSTEM_SUSPEND = 0x00010000,
+    SCE_POWER_CB_SYSTEM_RESUMING = 0x00020000,
+    SCE_POWER_CB_SYSTEM_RESUME = 0x00040000,
+    SCE_POWER_CB_UNK_0x100000 = 0x00100000, /* Related to proc_event::display_switch */
+    SCE_POWER_CB_APP_RESUME = 0x00200000,
+    SCE_POWER_CB_APP_SUSPEND = 0x00400000,
+    SCE_POWER_CB_APP_RESUMING = 0x00800000, /* TODO: confirm */
+    SCE_POWER_CB_BUTTON_PS_START_PRESS = 0x04000000,
+    SCE_POWER_CB_BUTTON_PS_POWER_PRESS = 0x08000000,
+    SCE_POWER_CB_BUTTON_PS_HOLD = 0x10000000,
+    SCE_POWER_CB_BUTTON_PS_PRESS = 0x20000000,
+    SCE_POWER_CB_BUTTON_POWER_HOLD = 0x40000000,
+    SCE_POWER_CB_BUTTON_POWER_PRESS = 0x80000000,
+    SCE_POWER_CB_VALID_MASK_KERNEL = 0xFCF71F80,
+    SCE_POWER_CB_VALID_MASK_SYSTEM = 0xFCF71F80,
+    SCE_POWER_CB_VALID_MASK_NON_SYSTEM = 0x00361180
+};
+
+inline std::string to_debug_str(ScePowerCallbackType type) {
+    switch (type) {
+    case ScePowerCallbackType::SCE_POWER_CB_AFTER_SYSTEM_RESUME: return "SCE_POWER_CB_AFTER_SYSTEM_RESUME";
+    case ScePowerCallbackType::SCE_POWER_CB_BATTERY_ONLINE: return "SCE_POWER_CB_BATTERY_ONLINE";
+    case ScePowerCallbackType::SCE_POWER_CB_THERMAL_SUSPEND: return "SCE_POWER_CB_THERMAL_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_LOW_BATTERY_SUSPEND: return "SCE_POWER_CB_LOW_BATTERY_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_LOW_BATTERY: return "SCE_POWER_CB_LOW_BATTERY";
+    case ScePowerCallbackType::SCE_POWER_CB_POWER_ONLINE: return "SCE_POWER_CB_POWER_ONLINE";
+    case ScePowerCallbackType::SCE_POWER_CB_SYSTEM_SUSPEND: return "SCE_POWER_CB_SYSTEM_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_SYSTEM_RESUMING: return "SCE_POWER_CB_SYSTEM_RESUMING";
+    case ScePowerCallbackType::SCE_POWER_CB_SYSTEM_RESUME: return "SCE_POWER_CB_SYSTEM_RESUME";
+    case ScePowerCallbackType::SCE_POWER_CB_UNK_0x100000: return "SCE_POWER_CB_UNK_0x100000";
+    case ScePowerCallbackType::SCE_POWER_CB_APP_RESUME: return "SCE_POWER_CB_APP_RESUME";
+    case ScePowerCallbackType::SCE_POWER_CB_APP_SUSPEND: return "SCE_POWER_CB_APP_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_APP_RESUMING: return "SCE_POWER_CB_APP_RESUMING";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_START_PRESS: return "SCE_POWER_CB_BUTTON_PS_START_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_POWER_PRESS: return "SCE_POWER_CB_BUTTON_PS_POWER_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_HOLD: return "SCE_POWER_CB_BUTTON_PS_HOLD";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_PRESS: return "SCE_POWER_CB_BUTTON_PS_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_POWER_HOLD: return "SCE_POWER_CB_BUTTON_POWER_HOLD";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_POWER_PRESS: return "SCE_POWER_CB_BUTTON_POWER_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_VALID_MASK_SYSTEM: return "SCE_POWER_CB_VALID_MASK_SYSTEM";
+    case ScePowerCallbackType::SCE_POWER_CB_VALID_MASK_NON_SYSTEM: return "SCE_POWER_CB_VALID_MASK_NON_SYSTEM";
+    default: return std::to_string(static_cast<typename std::underlying_type<ScePowerCallbackType>::type>(type));
+    }
+}
+
+int power_thread_id = 0;
+std::map<SceUID, CallbackPtr> power_callbacks{};
+void send_power_callback(ScePowerCallbackType type) {
+    // LOG_TRACE("power event send:{}", to_debug_str(type));
+    for (auto &cb : power_callbacks) {
+        cb.second->direct_notify(type);
+    }
+}
+
+static int SDLCALL thread_function(EmuEnvState &emuenv) {
+    while (true) {
+        const uint8_t *const keys = SDL_GetKeyboardState(nullptr);
+        if (keys[emuenv.cfg.keyboard_button_psbutton]) {
+            send_power_callback(SCE_POWER_CB_BUTTON_PS_PRESS);
+            if (keys[emuenv.cfg.keyboard_button_start]) {
+                send_power_callback(SCE_POWER_CB_BUTTON_PS_START_PRESS);
+            }
+            if (keys[emuenv.cfg.keyboard_button_psbutton_shell]) {
+                send_power_callback(SCE_POWER_CB_BUTTON_PS_POWER_PRESS);
+            }
+        }
+        if (keys[emuenv.cfg.keyboard_button_psbutton_shell]) {
+            send_power_callback(SCE_POWER_CB_BUTTON_POWER_PRESS);
+        }
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+}
+
+EXPORT(int, scePowerRegisterCallback, SceUID cbid) {
+    TRACY_FUNC(scePowerRegisterCallback, cbid);
+    LOG_TRACE("cbid:{}", cbid);
+    const auto cb = lock_and_find(cbid, emuenv.kernel.callbacks, emuenv.kernel.mutex);
+    if (!cb)
+        return RET_ERROR(-1);
+    power_callbacks[cbid] = cb;
+    LOG_TRACE("name:{}, owner_thread_id:{}", cb->get_name(), cb->get_owner_thread_id());
+    if (power_thread_id == 0) {
+        power_thread_id = 1;
+        // SDL_CreateThread(&thread_function, "SceGxmDisplayQueue",(void*)emuenv*);
+        auto power_thread = std::thread(thread_function, std::ref(emuenv));
+        power_thread.detach();
+    }
     return UNIMPLEMENTED();
 }
 
@@ -297,8 +395,17 @@ EXPORT(int, scePowerSetUsingWireless, SceBool enabled) {
     return 0;
 }
 
-EXPORT(int, scePowerUnregisterCallback) {
-    TRACY_FUNC(scePowerUnregisterCallback);
+EXPORT(int, scePowerUnregisterCallback, SceUID cbid) {
+    TRACY_FUNC(scePowerUnregisterCallback, cbid);
+    LOG_TRACE("cbid:{}", cbid);
+    auto cb = emuenv.kernel.callbacks[cbid];
+    LOG_TRACE("name:{}", cb->get_name());
+
+    if (power_callbacks.find(cbid) == power_callbacks.end())
+        return RET_ERROR(-1);
+
+    power_callbacks.erase(cbid);
+
     return UNIMPLEMENTED();
 }
 

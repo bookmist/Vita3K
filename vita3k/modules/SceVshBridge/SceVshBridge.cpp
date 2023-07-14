@@ -828,7 +828,8 @@ EXPORT(int, vshSysconIsDownLoaderMode) {
 }
 
 EXPORT(int, vshSysconIsIduMode) {
-    return UNIMPLEMENTED();
+    STUBBED("return true");
+    return SCE_TRUE;
 }
 
 EXPORT(int, vshSysconIsMCEmuCapable) {

@@ -516,6 +516,7 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv, const
                 lib_load_list.emplace_back(fmt::format("vs0:sys/external/{}.suprx", name));
         }
     };
+    lib_load_list.emplace_back("os0:us/driver_us.suprx");
     add_preload_module(0x00010000, "libc", is_app);
     add_preload_module(0x00020000, "libdbg", false);
     add_preload_module(0x00080000, "libshellsvc", false);
