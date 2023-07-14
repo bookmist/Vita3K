@@ -245,8 +245,41 @@ enum ScePowerCallbackType {
     SCE_POWER_CB_VALID_MASK_NON_SYSTEM = 0x00361180
 };
 
+inline std::string to_debug_str(ScePowerCallbackType type) {
+    switch (type) {
+    case ScePowerCallbackType::SCE_POWER_CB_AFTER_SYSTEM_RESUME: return "SCE_POWER_CB_AFTER_SYSTEM_RESUME";
+    case ScePowerCallbackType::SCE_POWER_CB_BATTERY_ONLINE: return "SCE_POWER_CB_BATTERY_ONLINE";
+    case ScePowerCallbackType::SCE_POWER_CB_THERMAL_SUSPEND: return "SCE_POWER_CB_THERMAL_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_LOW_BATTERY_SUSPEND: return "SCE_POWER_CB_LOW_BATTERY_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_LOW_BATTERY: return "SCE_POWER_CB_LOW_BATTERY";
+    case ScePowerCallbackType::SCE_POWER_CB_POWER_ONLINE: return "SCE_POWER_CB_POWER_ONLINE";
+    case ScePowerCallbackType::SCE_POWER_CB_SYSTEM_SUSPEND: return "SCE_POWER_CB_SYSTEM_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_SYSTEM_RESUMING: return "SCE_POWER_CB_SYSTEM_RESUMING";
+    case ScePowerCallbackType::SCE_POWER_CB_SYSTEM_RESUME: return "SCE_POWER_CB_SYSTEM_RESUME";
+    case ScePowerCallbackType::SCE_POWER_CB_UNK_0x100000: return "SCE_POWER_CB_UNK_0x100000";
+    case ScePowerCallbackType::SCE_POWER_CB_APP_RESUME: return "SCE_POWER_CB_APP_RESUME";
+    case ScePowerCallbackType::SCE_POWER_CB_APP_SUSPEND: return "SCE_POWER_CB_APP_SUSPEND";
+    case ScePowerCallbackType::SCE_POWER_CB_APP_RESUMING: return "SCE_POWER_CB_APP_RESUMING";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_START_PRESS: return "SCE_POWER_CB_BUTTON_PS_START_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_POWER_PRESS: return "SCE_POWER_CB_BUTTON_PS_POWER_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_HOLD: return "SCE_POWER_CB_BUTTON_PS_HOLD";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_PS_PRESS: return "SCE_POWER_CB_BUTTON_PS_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_POWER_HOLD: return "SCE_POWER_CB_BUTTON_POWER_HOLD";
+    case ScePowerCallbackType::SCE_POWER_CB_BUTTON_POWER_PRESS: return "SCE_POWER_CB_BUTTON_POWER_PRESS";
+    case ScePowerCallbackType::SCE_POWER_CB_VALID_MASK_SYSTEM: return "SCE_POWER_CB_VALID_MASK_SYSTEM";
+    case ScePowerCallbackType::SCE_POWER_CB_VALID_MASK_NON_SYSTEM: return "SCE_POWER_CB_VALID_MASK_NON_SYSTEM";
+    default: return std::to_string(static_cast<typename std::underlying_type<ScePowerCallbackType>::type>(type));
+    }
+}
+
 int power_thread_id = 0;
 std::map<SceUID, CallbackPtr> power_callbacks{};
+void send_power_callback(ScePowerCallbackType type) {
+    // LOG_TRACE("power event send:{}", to_debug_str(type));
+    for (auto &cb : power_callbacks) {
+        cb.second->direct_notify(type);
+    }
+}
 
 static int SDLCALL thread_function(EmuEnvState &emuenv) {
     bool currentKeyState = false; // État actuel de la touche

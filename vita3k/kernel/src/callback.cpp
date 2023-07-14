@@ -89,7 +89,9 @@ void Callback::execute(KernelState &kernel, std::function<void()> deleter) {
     std::lock_guard lock(this->_mutex);
     if (!this->is_notified())
         return;
-
+    if ((uint32_t)this->notification_arg == 0x00010000) {
+        LOG_DEBUG("SCE_POWER_CB_SYSTEM_SUSPEND callback executed");
+    }
     std::vector<uint32_t> args = { (uint32_t)(this->notifier_id), this->num_notifications, (uint32_t)this->notification_arg, this->userdata.address() };
     int ret = kernel.get_thread(this->thread_id)->run_callback(this->cb_func.address(), args);
     if (ret != 0) {
