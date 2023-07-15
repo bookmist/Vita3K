@@ -17,131 +17,188 @@
 
 #include "SceMotionDev.h"
 
-EXPORT(int, sceMotionDevGetAccCalibData) {
+#include <util/tracy.h>
+
+TRACY_MODULE_NAME(SceMotionDev);
+
+EXPORT(int, sceMotionDevGetAccCalibData, void *data) {
+    TRACY_FUNC(sceMotionDevGetAccCalibData, data);
+    memset(data, 0, 96);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevGetAccCalibData2) {
+    TRACY_FUNC(sceMotionDevGetAccCalibData2);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetCalibrationData) {
+EXPORT(int, sceMotionDevGetCalibrationData, SceUInt32 block_id, void *data, SceUInt32 data_num) {
+    TRACY_FUNC(sceMotionDevGetCalibrationData, block_id, data, data_num);
+    if ((1 < block_id) || !data) {
+        return 0x80360001;
+    }
+    memset(data, 0, data_num * 24);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetCalibrationHeader) {
+EXPORT(int, sceMotionDevGetCalibrationHeader, SceUInt32 block_id, void *calib_header) {
+    TRACY_FUNC(sceMotionDevGetCalibrationHeader, block_id, calib_header);
+    if ((1 < block_id) || !calib_header) {
+        return 0x80360001;
+    }
+    memset(calib_header, 0, 3 * 4);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetControllerType) {
+EXPORT(int, sceMotionDevGetControllerType, SceUInt32 block_id, uint32_t *data) {
+    TRACY_FUNC(sceMotionDevGetControllerType, block_id, data);
+    *data = 1;
+    return 0;
+}
+
+EXPORT(int, sceMotionDevGetCurrentMagnCalibData, void *data) {
+    TRACY_FUNC(sceMotionDevGetCurrentMagnCalibData, data);
+    memset(data, 0, 52);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetCurrentMagnCalibData) {
+EXPORT(int, sceMotionDevGetCurrentMagnStabilityLevel, SceUInt32 *level) {
+    TRACY_FUNC(sceMotionDevGetCurrentMagnStabilityLevel, level);
+    STUBBED("SCE_MOTION_MAGNETIC_FIELD_VERYSTABLE");
+    *level = 2; // SCE_MOTION_MAGNETIC_FIELD_VERYSTABLE
+    return 0;
+}
+
+EXPORT(int, sceMotionDevGetDeviceInfo, void *device_info) {
+    TRACY_FUNC(sceMotionDevGetDeviceInfo, device_info);
+    memset(device_info, 0, 44);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetCurrentMagnStabilityLevel) {
-    return UNIMPLEMENTED();
-}
-
-EXPORT(int, sceMotionDevGetDeviceInfo) {
-    return UNIMPLEMENTED();
-}
-
-EXPORT(int, sceMotionDevGetDeviceLocation) {
+EXPORT(int, sceMotionDevGetDeviceLocation, void *location) {
+    TRACY_FUNC(sceMotionDevGetDeviceLocation, location);
+    memset(location, 0, 48);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevGetDs3CalibData) {
+    TRACY_FUNC(sceMotionDevGetDs3CalibData);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetEvaInfo) {
+EXPORT(int, sceMotionDevGetEvaInfo, void *data) {
+    TRACY_FUNC(sceMotionDevGetEvaInfo, data);
+    memset(data, 0, 72);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetFactoryMagnCalibData) {
+EXPORT(int, sceMotionDevGetFactoryMagnCalibData, void *data) {
+    TRACY_FUNC(sceMotionDevGetFactoryMagnCalibData, data);
+    memset(data, 0, 52);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetGyroBias) {
+EXPORT(int, sceMotionDevGetGyroBias, void *bias) {
+    TRACY_FUNC(sceMotionDevGetGyroBias, bias);
+    memset(bias, 0, 16);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevGetGyroBias2) {
+    TRACY_FUNC(sceMotionDevGetGyroBias2);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetGyroCalibData) {
+EXPORT(int, sceMotionDevGetGyroCalibData, void *data) {
+    TRACY_FUNC(sceMotionDevGetGyroCalibData, data);
+    memset(data, 0, 108);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevGetGyroCalibData2) {
+    TRACY_FUNC(sceMotionDevGetGyroCalibData2);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceMotionDevGetMeasMode) {
+EXPORT(int, sceMotionDevGetMeasMode, void *mode_info) {
+    TRACY_FUNC(sceMotionDevGetMeasMode, mode_info);
+    memset(mode_info, 0, 8);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevIsReady) {
-    return UNIMPLEMENTED();
+    TRACY_FUNC(sceMotionDevIsReady);
+    STUBBED("SCE_TRUE");
+    return SCE_TRUE; // UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevMagnSamplingStart) {
+    TRACY_FUNC(sceMotionDevMagnSamplingStart);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevMagnSamplingStop) {
+    TRACY_FUNC(sceMotionDevMagnSamplingStop);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevRead) {
+    TRACY_FUNC(sceMotionDevRead);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevRead2) {
+    TRACY_FUNC(sceMotionDevRead2);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevRead3) {
+    TRACY_FUNC(sceMotionDevRead3);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevReadForMagnCalib) {
+    TRACY_FUNC(sceMotionDevReadForMagnCalib);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevSamplingStart) {
+    TRACY_FUNC(sceMotionDevSamplingStart);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevSamplingStart2) {
+    TRACY_FUNC(sceMotionDevSamplingStart2);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevSamplingStop) {
+    TRACY_FUNC(sceMotionDevSamplingStop);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevSamplingStop2) {
+    TRACY_FUNC(sceMotionDevSamplingStop2);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevSetGyroFeedBack) {
+    TRACY_FUNC(sceMotionDevSetGyroFeedBack);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevSetSamplingMode) {
+    TRACY_FUNC(sceMotionDevSetSamplingMode);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevUpdateMagnCalibData) {
+    TRACY_FUNC(sceMotionDevUpdateMagnCalibData);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceMotionDevUpdateMagnStabilityLevel) {
+    TRACY_FUNC(sceMotionDevUpdateMagnStabilityLevel);
     return UNIMPLEMENTED();
 }
 
