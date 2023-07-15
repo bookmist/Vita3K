@@ -123,22 +123,39 @@ public:
         }
     }
 
+    std::string log_stack_traceback() const {
+        constexpr Address START_OFFSET = 0;
+        constexpr Address END_OFFSET = 1024;
+        std::stringstream ss;
+        const Address sp = this->cpu->get_sp();
+        for (Address addr = sp - START_OFFSET; addr <= sp + END_OFFSET; addr += 4) {
+            if (Ptr<uint32_t>(addr).valid(*parent->mem)) {
+                const Address value = *Ptr<uint32_t>(addr).get(*parent->mem);
+                // const auto mod = kernel.find_module_by_addr(value);
+                // if (mod)
+                ss << fmt::format("{} (module: )\n", log_hex(value) /*, mod->module_name*/);
+            }
+        }
+        return ss.str();
+    }
+
     template <typename T>
     T MemoryRead(Dynarmic::A32::VAddr addr) {
         Ptr<T> ptr{ addr };
         if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
             LOG_ERROR("Invalid read of uint{}_t at address: 0x{:x} on thread {}\n{}", sizeof(T) * 8, addr, this->parent->thread_id, this->cpu->save_context().description());
+            LOG_DEBUG("stack:{}", log_stack_traceback());
 
             auto pc = this->cpu->get_pc();
-            if (pc < parent->mem->page_size)
-                LOG_CRITICAL("PC is 0x{:x}", pc);
-            else
-                LOG_ERROR("Executing: {}", disassemble(*parent, pc, nullptr));
-            if constexpr (sizeof(T) == 4) {
-                if (ptr.address() == 0 && pc == 0) {
-                    return 0xe1a0f00e; // mov pc, lr - Return to the caller.
+            if (!Ptr<uint32_t>(pc).valid(*parent->mem)) {
+                LOG_CRITICAL("PC is invalid 0x{:x}", pc);
+                if constexpr (sizeof(T) == 4) {
+                    if (ptr.address() == pc) {
+                        return 0xe1a0f00e; // mov pc, lr - Return to the caller.
+                    }
                 }
-            }
+            } else
+                LOG_ERROR("Executing: {}", disassemble(*parent, pc, nullptr));
             return 0;
         }
 
