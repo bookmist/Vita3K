@@ -529,7 +529,7 @@ EXPORT(int, sceAppMgrIsCameraActive) {
 }
 
 EXPORT(int, sceAppMgrLaunchAppByName, int flags, const char *name, const char *param) {
-    TRACY_FUNC(sceAppMgrLaunchAppByName);
+    TRACY_FUNC(sceAppMgrLaunchAppByName, flags, name, param);
     LOG_DEBUG("flags: {}, name: {}, param: {}", log_hex(flags), name, param ? param : "null");
 
     return -1; // load_app_by_path(emuenv, "vs0:app/" + std::string(name) + "/eboot.bin", name, param);
