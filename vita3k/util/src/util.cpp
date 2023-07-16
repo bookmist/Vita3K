@@ -837,6 +837,18 @@ uint32_t encode_thumb_inst(uint8_t type, uint32_t immed, uint16_t reg) {
         return 0;
     }
 }
+namespace string_utils {
+int stoi_def(const std::string &str, int default_value, const char *name) {
+    try {
+        return std::stoi(str);
+    } catch (std::invalid_argument &e) {
+        LOG_ERROR("Invalid {}: \"{}\"", name, str);
+    } catch (std::out_of_range &e) {
+        LOG_ERROR("Out of range {}: \"{}\"", name, str);
+    }
+    return default_value;
+}
+} // namespace string_utils
 
 #include <util/log_to_file.h>
 std::map<std::string, fs::ofstream> log_files;

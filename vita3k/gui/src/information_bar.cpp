@@ -122,7 +122,7 @@ static bool set_notice_info(GuiState &gui, EmuEnvState &emuenv, const NoticeList
         init_notice_icon(gui, emuenv, content_path / "sce_sys/icon0.png", info);
     } else {
         auto common = gui.lang.common.main;
-        switch (static_cast<np::trophy::SceNpTrophyGrade>(std::stoi(info.group))) {
+        switch (static_cast<np::trophy::SceNpTrophyGrade>(string_utils::stoi_def(info.group, 0, "trophy group"))) {
         case np::trophy::SceNpTrophyGrade::SCE_NP_TROPHY_GRADE_PLATINUM:
             name = fmt::format("({}) ", common["platinum"]);
             break;
