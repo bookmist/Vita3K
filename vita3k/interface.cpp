@@ -482,9 +482,9 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv, const
     main_module_id = load_module(emuenv, emuenv.io.app_device + ":" + emuenv.self_path);
     if (main_module_id >= 0) {
         const auto module = emuenv.kernel.loaded_modules[main_module_id];
-        LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
-    } else
-        return FileNotFound;
+            LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
+        } else
+            return FileNotFound;
     // Set self name from self path, can contain folder, get file name only
     emuenv.self_name = fs::path(emuenv.self_path).filename().string();
 
@@ -509,7 +509,12 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv, const
                 lib_load_list.emplace_back(fmt::format("vs0:sys/external/{}.suprx", name));
         }
     };
+    // lib_load_list.emplace_back("os0:us/libkernel.suprx");
     lib_load_list.emplace_back("os0:us/driver_us.suprx");
+    // lib_load_list.emplace_back("os0:us/avcodec_us.suprx");
+    //  lib_load_list.emplace_back("os0:us/libgpu_es4.suprx");
+    //  lib_load_list.emplace_back("os0:us/libgxm_es4.suprx");
+    //  lib_load_list.emplace_back("os0:us/libgxm_dbg_es4.suprx");//if DEVELOPMENT_MODE dipsw is set
     add_preload_module(0x00010000, "libc", is_app);
     add_preload_module(0x00020000, "libdbg", false);
     add_preload_module(0x00080000, "libshellsvc", false);

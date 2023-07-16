@@ -200,7 +200,8 @@ SceUID load_module(EmuEnvState &emuenv, const std::string &module_path) {
     auto translated_module_path = translate_path(module_path.c_str(), device, emuenv.io);
     if (!vfs::read_file(device, module_buffer, emuenv.pref_path, translated_module_path)) {
         LOG_ERROR("Failed to read module file {}", module_path);
-        return SCE_ERROR_ERRNO_ENOENT;
+        return 0;
+        // return SCE_ERROR_ERRNO_ENOENT;
     }
     SceUID module_id = load_self(emuenv.kernel, emuenv.mem, module_buffer.data(), module_path);
     if (module_id >= 0) {
