@@ -442,7 +442,7 @@ EXPORT(int, sceAppMgrIsCameraActive) {
 }
 
 EXPORT(int, sceAppMgrLaunchAppByName, int flags, const char *name, const char *param) {
-    TRACY_FUNC(sceAppMgrLaunchAppByName);
+    TRACY_FUNC(sceAppMgrLaunchAppByName, flags, name, param);
     LOG_DEBUG("flags: {}, name: {}, param: {}", flags, name, param);
     return UNIMPLEMENTED();
 }
@@ -569,7 +569,7 @@ EXPORT(int, sceAppMgrReceiveNotificationRequestForShell) {
 }
 
 EXPORT(int, sceAppMgrReceiveShellEvent, SceAppMgrEvent *mgrEvent) {
-    TRACY_FUNC(sceAppMgrReceiveEvent, mgrEvent);
+    TRACY_FUNC(sceAppMgrReceiveShellEvent, mgrEvent);
     // mgrEvent->mgrEvent = SCE_APPMGR_EVENT_ON_RESUME;
     LOG_DEBUG("call shell event");
     return UNIMPLEMENTED();
