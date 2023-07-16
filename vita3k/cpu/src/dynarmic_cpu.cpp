@@ -144,7 +144,7 @@ public:
         Ptr<T> ptr{ addr };
         if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
             LOG_ERROR("Invalid read of uint{}_t at address: 0x{:x} on thread {}\n{}", sizeof(T) * 8, addr, this->parent->thread_id, this->cpu->save_context().description());
-            LOG_DEBUG("stack:{}", log_stack_traceback());
+            // LOG_DEBUG("stack:{}", log_stack_traceback());
 
             auto pc = this->cpu->get_pc();
             if (!Ptr<uint32_t>(pc).valid(*parent->mem)) {

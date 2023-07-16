@@ -205,7 +205,8 @@ SceUID load_module(EmuEnvState &emuenv, const std::string &module_path) {
         res = vfs::read_file(device, module_buffer, emuenv.pref_path, translated_module_path);
     if (!res) {
         LOG_ERROR("Failed to read module file {}", module_path);
-        return SCE_ERROR_ERRNO_ENOENT;
+        return 0;
+        // return SCE_ERROR_ERRNO_ENOENT;
     }
     SceUID module_id = load_self(emuenv.kernel, emuenv.mem, module_buffer.data(), module_path);
     if (module_id >= 0) {
@@ -281,15 +282,15 @@ bool load_module_internal_with_arg(EmuEnvState &emuenv, SceUID thread_id, SceSys
         std::string module_path = fmt::format("vs0:sys/external/{}.suprx", module_filename);
 
         auto loaded_module_uid = load_module(emuenv, module_path);
-            if (loaded_module_uid < 0) {
-                LOG_ERROR("Error when loading module at \"{}\"", module_path);
-                return false;
-            }
-            const auto module = emuenv.kernel.loaded_modules[loaded_module_uid];
+        if (loaded_module_uid < 0) {
+            LOG_ERROR("Error when loading module at \"{}\"", module_path);
+            return false;
+        }
+        const auto module = emuenv.kernel.loaded_modules[loaded_module_uid];
         auto ret = start_module(emuenv, module, args, argp);
-                if (retcode)
-                    *retcode = static_cast<int>(ret);
-            }
+        if (retcode)
+            *retcode = static_cast<int>(ret);
+    }
 
     return true;
 }
