@@ -141,9 +141,11 @@ EXPORT(int, _sceAppMgrContentInstallPeriodStop) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrConvertVs0UserDrivePath) {
-    TRACY_FUNC(_sceAppMgrConvertVs0UserDrivePath);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrConvertVs0UserDrivePath, char *source_path, char *dest_path, int dest_len) {
+    TRACY_FUNC(_sceAppMgrConvertVs0UserDrivePath, source_path, dest_path, dest_len);
+    STUBBED("Using strncpy");
+    strncpy(dest_path, source_path, dest_len);
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrDeclareShellProcess2) {
@@ -266,9 +268,11 @@ EXPORT(int, _sceAppMgrGetPidListForShell) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrGetRawPath) {
-    TRACY_FUNC(_sceAppMgrGetRawPath);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrGetRawPath, char *path, char *resolved_path, int resolved_path_size) {
+    TRACY_FUNC(_sceAppMgrGetRawPath, resolved_path, path, resolved_path_size);
+    STUBBED("Using strncpy");
+    strncpy(resolved_path, path, resolved_path_size);
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrGetRawPathOfApp0ByAppIdForShell) {
@@ -321,9 +325,12 @@ EXPORT(int, _sceAppMgrGetSystemDataFilePlayReady) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrGetUserDirPath) {
-    TRACY_FUNC(_sceAppMgrGetUserDirPath);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrGetUserDirPath, int partition_id, char *userDirPath, SceSize path_maxlen) {
+    TRACY_FUNC(_sceAppMgrGetUserDirPath, partition_id, userDirPath, path_maxlen);
+    STUBBED("Using strncpy");
+    const auto partition = partition_id == 1 ? "ur0:" : "ux0:";
+    fmt::format_to_n(userDirPath, path_maxlen, "{}user/{}{}", partition, emuenv.io.user_id, '\0');
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrGetUserDirPathById) {
@@ -356,8 +363,9 @@ EXPORT(int, _sceAppMgrIsCameraActive) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrLaunchAppByName) {
-    TRACY_FUNC(_sceAppMgrLaunchAppByName);
+EXPORT(int, _sceAppMgrLaunchAppByName, int flags, const char *name, const char *param) {
+    TRACY_FUNC(_sceAppMgrLaunchAppByName, flags, name, param);
+    LOG_DEBUG("flags: {}, name: {}, param: {}", flags, name, param);
     return UNIMPLEMENTED();
 }
 
@@ -506,9 +514,13 @@ EXPORT(int, _sceAppMgrReceiveEvent) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrReceiveEventNum) {
-    TRACY_FUNC(_sceAppMgrReceiveEventNum);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrReceiveEventNum, SceUInt32 *eventNum) {
+    TRACY_FUNC(_sceAppMgrReceiveEventNum, eventNum);
+
+    // Vita3K does not yet manage events
+    *eventNum = 0;
+
+    return STUBBED("Set eventNum to 0");
 }
 
 EXPORT(int, _sceAppMgrReceiveNotificationRequestForShell) {
