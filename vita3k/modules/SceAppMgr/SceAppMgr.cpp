@@ -17,9 +17,12 @@
 
 #include "SceAppMgr.h"
 
+#include <emuenv/app_util.h>
 #include <io/device.h>
 #include <io/state.h>
-#include <io/device.h>
+#include <io/functions.h>
+#include <io/io.h>
+#include <packages/functions.h>
 #include <kernel/state.h>
 #include <packages/sfo.h>
 #include <renderer/state.h>
@@ -54,9 +57,37 @@ EXPORT(int, _sceAppMgrAddContMount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrAppDataMount) {
-    TRACY_FUNC(_sceAppMgrAppDataMount);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrAppDataMount, int mountId, char *mountPoint) {
+    TRACY_FUNC(_sceAppMgrAppDataMount, mountId, mountPoint);
+    STUBBED("Using strcpy");
+    switch (mountId) {
+    case 0x64: // photo0:
+        strcpy(mountPoint, "ux0:picture");
+        break;
+    case 0x65: // psnfriend
+        fmt::format_to(mountPoint, "ur0:user/{}/psnfriend{}", emuenv.io.user_id, '\0');
+        break;
+    case 0x66: // psnmsg
+        fmt::format_to(mountPoint, "ur0:user/{}/psnmsg{}", emuenv.io.user_id, '\0');
+        break;
+    case 0x67: // near
+        fmt::format_to(mountPoint, "ur0:user/{}/near{}", emuenv.io.user_id, '\0');
+        break;
+    case 0x69: // music0:
+        strcpy(mountPoint, "ux0:music");
+        break;
+    case 0x6C: // calendar
+        strcpy(mountPoint, "ux0:calendar");
+        break;
+    case 0x6D: // video0:
+        strcpy(mountPoint, "ux0:video");
+        break;
+    default:
+        LOG_WARN("Unknown mountId {}", log_hex(mountId));
+        break;
+    }
+
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrAppDataMountById) {
@@ -92,13 +123,13 @@ EXPORT(SceInt32, _sceAppMgrAppParamGetString, int pid, int param, char *string, 
             return 0;
         }
     } else {
-        if (!sfo::get_data_by_id(res, emuenv.sfo_handle, param))
-            return RET_ERROR(SCE_APPMGR_ERROR_INVALID);
-        else {
-            res.copy(string, length);
-            return 0;
-        }
+    if (!sfo::get_data_by_id(res, emuenv.sfo_handle, param))
+        return RET_ERROR(SCE_APPMGR_ERROR_INVALID);
+    else {
+        res.copy(string, length);
+        return 0;
     }
+}
 }
 
 EXPORT(int, _sceAppMgrAppParamSetString) {
@@ -173,9 +204,18 @@ EXPORT(int, _sceAppMgrForceUmount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrGameDataMount) {
-    TRACY_FUNC(_sceAppMgrGameDataMount);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrGameDataMount, const char *app_path, const char *patch_path, const char *rif_path, char *mount_point) {
+    TRACY_FUNC(_sceAppMgrGameDataMount, app_path, patch_path, rif_path, mount_point);
+    if (strlen(app_path) > 0)
+        emuenv.io.device_paths.gamedata0 = app_path;
+    else if (strlen(patch_path) > 0)
+        emuenv.io.device_paths.gamedata0 = patch_path;
+    else if (strlen(rif_path) > 0)
+        emuenv.io.device_paths.gamedata0 = rif_path;
+
+    strcpy(mount_point, "gamedata0:");
+
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrGetAppInfo) {
@@ -205,7 +245,8 @@ EXPORT(int, _sceAppMgrGetBootParam) {
 
 EXPORT(int, _sceAppMgrGetBudgetInfo) {
     TRACY_FUNC(_sceAppMgrGetBudgetInfo);
-    return UNIMPLEMENTED();
+    STUBBED("not system mode");
+    return -1;
 }
 
 EXPORT(int, _sceAppMgrGetCoredumpStateForShell) {
@@ -223,9 +264,31 @@ EXPORT(int, _sceAppMgrGetCurrentBgmState2) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrGetDevInfo) {
-    TRACY_FUNC(_sceAppMgrGetDevInfo);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrGetDevInfo, const char *dev, uint64_t *max_size, uint64_t *free_size) {
+    TRACY_FUNC(_sceAppMgrGetDevInfo, dev, max_size, free_size);
+
+    if (dev == nullptr) {
+        return RET_ERROR(SCE_ERROR_ERRNO_EINVAL);
+    }
+
+    auto device = device::get_device(dev);
+    if (device == VitaIoDevice::_INVALID) {
+        LOG_ERROR("Cannot find device for path: {}", dev);
+        return RET_ERROR(SCE_ERROR_ERRNO_ENOENT);
+    }
+
+    fs::path dev_path = device._to_string();
+    fs::path path = emuenv.pref_path / dev_path;
+    fs::space_info space = fs::space(path);
+
+    // TODO: Use free or available?
+    // free = free space available on the whole partition
+    // available = free space available to a non-privileged process
+    // Using available in case the drive is nearly full and the game tries to write since available will always be smaller
+    *free_size = space.available;
+    *max_size = space.capacity;
+
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrGetFgAppInfo) {
@@ -269,7 +332,7 @@ EXPORT(int, _sceAppMgrGetPidListForShell) {
 }
 
 EXPORT(int, _sceAppMgrGetRawPath, char *path, char *resolved_path, int resolved_path_size) {
-    TRACY_FUNC(_sceAppMgrGetRawPath, resolved_path, path, resolved_path_size);
+    TRACY_FUNC(_sceAppMgrGetRawPath, path, resolved_path, resolved_path_size);
     STUBBED("Using strncpy");
     strncpy(resolved_path, path, resolved_path_size);
     return 0;
@@ -719,8 +782,20 @@ EXPORT(int, _sceAppMgrTrophyMountById) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrUmount) {
-    TRACY_FUNC(_sceAppMgrUmount);
+EXPORT(int, _sceAppMgrUmount, const char *mount_point) {
+    TRACY_FUNC(_sceAppMgrUmount, mount_point);
+    if (std::string(mount_point) == "gamedata0:") {
+        emuenv.io.device_paths.gamedata0.clear();
+
+        return 0;
+    } else if (std::string(mount_point) == "appmeta0:") {
+        emuenv.io.device_paths.appmeta0.clear();
+
+        return 0;
+    }
+
+    LOG_DEBUG("Unknown mount point: {}", mount_point);
+
     return UNIMPLEMENTED();
 }
 
@@ -734,9 +809,31 @@ EXPORT(int, _sceAppMgrUpdateSaveDataParam) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrWorkDirMount) {
-    TRACY_FUNC(_sceAppMgrWorkDirMount);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceAppMgrWorkDirMount, int mountId, char *mountPoint) {
+    TRACY_FUNC(_sceAppMgrWorkDirMount, mountId, mountPoint);
+    STUBBED("using strcpy");
+    switch (mountId) {
+    case 0xC8:
+        strcpy(mountPoint, "ur0:temp/sqlite/");
+        break;
+    case 0xC9:
+        strcpy(mountPoint, "ur0:temp/attach/");
+        break;
+    case 0xCA:
+        strcpy(mountPoint, "ux0:pspemu/");
+        break;
+    case 0xCC:
+        strcpy(mountPoint, "ur0:temp/checkout/");
+        break;
+    case 0xCE:
+        strcpy(mountPoint, "ur0:temp/webbrowser/");
+        break;
+    default:
+        LOG_WARN("Unknown mount id: {}", log_hex(mountId));
+        break;
+    }
+
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrWorkDirMountById) {
@@ -934,9 +1031,13 @@ EXPORT(int, sceAppMgrQuitForNonSuspendableApp) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrReceiveShellEventNum) {
-    TRACY_FUNC(sceAppMgrReceiveShellEventNum);
-    return UNIMPLEMENTED();
+EXPORT(int, sceAppMgrReceiveShellEventNum, SceUInt32 *eventNum) {
+    TRACY_FUNC(sceAppMgrReceiveShellEventNum, eventNum);
+
+    // Vita3K does not yet manage events
+    //*eventNum = 0;
+
+    return STUBBED("Set eventNum to 0");
 }
 
 EXPORT(int, sceAppMgrReleaseBgmPort, int port) {

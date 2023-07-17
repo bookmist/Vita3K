@@ -66,8 +66,16 @@ struct SceDisplayFrameBuf2 : public SceDisplayFrameBuf {
     SceUInt32 unkn = 0;
 };
 
+struct sceDisplaySetFrameBufInternalParam {
+    SceDisplaySetBufSync sync;
+    SceSize framebuf_size;
+    int unk_01;
+    int unk_02;
+};
+
 EXPORT(SceInt32, _sceDisplayGetFrameBuf, SceDisplayFrameBuf *pFrameBuf, SceDisplaySetBufSync sync, uint32_t *pFrameBuf_size);
 EXPORT(SceInt32, _sceDisplaySetFrameBuf, const SceDisplayFrameBuf *pFrameBuf, SceDisplaySetBufSync sync, uint32_t *pFrameBuf_size);
+EXPORT(int, _sceDisplaySetFrameBufInternal, uint32_t maybe_buffer_idx, uint32_t unkn, SceDisplayFrameBuf *pFrameBuf, sceDisplaySetFrameBufInternalParam *param);
 EXPORT(SceInt32, sceDisplayRegisterVblankStartCallback, SceUID uid);
 EXPORT(int, _sceDisplayGetMaximumFrameBufResolution, int *width, int *height);
 

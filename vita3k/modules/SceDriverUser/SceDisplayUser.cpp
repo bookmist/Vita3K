@@ -23,12 +23,9 @@ TRACY_MODULE_NAME(SceDisplayUser);
 
 EXPORT(SceInt32, sceDisplayGetFrameBuf, SceDisplayFrameBuf *pFrameBuf, SceDisplaySetBufSync sync) {
     TRACY_FUNC(sceDisplayGetFrameBuf, pFrameBuf, sync);
-    if (!pFrameBuf)
-        return SCE_DISPLAY_ERROR_INVALID_ADDR;
-    if ((pFrameBuf->size & 0xfffffffb) != 0x18)
-        return SCE_DISPLAY_ERROR_INVALID_VALUE;
-
-    uint32_t pFrameBuf_size = pFrameBuf->size;
+    uint32_t pFrameBuf_size = 0;
+    if (pFrameBuf)
+        pFrameBuf_size = pFrameBuf->size;
     return CALL_EXPORT(_sceDisplayGetFrameBuf, pFrameBuf, sync, &pFrameBuf_size);
 }
 
@@ -62,6 +59,11 @@ EXPORT(int, sceDisplaySetFrameBufForCompat) {
 
 EXPORT(int, sceDisplaySetFrameBufInternal, uint32_t maybe_buffer_idx, uint32_t unkn, SceDisplayFrameBuf *pFrameBuf, SceDisplaySetBufSync sync) {
     TRACY_FUNC(sceDisplaySetFrameBufInternal, maybe_buffer_idx, unkn, pFrameBuf, sync);
+    sceDisplaySetFrameBufInternalParam param{ .sync = sync };
+    if (pFrameBuf)
+        param.framebuf_size = pFrameBuf->size;
+    return CALL_EXPORT(_sceDisplaySetFrameBufInternal, maybe_buffer_idx, unkn, pFrameBuf, &param);
+    /*
     // only render for frame buffer 0 or we'll get double fps
     if (maybe_buffer_idx != 0)
         return 0;
@@ -69,6 +71,7 @@ EXPORT(int, sceDisplaySetFrameBufInternal, uint32_t maybe_buffer_idx, uint32_t u
     if (pFrameBuf)
         pFrameBuf->size = 0x18;
     return CALL_EXPORT(_sceDisplaySetFrameBuf, pFrameBuf, sync, nullptr);
+    */
 }
 
 BRIDGE_IMPL(sceDisplayGetFrameBuf)

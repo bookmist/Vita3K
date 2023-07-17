@@ -58,6 +58,10 @@ static int display_wait(EmuEnvState &emuenv, SceUID thread_id, int vcount, const
 
 EXPORT(SceInt32, _sceDisplayGetFrameBuf, SceDisplayFrameBuf *pFrameBuf, SceDisplaySetBufSync sync, uint32_t *pFrameBuf_size) {
     TRACY_FUNC(_sceDisplayGetFrameBuf, pFrameBuf, sync, pFrameBuf_size);
+    if (!pFrameBuf)
+        return RET_ERROR(SCE_DISPLAY_ERROR_INVALID_ADDR);
+    /*    if ((pFrameBuf->size & 0xfffffffb) != 0x18)
+            return RET_ERROR(SCE_DISPLAY_ERROR_INVALID_VALUE);*/
     if (pFrameBuf->size != sizeof(SceDisplayFrameBuf) && pFrameBuf->size != sizeof(SceDisplayFrameBuf2))
         return RET_ERROR(SCE_DISPLAY_ERROR_INVALID_VALUE);
     else if (sync != SCE_DISPLAY_SETBUF_NEXTFRAME && sync != SCE_DISPLAY_SETBUF_IMMEDIATE)
@@ -123,7 +127,7 @@ EXPORT(int, _sceDisplayGetResolutionInfoInternal) {
 EXPORT(SceInt32, _sceDisplaySetFrameBuf, const SceDisplayFrameBuf *pFrameBuf, SceDisplaySetBufSync sync, uint32_t *pFrameBuf_size) {
     TRACY_FUNC(_sceDisplaySetFrameBuf, pFrameBuf, sync, pFrameBuf_size);
     if (!pFrameBuf)
-        return SCE_DISPLAY_ERROR_OK;
+        return RET_ERROR(SCE_DISPLAY_ERROR_OK);
     if (pFrameBuf->size != sizeof(SceDisplayFrameBuf) && pFrameBuf->size != sizeof(SceDisplayFrameBuf2)) {
         return RET_ERROR(SCE_DISPLAY_ERROR_INVALID_VALUE);
     }
@@ -184,9 +188,15 @@ EXPORT(int, _sceDisplaySetFrameBufForCompat) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceDisplaySetFrameBufInternal) {
-    TRACY_FUNC(_sceDisplaySetFrameBufInternal);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceDisplaySetFrameBufInternal, uint32_t maybe_buffer_idx, uint32_t unkn, SceDisplayFrameBuf *pFrameBuf, sceDisplaySetFrameBufInternalParam *param) {
+    TRACY_FUNC(_sceDisplaySetFrameBufInternal, maybe_buffer_idx, unkn, pFrameBuf, param);
+    // only render for frame buffer 0 or we'll get double fps
+    if (maybe_buffer_idx != 0)
+        return 0;
+    // size does not match (is 4 bytes larger)
+    if (pFrameBuf)
+        pFrameBuf->size = 0x18;
+    return CALL_EXPORT(_sceDisplaySetFrameBuf, pFrameBuf, param->sync, &param->framebuf_size);
 }
 
 EXPORT(int, sceDisplayGetPrimaryHead) {
