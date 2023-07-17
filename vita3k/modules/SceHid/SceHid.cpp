@@ -16,6 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "SceHid.h"
+#include "../SceKernelThreadMgr/SceThreadmgr.h"
 
 EXPORT(int, sceHidConsumerControlEnumerate) {
     return UNIMPLEMENTED();
@@ -85,11 +86,13 @@ EXPORT(int, sceHidKeyboardRead) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceHidKeyboardRegisterEnumHintCallback) {
+EXPORT(int, sceHidKeyboardRegisterEnumHintCallback, SceUID cbid) {
+    CALL_EXPORT(sceKernelNotifyCallback, cbid, 0);
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceHidKeyboardRegisterReadHintCallback) {
+EXPORT(int, sceHidKeyboardRegisterReadHintCallback, SceUID cbid) {
+    CALL_EXPORT(sceKernelNotifyCallback, cbid, 0);
     return UNIMPLEMENTED();
 }
 
