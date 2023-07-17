@@ -77,35 +77,7 @@ EXPORT(int, sceAppMgrAddContMount) {
 
 EXPORT(int, sceAppMgrAppDataMount, int mountId, char *mountPoint) {
     TRACY_FUNC(sceAppMgrAppDataMount, mountId, mountPoint);
-    STUBBED("Using strcpy");
-    switch (mountId) {
-    case 0x64: // photo0:
-        strcpy(mountPoint, "ux0:picture");
-        break;
-    case 0x65: // psnfriend
-        fmt::format_to(mountPoint, "ur0:user/{}/psnfriend{}", emuenv.io.user_id, '\0');
-        break;
-    case 0x66: // psnmsg
-        fmt::format_to(mountPoint, "ur0:user/{}/psnmsg{}", emuenv.io.user_id, '\0');
-        break;
-    case 0x67: // near
-        fmt::format_to(mountPoint, "ur0:user/{}/near{}", emuenv.io.user_id, '\0');
-        break;
-    case 0x69: // music0:
-        strcpy(mountPoint, "ux0:music");
-        break;
-    case 0x6C: // calendar
-        strcpy(mountPoint, "ux0:calendar");
-        break;
-    case 0x6D: // video0:
-        strcpy(mountPoint, "ux0:video");
-        break;
-    default:
-        LOG_WARN("Unknown mountId {}", log_hex(mountId));
-        break;
-    }
-
-    return 0;
+    return CALL_EXPORT(_sceAppMgrAppDataMount, mountId, mountPoint);
 }
 
 EXPORT(int, sceAppMgrAppDataMountById) {
@@ -170,9 +142,7 @@ EXPORT(int, sceAppMgrContentInstallPeriodStop) {
 
 EXPORT(int, sceAppMgrConvertVs0UserDrivePath, char *source_path, char *dest_path, int dest_len) {
     TRACY_FUNC(sceAppMgrConvertVs0UserDrivePath, source_path, dest_path, dest_len);
-    STUBBED("Using strncpy");
-    strncpy(dest_path, source_path, dest_len);
-    return 0;
+    return CALL_EXPORT(_sceAppMgrConvertVs0UserDrivePath, source_path, dest_path, dest_len);
 }
 
 EXPORT(int, sceAppMgrDeclareShellProcess2) {
@@ -203,16 +173,7 @@ EXPORT(int, sceAppMgrForceUmount) {
 
 EXPORT(int, sceAppMgrGameDataMount, const char *app_path, const char *patch_path, const char *rif_path, char *mount_point) {
     TRACY_FUNC(sceAppMgrGameDataMount, app_path, patch_path, rif_path, mount_point);
-    if (strlen(app_path) > 0)
-        emuenv.io.device_paths.gamedata0 = app_path;
-    else if (strlen(patch_path) > 0)
-        emuenv.io.device_paths.gamedata0 = patch_path;
-    else if (strlen(rif_path) > 0)
-        emuenv.io.device_paths.gamedata0 = rif_path;
-
-    strcpy(mount_point, "gamedata0:");
-
-    return 0;
+    return CALL_EXPORT(_sceAppMgrGameDataMount, app_path, patch_path, rif_path, mount_point);
 }
 
 EXPORT(int, sceAppMgrGetAppInfo) {
@@ -242,8 +203,7 @@ EXPORT(int, sceAppMgrGetBootParam) {
 
 EXPORT(int, sceAppMgrGetBudgetInfo) {
     TRACY_FUNC(sceAppMgrGetBudgetInfo);
-    STUBBED("not system mode");
-    return -1;
+    return CALL_EXPORT(_sceAppMgrGetBudgetInfo);
 }
 
 EXPORT(int, sceAppMgrGetCoredumpStateForShell) {
@@ -263,28 +223,7 @@ EXPORT(int, sceAppMgrGetCurrentBgmState2) {
 
 EXPORT(int, sceAppMgrGetDevInfo, const char *dev, uint64_t *max_size, uint64_t *free_size) {
     TRACY_FUNC(sceAppMgrGetDevInfo, dev, max_size, free_size);
-    if (dev == nullptr) {
-        return RET_ERROR(SCE_ERROR_ERRNO_EINVAL);
-    }
-
-    auto device = device::get_device(dev);
-    if (device == VitaIoDevice::_INVALID) {
-        LOG_ERROR("Cannot find device for path: {}", dev);
-        return RET_ERROR(SCE_ERROR_ERRNO_ENOENT);
-    }
-
-    fs::path dev_path = device._to_string();
-    fs::path path = emuenv.pref_path / dev_path;
-    fs::space_info space = fs::space(path);
-
-    // TODO: Use free or available?
-    // free = free space available on the whole partition
-    // available = free space available to a non-privileged process
-    // Using available in case the drive is nearly full and the game tries to write since available will always be smaller
-    *free_size = space.available;
-    *max_size = space.capacity;
-
-    return 0;
+    return CALL_EXPORT(_sceAppMgrGetDevInfo, dev, max_size, free_size);
 }
 
 EXPORT(int, sceAppMgrGetFgAppInfo) {
@@ -328,10 +267,8 @@ EXPORT(int, sceAppMgrGetPidListForShell) {
 }
 
 EXPORT(int, sceAppMgrGetRawPath, char *path, char *resolved_path, int resolved_path_size) {
-    TRACY_FUNC(sceAppMgrGetRawPath, resolved_path, path, resolved_path_size);
-    STUBBED("Using strncpy");
-    strncpy(resolved_path, path, resolved_path_size);
-    return 0;
+    TRACY_FUNC(sceAppMgrGetRawPath, path, resolved_path, resolved_path_size);
+    return CALL_EXPORT(_sceAppMgrGetRawPath, path, resolved_path, resolved_path_size);
 }
 
 EXPORT(int, sceAppMgrGetRawPathOfApp0ByAppIdForShell) {
@@ -405,10 +342,7 @@ EXPORT(int, sceAppMgrGetSystemDataFilePlayReady) {
 
 EXPORT(int, sceAppMgrGetUserDirPath, int partition_id, char *userDirPath, SceSize path_maxlen) {
     TRACY_FUNC(sceAppMgrGetUserDirPath, partition_id, userDirPath, path_maxlen);
-    STUBBED("Using strncpy");
-    const auto partition = partition_id == 1 ? "ur0:" : "ux0:";
-    fmt::format_to_n(userDirPath, path_maxlen, "{}user/{}{}", partition, emuenv.io.user_id, '\0');
-    return 0;
+    return CALL_EXPORT(_sceAppMgrGetUserDirPath, partition_id, userDirPath, path_maxlen);
 }
 
 EXPORT(int, sceAppMgrGetUserDirPathById) {
@@ -556,11 +490,7 @@ EXPORT(int, sceAppMgrReceiveEvent, SceAppMgrEvent *mgrEvent) {
 
 EXPORT(int, sceAppMgrReceiveEventNum, SceUInt32 *eventNum) {
     TRACY_FUNC(sceAppMgrReceiveEventNum, eventNum);
-
-    // Vita3K does not yet manage events
-    *eventNum = 0;
-
-    return STUBBED("Set eventNum to 0");
+    return CALL_EXPORT(_sceAppMgrReceiveEventNum, eventNum);
 }
 
 EXPORT(int, sceAppMgrReceiveNotificationRequestForShell) {
@@ -803,13 +733,7 @@ EXPORT(int, sceAppMgrTrophyMountById) {
 
 EXPORT(int, sceAppMgrUmount, const char *mount_point) {
     TRACY_FUNC(sceAppMgrUmount, mount_point);
-    if (std::string(mount_point) == "gamedata0:") {
-        emuenv.io.device_paths.gamedata0.clear();
-
-        return 0;
-    }
-
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(_sceAppMgrUmount, mount_point);
 }
 
 EXPORT(int, sceAppMgrUmountByPid) {
@@ -824,29 +748,7 @@ EXPORT(int, sceAppMgrUpdateSaveDataParam) {
 
 EXPORT(int, sceAppMgrWorkDirMount, int mountId, char *mountPoint) {
     TRACY_FUNC(sceAppMgrWorkDirMount, mountId, mountPoint);
-    STUBBED("using strcpy");
-    switch (mountId) {
-    case 0xC8:
-        strcpy(mountPoint, "ur0:temp/sqlite/");
-        break;
-    case 0xC9:
-        strcpy(mountPoint, "ur0:temp/attach/");
-        break;
-    case 0xCA:
-        strcpy(mountPoint, "ux0:pspemu/");
-        break;
-    case 0xCC:
-        strcpy(mountPoint, "ur0:temp/checkout/");
-        break;
-    case 0xCE:
-        strcpy(mountPoint, "ur0:temp/webbrowser/");
-        break;
-    default:
-        LOG_WARN("Unknown mount id: {}", log_hex(mountId));
-        break;
-    }
-
-    return 0;
+    return CALL_EXPORT(_sceAppMgrWorkDirMount, mountId, mountPoint);
 }
 
 EXPORT(int, sceAppMgrWorkDirMountById) {

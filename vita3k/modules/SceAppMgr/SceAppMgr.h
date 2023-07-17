@@ -69,6 +69,16 @@ typedef struct SceAppMgrLoadExecOptParam {
 EXPORT(SceInt32, __sceAppMgrGetAppState, SceAppMgrAppState *appState, SceUInt32 sizeofSceAppMgrAppState, SceUInt32 buildVersion);
 EXPORT(SceInt32, _sceAppMgrAppParamGetString, int pid, int param, char *string, int length);
 EXPORT(SceInt32, _sceAppMgrLoadExec, const char *appPath, Ptr<char> const argv[], const SceAppMgrLoadExecOptParam *optParam);
+EXPORT(int, _sceAppMgrAppDataMount, int mountId, char *mountPoint);
+EXPORT(int, _sceAppMgrGameDataMount, const char *app_path, const char *patch_path, const char *rif_path, char *mount_point);
+EXPORT(int, _sceAppMgrConvertVs0UserDrivePath, char *source_path, char *dest_path, int dest_len);
+EXPORT(int, _sceAppMgrGetBudgetInfo);
+EXPORT(int, _sceAppMgrGetDevInfo, const char *dev, uint64_t *max_size, uint64_t *free_size);
+EXPORT(int, _sceAppMgrGetRawPath, char *path, char *resolved_path, int resolved_path_size);
+EXPORT(int, _sceAppMgrGetUserDirPath, int partition_id, char *userDirPath, SceSize path_maxlen);
+EXPORT(int, _sceAppMgrReceiveEventNum, SceUInt32 *eventNum);
+EXPORT(int, _sceAppMgrUmount, const char *mount_point);
+EXPORT(int, _sceAppMgrWorkDirMount, int mountId, char *mountPoint);
 
 SceInt32 __sceAppMgrGetAppState(SceAppMgrAppState *appState, SceUInt32 sizeofSceAppMgrAppState, SceUInt32 buildVersion);
 SceInt32 _sceAppMgrLoadExec(const char *appPath, char *const argv[], const SceAppMgrLoadExecOptParam *optParam);

@@ -73,11 +73,73 @@ EXPORT(int, _sceRtcFormatRFC2822) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceRtcFormatRFC2822LocalTime) {
-    TRACY_FUNC(_sceRtcFormatRFC2822LocalTime);
-    return UNIMPLEMENTED();
-}
+EXPORT(int, _sceRtcFormatRFC2822LocalTime, char *pszDateTime, const SceRtcTick *utc) {
+    TRACY_FUNC(_sceRtcFormatRFC2822LocalTime, pszDateTime, utc);
+    // The following code is from PPSSPP
+    // Copyright (c) 2012- PPSSPP Project.
 
+    // Get timezone difference
+    std::time_t epoch_plus_11h = 60 * 60 * 11;
+    tm epoch_localtime = {};
+    tm epoch_gmtime = {};
+    SAFE_LOCALTIME(&epoch_plus_11h, &epoch_localtime);
+    SAFE_GMTIME(&epoch_plus_11h, &epoch_gmtime);
+
+    auto local_tz_hour = epoch_localtime.tm_hour;
+    const auto local_tz_minute = epoch_localtime.tm_min;
+    const auto gmt_tz_hour = epoch_gmtime.tm_hour;
+    const auto gmt_tz_minute = epoch_gmtime.tm_min;
+    const auto tz_minute_diff = local_tz_minute - gmt_tz_minute;
+    if (tz_minute_diff != 0 && gmt_tz_hour > local_tz_hour)
+        local_tz_hour++;
+    const auto tz_hour_diff = local_tz_hour - gmt_tz_hour;
+
+    if (utc) { // format utc in localtime
+        SceDateTime date;
+        memset(&date, 0, sizeof(date));
+        tm gmt = {};
+        __RtcTicksToPspTime(&date, utc->tick);
+        __RtcPspTimeToTm(&gmt, &date);
+        while (gmt.tm_year < 70)
+            gmt.tm_year += 400;
+        while (gmt.tm_year >= 470)
+            gmt.tm_year -= 400;
+
+        time_t time = rtc_timegm(&gmt);
+        tm current_localtime = {};
+        SAFE_LOCALTIME(&time, &current_localtime);
+
+        char *end = pszDateTime + 32;
+        pszDateTime += strftime(pszDateTime, end - pszDateTime, "%a, %d %b ", &current_localtime);
+        pszDateTime += snprintf(pszDateTime, end - pszDateTime, "%04d", date.year);
+        pszDateTime += strftime(pszDateTime, end - pszDateTime, " %H:%M:%S ", &current_localtime);
+
+        if (local_tz_hour < gmt_tz_hour || current_localtime.tm_mday < gmt.tm_mday) {
+            pszDateTime += snprintf(pszDateTime, end - pszDateTime, "-%02d%02d", abs(tz_hour_diff), abs(tz_minute_diff));
+        } else {
+            pszDateTime += snprintf(pszDateTime, end - pszDateTime, "+%02d%02d", abs(tz_hour_diff), abs(tz_minute_diff));
+        }
+    } else { // format current time
+        time_t time = std::time(nullptr);
+        tm local_time = {};
+        tm gmt = {};
+
+        SAFE_LOCALTIME(&time, &local_time);
+        SAFE_GMTIME(&time, &gmt);
+
+        char *end = pszDateTime + 32;
+        pszDateTime += strftime(pszDateTime, end - pszDateTime, "%a, %d %b ", &local_time);
+        pszDateTime += snprintf(pszDateTime, end - pszDateTime, "%04d", local_time.tm_year + 1900);
+        pszDateTime += strftime(pszDateTime, end - pszDateTime, " %H:%M:%S ", &local_time);
+
+        if (local_tz_hour < gmt_tz_hour || local_time.tm_mday < gmt.tm_mday) {
+            pszDateTime += snprintf(pszDateTime, end - pszDateTime, "-%02d%02d", abs(tz_hour_diff), abs(tz_minute_diff));
+        } else {
+            pszDateTime += snprintf(pszDateTime, end - pszDateTime, "+%02d%02d", abs(tz_hour_diff), abs(tz_minute_diff));
+        }
+    }
+    return 0;
+}
 EXPORT(int, _sceRtcFormatRFC3339) {
     TRACY_FUNC(_sceRtcFormatRFC3339);
     return UNIMPLEMENTED();
@@ -88,9 +150,10 @@ EXPORT(int, _sceRtcFormatRFC3339LocalTime) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceRtcGetCurrentAdNetworkTick) {
-    TRACY_FUNC(_sceRtcGetCurrentAdNetworkTick);
-    return UNIMPLEMENTED();
+EXPORT(int, _sceRtcGetCurrentAdNetworkTick, SceRtcTick *tick) {
+    TRACY_FUNC(_sceRtcGetCurrentAdNetworkTick, tick);
+    STUBBED("stubbed with _sceRtcGetCurrentNetworkTick");
+    return CALL_EXPORT(_sceRtcGetCurrentNetworkTick, tick);
 }
 
 EXPORT(int, _sceRtcGetCurrentClock, SceDateTime *datePtr, int iTimeZone) {
