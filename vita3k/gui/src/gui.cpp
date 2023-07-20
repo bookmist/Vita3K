@@ -599,10 +599,65 @@ void get_user_apps_title(GuiState &gui, EmuEnvState &emuenv) {
 
 void get_sys_apps_title(GuiState &gui, EmuEnvState &emuenv) {
     gui.app_selector.sys_apps.clear();
-    const std::array<std::string, 6> sys_apps_list = { "NPXS10003", "NPXS10008", "NPXS10015", "NPXS10026", "NPXS19999", "NPXS10062" };
+    const std::array<std::string, 58> sys_apps_list = { "NPXS10000",
+        "NPXS10001",
+        "NPXS10002",
+        "NPXS10003",
+        "NPXS10004",
+        "NPXS10006",
+        "NPXS10008",
+        "NPXS10009",
+        "NPXS10010",
+        "NPXS10012",
+        "NPXS10013",
+        "NPXS10014",
+        "NPXS10015",
+        "NPXS10016",
+        "NPXS10018",
+        "NPXS10021",
+        "NPXS10023",
+        "NPXS10024",
+        "NPXS10025",
+        "NPXS10026",
+        "NPXS10027",
+        "NPXS10028",
+        "NPXS10029",
+        "NPXS10031",
+        "NPXS10032",
+        "NPXS10035",
+        "NPXS10036",
+        "NPXS10040",
+        "NPXS10041",
+        "NPXS10042",
+        "NPXS10043",
+        "NPXS10044",
+        "NPXS10045",
+        "NPXS10060",
+        "NPXS10063",
+        "NPXS10065",
+        "NPXS10072",
+        "NPXS10073",
+        "NPXS10077",
+        "NPXS10078",
+        "NPXS10079",
+        "NPXS10080",
+        "NPXS10081",
+        "NPXS10082",
+        "NPXS10083",
+        "NPXS10084",
+        "NPXS10085",
+        "NPXS10090",
+        "NPXS10091",
+        "NPXS10092",
+        "NPXS10093",
+        "NPXS10094",
+        "NPXS10095",
+        "NPXS10098",
+        "NPXS10100",
+        "NPXS10101", "NPXS19999" };
     for (const auto &app : sys_apps_list) {
         vfs::FileBuffer params;
-        if ((app != "NPXS19999" || app != "NPXS10062") && vfs::read_file(VitaIoDevice::vs0, params, emuenv.pref_path, "app/" + app + "/sce_sys/param.sfo")) {
+        if (vfs::read_file(VitaIoDevice::vs0, params, emuenv.pref_path, "app/" + app + "/sce_sys/param.sfo")) {
             SfoFile sfo_handle;
             sfo::load(sfo_handle, params);
             sfo::get_data_by_key(emuenv.app_info.app_version, sfo_handle, "APP_VER");
@@ -627,9 +682,12 @@ void get_sys_apps_title(GuiState &gui, EmuEnvState &emuenv) {
                 emuenv.app_info.app_short_title = emuenv.app_info.app_title = "Settings";
             else if (app == "NPXS10026")
                 emuenv.app_info.app_short_title = emuenv.app_info.app_title = "Content Manager";
-            else {
+            else if (app == "NPXS19999") {
                 emuenv.app_info.app_short_title = "PS Vita OS";
                 emuenv.app_info.app_title = "PlayStation Vita OS";
+            } else {
+                emuenv.app_info.app_short_title = app;
+                emuenv.app_info.app_title = app;
             }
         }
         gui.app_selector.sys_apps.push_back({ "vs0", emuenv.app_info.app_version, emuenv.app_info.app_category, {}, {}, {}, {}, emuenv.app_info.app_short_title, emuenv.app_info.app_title, emuenv.app_info.app_title_id, app });

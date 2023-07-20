@@ -475,16 +475,18 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv, const
         emuenv.self_path = "vsh/shell/shell.self";
     else if (emuenv.io.app_path == "NPXS10062")
         emuenv.self_path = "vs0:vsh/initialsetup/initialsetup.self";
-    } else {
-        LOG_DEBUG("self path: {}", emuenv.cfg.self_path);
-        emuenv.self_path = !emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : (fs::path("app") / emuenv.io.app_path / EBOOT_PATH).string();
-    }
+    else if (emuenv.io.app_path == "NPXS10082")
+        emuenv.self_path = "vs0:app/NPXS10082/spawn.self";
+    else if (emuenv.io.app_path.find("NPXS") != std::string::npos) {
+        emuenv.self_path = fmt::format("vs0:app/{}/eboot.bin", emuenv.io.app_path);
+    } else
+        emuenv.self_path = !emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : EBOOT_PATH;
     main_module_id = load_module(emuenv, emuenv.io.app_device + ":" + emuenv.self_path);
-    if (main_module_id >= 0) {
+    if (main_module_id > 0) {
         const auto module = emuenv.kernel.loaded_modules[main_module_id];
-            LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
-        } else
-            return FileNotFound;
+        LOG_INFO("Main executable {} ({}) loaded", module->module_name, emuenv.self_path);
+    } else
+        return FileNotFound;
     // Set self name from self path, can contain folder, get file name only
     emuenv.self_name = fs::path(emuenv.self_path).filename().string();
 

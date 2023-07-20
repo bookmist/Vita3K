@@ -284,6 +284,8 @@ void open_path(const std::string &path) {
 static std::string context_dialog;
 
 void draw_app_context_menu(GuiState &gui, EmuEnvState &emuenv, const std::string &app_device, const std::string &app_path) {
+    if (app_path.size() == 0)
+        return;
     const auto APP_INDEX = get_app_index(gui, app_path);
     const auto title_id = APP_INDEX->title_id;
 

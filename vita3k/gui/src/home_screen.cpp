@@ -150,7 +150,7 @@ void pre_load_app(GuiState &gui, EmuEnvState &emuenv, bool live_area, const std:
 }
 
 void pre_run_app(GuiState &gui, EmuEnvState &emuenv, const std::string &app_device, const std::string &app_path) {
-    if ((app_path == "NPXS19999") || (app_path == "NPXS10007") || (app_path == "NPXS10062") || (app_path.find("NPXS") == std::string::npos)) {
+    if (true || (app_path == "NPXS19999") || (app_path == "NPXS10062") /*|| (app_path.find("NPXS") == std::string::npos)*/) {
         if (emuenv.io.app_path != app_path) {
             if (!emuenv.io.app_path.empty())
                 gui.vita_area.app_close = true;
@@ -182,7 +182,7 @@ void pre_run_app(GuiState &gui, EmuEnvState &emuenv, const std::string &app_devi
             }
 
             gui.vita_area.settings = true;
-        } else {
+        } else if (app_path == "NPXS10026") {
             init_content_manager(gui, emuenv);
             gui.vita_area.content_manager = true;
         }
@@ -499,7 +499,7 @@ void browse_home_apps_list(GuiState &gui, EmuEnvState &emuenv, const uint32_t bu
             pre_load_app(gui, emuenv, emuenv.cfg.show_live_area_screen, selected_app.device, selected_app.path);
         }
         break;
-    case SCE_CTRL_CROSS:
+    case SCE_CTRL_CROSS: 
         if (emuenv.cfg.sys_button == 1) {
             const auto &selected_app = current_selected_app_index < 0 ? gui.app_selector.sys_apps[current_selected_app_index + 5] : gui.app_selector.user_apps[current_selected_app_index];
             pre_load_app(gui, emuenv, emuenv.cfg.show_live_area_screen, selected_app.device, selected_app.path);

@@ -164,7 +164,7 @@ void init_live_area(GuiState &gui, EmuEnvState &emuenv, const std::string &app_d
     const auto is_ps_app = app_path.find("PCS") != std::string::npos;
     const auto APP_INDEX = get_app_index(gui, app_path);
     const auto device = VitaIoDevice::_from_string(app_device.c_str());
-    
+
     if (is_ps_app && !sku_flag.contains(app_path))
         sku_flag[app_path] = get_license_sku_flag(emuenv, APP_INDEX->content_id);
 
@@ -176,7 +176,7 @@ void init_live_area(GuiState &gui, EmuEnvState &emuenv, const std::string &app_d
         const auto live_area_path{ fs::path("sce_sys") / ((sku_flag[app_path] == 3) && fs::exists(APP_PATH / "sce_sys/retail/livearea") ? "retail/livearea" : "livearea") };
         auto template_xml{ APP_PATH / live_area_path / "contents/template.xml" };
 
-        const auto is_ps_vita_os = (app_path == "NPXS19999") || (app_path == "NPXS10062");
+        const auto is_ps_vita_os = (app_path.find("NPXS") != std::string::npos); //(app_path == "NPXS19999") || (app_path == "NPXS10062");
 
         pugi::xml_document doc;
         if (!doc.load_file(template_xml.c_str())) {
@@ -478,7 +478,7 @@ void init_live_area(GuiState &gui, EmuEnvState &emuenv, const std::string &app_d
                             vfs::FileBuffer buffer;
 
                             vfs::read_app_file(buffer, emuenv.pref_path, app_device, app_path, "sce_sys/livearea/contents/" + img_name);
-                            
+
                             if (buffer.empty()) {
                                 if (is_ps_app || is_sys_app)
                                     LOG_WARN("Image, Id: {} Name: '{}', Not found for title {} [{}].", item.first, img_name, app_path, APP_INDEX->title);
@@ -1068,7 +1068,7 @@ void draw_live_area_screen(GuiState &gui, EmuEnvState &emuenv) {
     ImGui::PopID();
     window_draw_list->AddRect(GATE_POS, SIZE_GATE, IM_COL32(192, 192, 192, 255), 10.f * SCALE.x, ImDrawFlags_RoundCornersAll, 12.f * SCALE.x);
 
-    if (device == VitaIoDevice::ux0) {
+    if (device == VitaIoDevice::ux0 || true) {
         const auto widget_scal_size = ImVec2(80.0f * SCALE.x, 80.f * SCALE.y);
         const auto manual_path{ fs::path(emuenv.pref_path) / "ux0/app" / app_path / "sce_sys/manual/" };
         const auto scal_widget_font_size = 23.0f / ImGui::GetFontSize();
