@@ -17,6 +17,8 @@
 
 #include "SceAppMgr.h"
 
+#include "..\SceKernelThreadMgr\SceThreadmgr.h"
+
 #include <emuenv/app_util.h>
 #include <io/device.h>
 #include <io/state.h>
@@ -368,8 +370,38 @@ EXPORT(int, _sceAppMgrGetSaveDataInfoForSpecialExport) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrGetStatusByAppId) {
-    TRACY_FUNC(_sceAppMgrGetStatusByAppId);
+struct app_status {
+    uint32_t field0_0x0;
+    uint32_t field1_0x4;
+    uint32_t field2_0x8;
+    char name_01[32];
+    uint32_t field4_0x2c;
+    uint32_t field5_0x30;
+    uint32_t process_id;
+    uint32_t field7_0x38;
+    uint32_t field8_0x3c;
+    uint32_t field9_0x40;
+    uint32_t field10_0x44;
+    uint32_t field11_0x48;
+    uint32_t field12_0x4c;
+    char name_02[32];
+    char field14_0x70;
+    uint8_t field15_0x71;
+    char field16_0x72;
+    char field17_0x73;
+    uint32_t field18_0x74;
+    uint32_t field19_0x78;
+    uint32_t field20_0x7c;
+};
+
+EXPORT(int, _sceAppMgrGetStatusByAppId, SceUID app_id, app_status *res) {
+    TRACY_FUNC(_sceAppMgrGetStatusByAppId, app_id, res);
+    LOG_DEBUG("app_id:{}, res:{}", to_debug_str(emuenv.mem, app_id), to_debug_str(emuenv.mem, res));
+    if (res) {
+        memset(res, 0, 0x80);
+        res->process_id = CALL_EXPORT(sceKernelGetProcessId);
+        res->field15_0x71 = 2;
+    }
     return UNIMPLEMENTED();
 }
 
@@ -378,8 +410,14 @@ EXPORT(int, _sceAppMgrGetStatusById) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _sceAppMgrGetStatusByName) {
-    TRACY_FUNC(_sceAppMgrGetStatusByName);
+EXPORT(int, _sceAppMgrGetStatusByName, char *name, app_status *res, int *flags) {
+    TRACY_FUNC(_sceAppMgrGetStatusByName, name, res, flags);
+    LOG_DEBUG("name:{}, res:{}, flags:{}", to_debug_str(emuenv.mem, name), to_debug_str(emuenv.mem, res), to_debug_str(emuenv.mem, flags));
+    if (res) {
+        memset(res, 0, 0x80);
+        res->process_id = CALL_EXPORT(sceKernelGetProcessId);
+        res->field15_0x71 = 2;
+    }
     return UNIMPLEMENTED();
 }
 
@@ -586,8 +624,16 @@ EXPORT(int, _sceAppMgrReceiveEventNum, SceUInt32 *eventNum) {
     return STUBBED("Set eventNum to 0");
 }
 
-EXPORT(int, _sceAppMgrReceiveNotificationRequestForShell) {
-    TRACY_FUNC(_sceAppMgrReceiveNotificationRequestForShell);
+struct NotifForShell {
+    SceInt32 unk_0;
+    char notification[60];
+};
+
+EXPORT(int, _sceAppMgrReceiveNotificationRequestForShell, NotifForShell *notif) {
+    TRACY_FUNC(_sceAppMgrReceiveNotificationRequestForShell, notif);
+    if (notif) {
+        strcpy(notif->notification, "Vita3k <3");
+    }
     return UNIMPLEMENTED();
 }
 

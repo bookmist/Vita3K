@@ -1172,10 +1172,16 @@ EXPORT(int, sceKernelGetMsgPipeCreatorId, const char *name) {
     return UNIMPLEMENTED();
 }
 
+int pid = 0x10005;
+
 EXPORT(int, sceKernelGetProcessId) {
     TRACY_FUNC(sceKernelGetProcessId);
-    STUBBED("pid: 0");
-    return 0;
+    if (pid == 0) {
+        pid = emuenv.kernel.get_next_uid();
+        LOG_DEBUG("stubbed process id:{}", pid);
+    }
+    STUBBED("pid: {}");
+    return pid;
 }
 
 EXPORT(uint64_t, sceKernelGetSystemTimeWide) {
