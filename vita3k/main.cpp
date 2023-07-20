@@ -134,34 +134,34 @@ int main(int argc, char *argv[]) {
     {
         const auto err = config::init_config(cfg, argc, argv, root_paths);
         if (err != Success) {
-        if (err == QuitRequested) {
-            if (cfg.recompile_shader_path.has_value()) {
-                LOG_INFO("Recompiling {}", *cfg.recompile_shader_path);
-                shader::convert_gxp_to_glsl_from_filepath(*cfg.recompile_shader_path);
+            if (err == QuitRequested) {
+                if (cfg.recompile_shader_path.has_value()) {
+                    LOG_INFO("Recompiling {}", *cfg.recompile_shader_path);
+                    shader::convert_gxp_to_glsl_from_filepath(*cfg.recompile_shader_path);
+                }
+                if (cfg.delete_title_id.has_value()) {
+                    LOG_INFO("Deleting title id {}", *cfg.delete_title_id);
+                    fs::remove_all(fs::path(cfg.pref_path) / "ux0/app" / *cfg.delete_title_id);
+                    fs::remove_all(fs::path(cfg.pref_path) / "ux0/addcont" / *cfg.delete_title_id);
+                    fs::remove_all(fs::path(cfg.pref_path) / "ux0/user/00/savedata" / *cfg.delete_title_id);
+                    fs::remove_all(fs::path(root_paths.get_base_path()) / "cache/shaders" / *cfg.delete_title_id);
+                }
+                if (cfg.pkg_path.has_value() && cfg.pkg_zrif.has_value()) {
+                    LOG_INFO("Installing pkg from {} ", *cfg.pkg_path);
+                    emuenv.pref_path = string_utils::utf_to_wide(cfg.pref_path);
+                    install_pkg(*cfg.pkg_path, emuenv, *cfg.pkg_zrif, [](float) {});
+                }
+                return Success;
             }
-            if (cfg.delete_title_id.has_value()) {
-                LOG_INFO("Deleting title id {}", *cfg.delete_title_id);
-                fs::remove_all(fs::path(cfg.pref_path) / "ux0/app" / *cfg.delete_title_id);
-                fs::remove_all(fs::path(cfg.pref_path) / "ux0/addcont" / *cfg.delete_title_id);
-                fs::remove_all(fs::path(cfg.pref_path) / "ux0/user/00/savedata" / *cfg.delete_title_id);
-                fs::remove_all(fs::path(root_paths.get_base_path()) / "cache/shaders" / *cfg.delete_title_id);
-            }
-            if (cfg.pkg_path.has_value() && cfg.pkg_zrif.has_value()) {
-                LOG_INFO("Installing pkg from {} ", *cfg.pkg_path);
-                emuenv.pref_path = string_utils::utf_to_wide(cfg.pref_path);
-                install_pkg(*cfg.pkg_path, emuenv, *cfg.pkg_zrif, [](float) {});
-            }
-            return Success;
-        }
             LOG_ERROR("Failed to initialise config");
-        return InitConfigFailed;
-    }
+            return InitConfigFailed;
+        }
     }
 
 #ifdef WIN32
     {
-    auto res = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    LOG_ERROR_IF(res == S_FALSE, "Failed to initialize COM Library");
+        auto res = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        LOG_ERROR_IF(res == S_FALSE, "Failed to initialize COM Library");
     }
 #endif
 
@@ -353,7 +353,7 @@ int main(int argc, char *argv[]) {
         gui.imgui_state->do_clear_screen = false;
     }
 
-    if ((emuenv.io.app_path != "NPXS19999") && (emuenv.io.app_path != "NPXS10062"))
+    if ((emuenv.io.app_path != "NPXS19999") && (emuenv.io.app_path != "NPXS10062") && !emuenv.io.app_path.starts_with("NPSX"))
         gui::init_app_background(gui, emuenv, emuenv.io.app_device, emuenv.io.app_path);
     gui::update_last_time_app_used(gui, emuenv, emuenv.io.app_path);
 
@@ -383,6 +383,7 @@ int main(int argc, char *argv[]) {
     emuenv.renderer->self_name = emuenv.self_name.c_str();
     if (renderer::get_shaders_cache_hashs(*emuenv.renderer) && cfg.shader_cache) {
         SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, compiling shaders...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
+        if (emuenv.renderer->shaders_cache_hashs.size() > 50) {
         BS::thread_pool pool;
         for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
             pool.push_task([&renderer = emuenv.renderer, hash]() { renderer->precompile_shader(hash); });
@@ -404,11 +405,23 @@ int main(int argc, char *argv[]) {
             emuenv.renderer->swap_window(emuenv.window.get());
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         } /**/
+        } else {
+            for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
+                handle_events(emuenv, gui);
+                gui::draw_begin(gui, emuenv);
+                draw_app_background(gui, emuenv);
+
+                gui::draw_pre_compiling_shaders_progress(gui, emuenv, uint32_t(emuenv.renderer->shaders_cache_hashs.size()));
+                emuenv.renderer->precompile_shader(hash);
+                gui::draw_end(gui, emuenv.window.get());
+                emuenv.renderer->swap_window(emuenv.window.get());
+            }
+        }
     }
     {
         const auto err = run_app(emuenv, main_module_id);
         if (err != Success)
-        return err;
+            return err;
     }
     SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, loading...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
 
