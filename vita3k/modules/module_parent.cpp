@@ -273,39 +273,18 @@ bool load_sys_module_internal_with_arg(EmuEnvState &emuenv, SceUID thread_id, Sc
 
     const auto module_paths = sysmodule_internal_paths.at(module_id);
 
-    for (std::string module_path : module_paths) {
-        module_path = "sys/external/" + module_path + ".suprx";
+    for (auto module_filename : module_paths) {
+        std::string module_path = fmt::format("vs0:sys/external/{}.suprx", module_filename);
+        auto loaded_module_uid = load_module(emuenv, module_path);
 
-        vfs::FileBuffer module_buffer;
-        Ptr<const void> lib_entry_point;
-
-        if (vfs::read_file(VitaIoDevice::vs0, module_buffer, emuenv.pref_path, module_path)) {
-            SceUID loaded_module_uid = load_self(emuenv.kernel, emuenv.mem, module_buffer.data(), module_path);
-            if (loaded_module_uid < 0) {
-                LOG_ERROR("Error when loading module at \"{}\"", module_path);
-                return false;
-            }
-            const auto module = emuenv.kernel.loaded_modules[loaded_module_uid];
-            const auto module_name = module->module_name;
-            LOG_INFO("Module {} (at \"{}\") loaded", module_name, module_path);
-
-            if (lib_entry_point) {
-                LOG_DEBUG("Running module_start of module: {}", module_name);
-
-                const auto thread = emuenv.kernel.get_thread(thread_id);
-                const auto ret = thread->run_callback(lib_entry_point.address(), { args, argp.address() });
-                LOG_INFO("Module {} (at \"{}\") module_start returned {}", module_name, module->path, log_hex(ret));
-
-                if (retcode)
-                    *retcode = static_cast<int>(ret);
-            }
-
-        } else {
-            LOG_ERROR("Module at \"{}\" not present", module_path);
-            // ignore and assume it was loaded
+        if (loaded_module_uid < 0) {
+            return false;
         }
+        const auto module = emuenv.kernel.loaded_modules[loaded_module_uid];
+        auto ret = start_module(emuenv, module, args, argp);
+        if (retcode)
+            *retcode = static_cast<int>(ret);
     }
-
     emuenv.kernel.loaded_internal_sysmodules.push_back(module_id);
     return true;
 }
@@ -317,10 +296,10 @@ int load_app_by_path(EmuEnvState &emuenv, const std::string &self_path, const ch
     LOG_DEBUG("device: {}, relative_path: {}", device._to_string(), relative_path);
     const auto res = vfs::read_file(device, self_buffer, emuenv.pref_path, relative_path);
     if (res) {
-        Ptr<const void> entry_point;
         SceUID module_id = load_self(emuenv.kernel, emuenv.mem, self_buffer.data(), self_path);
         if (module_id >= 0) {
             const auto module = emuenv.kernel.loaded_modules[module_id];
+            Ptr<const void> entry_point = module->start_entry;
             const ThreadStatePtr thread = emuenv.kernel.create_thread(emuenv.mem, titleid, entry_point, SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, static_cast<int>(SCE_KERNEL_STACK_SIZE_USER_MAIN), nullptr);
             const SceUID self_thread_id = thread->id;
 
