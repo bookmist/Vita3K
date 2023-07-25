@@ -495,15 +495,15 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv, const
             process_preload_disabled = *preload_disabled_ptr.get(emuenv.mem);
         }
     }
-    const auto module_app_path{ fs::path(emuenv.pref_path) / "ux0/app" / emuenv.io.app_path / "sce_module" };
+    const auto module_app_path{ fs::path(emuenv.pref_path) / emuenv.io.app_device / "app" / emuenv.io.app_path / "sce_module" };
     const auto is_app = fs::exists(module_app_path) && !fs::is_empty(module_app_path);
     std::vector<std::string> lib_load_list = {};
     // todo: check if module is imported
     auto add_preload_module = [&](uint32_t code, const std::string &name, bool load_from_app) {
         if ((process_preload_disabled & code) == 0 && is_lle_module(name, emuenv)) {
-            if (load_from_app)
-                lib_load_list.emplace_back(fmt::format("app0:sce_module/{}.suprx", name));
-            else
+            if (load_from_app) {
+                lib_load_list.emplace_back(fmt::format("{}:app/{}/sce_module/{}.suprx", emuenv.io.app_device, emuenv.io.app_path, name));
+            } else
                 lib_load_list.emplace_back(fmt::format("vs0:sys/external/{}.suprx", name));
         }
     };
