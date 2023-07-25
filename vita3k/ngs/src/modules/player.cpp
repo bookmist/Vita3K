@@ -17,6 +17,7 @@
 
 #include <ngs/modules/player.h>
 #include <util/log.h>
+#include <util/log_to_file.h>
 
 extern "C" {
 #include <libswresample/swresample.h>
@@ -24,6 +25,8 @@ extern "C" {
 
 #include <cassert>
 #include <cstring>
+
+#define assert(condition) LOG_ERROR_IF(!(condition), "assertion failed " #condition)
 
 namespace ngs {
 
@@ -141,6 +144,7 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                             voice_lock.lock();
                             break;
                         } else {
+                            std::this_thread::sleep_for(std::chrono::microseconds(10));
                             data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_SWAPPED_BUFFER, prev_index,
                                 params->buffer_params[state->current_buffer].buffer.address());
                         }
@@ -178,7 +182,6 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                 auto *input = params->buffer_params[state->current_buffer].buffer.cast<uint8_t>().get(mem);
 
                 DecoderSize samples_count;
-
                 // we need to know how many samples (not bytes!) we need to send (just enough for the system granularity)
                 uint32_t samples_needed = granularity - state->decoded_samples_pending;
 
@@ -203,6 +206,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                 // Send buffered audio data to decoder
                 decoder->send(input + state->current_byte_position_in_buffer, bytes_to_send);
 
+                std::string file_name = fmt::format("soundlog/ngs_pcm_decoder_voice_{}_voice_module_{}_input.dat", log_hex(intptr_t(data.parent)), log_hex(intptr_t(&data)));
+                log_to_file(file_name, (const char *)(input + state->current_byte_position_in_buffer), bytes_to_send);
+
                 state->current_byte_position_in_buffer += bytes_to_send;
                 state->bytes_consumed_since_key_on += bytes_to_send;
                 state->total_bytes_consumed += bytes_to_send;
@@ -212,7 +218,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
 
                 // Get the amount of samples about to be received from the decoder and dump the value in samples_count
                 decoder->receive(nullptr, &samples_count);
-
+                if (isnan(params->playback_scalar)) {
+                    params->playback_scalar = 1;
+                }
                 // Playback rate scaling
                 if (params->playback_scalar != 1 || static_cast<int>(round(params->playback_frequency)) != sample_rate) {
                     static bool LOG_PLAYBACK_SCALING = true;
@@ -229,6 +237,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                     int src_sample_rate = static_cast<int>(params->playback_frequency);
                     if (params->playback_scalar != 1.0)
                         src_sample_rate = static_cast<int>(src_sample_rate * params->playback_scalar);
+
+                    if (src_sample_rate == 0)
+                        src_sample_rate = sample_rate;
 
                     if (!state->swr || state->reset_swr) {
                         if (state->swr)
@@ -291,6 +302,9 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
     data_ptr += 2 * sizeof(float) * state->decoded_samples_passed;
 
     data.parent->products[0].data = data_ptr;
+
+    std::string file_name = fmt::format("soundlog/ngs_pcm_decoder_voice_{}_voice_module{}.dat", log_hex(intptr_t(data.parent)), log_hex(intptr_t(&data)));
+    log_to_file(file_name, reinterpret_cast<const char *>(data.parent->products[0].data), data.parent->rack->system->granularity * 2 * sizeof(float));
 
     state->decoded_samples_pending -= samples_to_be_passed;
     state->decoded_samples_passed += samples_to_be_passed;

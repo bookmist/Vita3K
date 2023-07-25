@@ -36,6 +36,7 @@ namespace renderer::gl {
 struct GLState : public renderer::State {
     GLContextPtr context;
 
+    std::mutex shaders_mutex = {};
     ShaderCache fragment_shader_cache;
     ShaderCache vertex_shader_cache;
     ProgramCache program_cache;
@@ -53,6 +54,8 @@ struct GLState : public renderer::State {
     void set_screen_filter(const std::string_view &filter) override;
     int get_max_anisotropic_filtering() override;
     void set_anisotropic_filtering(int anisotropic_filtering) override;
+
+    std::string get_gpu_name() override;
 
     void precompile_shader(const ShadersHash &hash) override;
     void preclose_action() override;

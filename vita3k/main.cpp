@@ -37,6 +37,8 @@
 #include <util/log.h>
 #include <util/string_utils.h>
 
+#include "c:\Users\Dima\Documents\git\Vita3K\external\thread-pool\BS_thread_pool.hpp"
+
 #if USE_DISCORD
 #include <app/discord.h>
 #endif
@@ -129,7 +131,9 @@ int main(int argc, char *argv[]) {
 
     Config cfg{};
     EmuEnvState emuenv;
-    if (const auto err = config::init_config(cfg, argc, argv, root_paths) != Success) {
+    {
+        const auto err = config::init_config(cfg, argc, argv, root_paths);
+        if (err != Success) {
         if (err == QuitRequested) {
             if (cfg.recompile_shader_path.has_value()) {
                 LOG_INFO("Recompiling {}", *cfg.recompile_shader_path);
@@ -146,16 +150,19 @@ int main(int argc, char *argv[]) {
                 LOG_INFO("Installing pkg from {} ", *cfg.pkg_path);
                 emuenv.pref_path = string_utils::utf_to_wide(cfg.pref_path);
                 install_pkg(*cfg.pkg_path, emuenv, *cfg.pkg_zrif, [](float) {});
-                return Success;
             }
             return Success;
         }
+            LOG_ERROR("Failed to initialise config");
         return InitConfigFailed;
+    }
     }
 
 #ifdef WIN32
+    {
     auto res = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     LOG_ERROR_IF(res == S_FALSE, "Failed to initialize COM Library");
+    }
 #endif
 
     if (cfg.console) {
@@ -336,7 +343,7 @@ int main(int argc, char *argv[]) {
         emuenv.app_sku_flag = get_license_sku_flag(emuenv, emuenv.app_info.app_content_id);
 
     if (cfg.console) {
-        auto main_thread = emuenv.kernel.threads.at(emuenv.main_thread_id);
+        auto main_thread = emuenv.kernel.get_thread(emuenv.main_thread_id);
         auto lock = std::unique_lock<std::mutex>(main_thread->mutex);
         main_thread->status_cond.wait(lock, [&]() {
             return main_thread->status == ThreadStatus::dormant;
@@ -376,22 +383,32 @@ int main(int argc, char *argv[]) {
     emuenv.renderer->self_name = emuenv.self_name.c_str();
     if (renderer::get_shaders_cache_hashs(*emuenv.renderer) && cfg.shader_cache) {
         SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, compiling shaders...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
+        BS::thread_pool pool;
         for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
-            handle_events(emuenv, gui);
+            pool.push_task([&renderer = emuenv.renderer, hash]() { renderer->precompile_shader(hash); });
+        }
+        /*
+        for (const auto &hash : emuenv.renderer->shaders_cache_hashs) {
+            std::thread th([&renderer = emuenv.renderer, hash]() { emuenv.renderer->precompile_shader(hash); });
+            th.detach();
+        }*/
+        // uint32_t totals = uint32_t(emuenv.renderer->shaders_cache_hashs.size());
+        //  while (totals < emuenv.renderer->programs_count_pre_compiled) {
+        while (handle_events(emuenv, gui) && pool.get_tasks_total() > 0) {
             gui::draw_begin(gui, emuenv);
             draw_app_background(gui, emuenv);
 
-            emuenv.renderer->precompile_shader(hash);
             gui::draw_pre_compiling_shaders_progress(gui, emuenv, uint32_t(emuenv.renderer->shaders_cache_hashs.size()));
 
             gui::draw_end(gui, emuenv.window.get());
             emuenv.renderer->swap_window(emuenv.window.get());
-        }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        } /**/
     }
     {
         const auto err = run_app(emuenv, main_module_id);
         if (err != Success)
-            return err;
+        return err;
     }
     SDL_SetWindowTitle(emuenv.window.get(), fmt::format("{} | {} ({}) | Please wait, loading...", window_title, emuenv.current_app_title, emuenv.io.title_id).c_str());
 

@@ -57,6 +57,7 @@ struct RegMgrState;
 struct SfoFile;
 struct GDBState;
 struct HTTPState;
+struct CameraState;
 
 typedef int32_t SceInt;
 struct IVector2 {
@@ -101,6 +102,7 @@ private:
     std::unique_ptr<SfoFile> _sfo_handle;
     std::unique_ptr<GDBState> _gdb;
     std::unique_ptr<HTTPState> _http;
+    std::unique_ptr<CameraState> _camera;
 
 public:
     // App info contained in its `param.sfo` file
@@ -163,6 +165,7 @@ public:
     uint32_t res_height_dpi_scale = 0;
     GDBState &gdb;
     HTTPState &http;
+    CameraState &camera;
 
     EmuEnvState();
     // declaring a destructor is necessary to forward declare unique_ptrs

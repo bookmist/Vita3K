@@ -17,22 +17,20 @@
 
 #pragma once
 
-#include <module/module.h>
+#include "camera.h"
 
-BRIDGE_DECL(sceNetInternalIcmConnect)
-BRIDGE_DECL(sceNetInternalInetPton)
-BRIDGE_DECL(SceNetInternalPrintf)
-BRIDGE_DECL(SceNetInternalIoctl)
+#include <SDL_gamecontroller.h>
 
-BRIDGE_DECL(sceNetInternal_EE1985D9)
-BRIDGE_DECL(SceNetInternal_DF815D48)
-BRIDGE_DECL(SceNetInternal_333F9CB3)
-BRIDGE_DECL(SceNetInternal_694F8996)
-BRIDGE_DECL(SceNetInternal_8157DE3E)
-BRIDGE_DECL(SceNetInternal_E03F6A77)
-BRIDGE_DECL(SceNetInternal_EAC33599)
-BRIDGE_DECL(SceNetInternal_EDAA3453)
-BRIDGE_DECL(SceNetInternal_EDAA3453)
-BRIDGE_DECL(SceNetInternal_235DE96C)
-BRIDGE_DECL(SceNetInternal_04E6136D)
-BRIDGE_DECL(SceNetInternal_A9F2277C)
+struct CameraState {
+    // Put variable used by app here
+    SceCameraDevice active_camera{ SCE_CAMERA_DEVICE_UNKNOWN };
+    Camera front_camera;
+    Camera back_camera;
+    Camera &get_camera(SceCameraDevice devnum);
+    int open(SceCameraDevice devnum, SceCameraInfo *pInfo);
+    int close(SceCameraDevice devnum);
+    int start(SceCameraDevice devnum);
+    int stop(SceCameraDevice devnum);
+    int read(SceCameraDevice devnum, SceCameraRead *pRead);
+    int is_active(SceCameraDevice devnum);
+};

@@ -1278,7 +1278,7 @@ EXPORT(void, sceGxmSetDefaultRegionClipAndViewport, SceGxmContext *context, uint
     const std::uint32_t yMin = 0;
 
     context->state.viewport.offset.x = 0.5f * static_cast<float>(1.0f + xMin + xMax);
-    context->state.viewport.offset.y = 0.5f * (static_cast<float>(1.0 + yMin + yMax));
+    context->state.viewport.offset.y = 0.5f * static_cast<float>(1.0f + yMin + yMax);
     context->state.viewport.offset.z = 0.5f;
     context->state.viewport.scale.x = 0.5f * static_cast<float>(1.0f + xMax - xMin);
     context->state.viewport.scale.y = -0.5f * static_cast<float>(1.0f + yMax - yMin);
@@ -2565,8 +2565,16 @@ EXPORT(int, sceGxmInitialize, const SceGxmInitializeParams *params) {
     const uint32_t max_queue_size = std::min(std::max(params->displayQueueMaxPendingCount, 2U), 3U) - 1;
     emuenv.gxm.display_queue.maxPendingCount_ = max_queue_size;
 
-    const ThreadStatePtr main_thread = util::find(thread_id, emuenv.kernel.threads);
-    const ThreadStatePtr display_queue_thread = emuenv.kernel.create_thread(emuenv.mem, "SceGxmDisplayQueue", Ptr<void>(0), SCE_KERNEL_HIGHEST_PRIORITY_USER, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, SCE_KERNEL_STACK_SIZE_USER_DEFAULT, nullptr);
+    const ThreadStatePtr main_thread = emuenv.kernel.get_thread(thread_id);
+    int affinity_flag = SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT;
+    if (params->flags == 0) {
+        affinity_flag = (0x01 << 16);
+    } else if (params->flags == 0x00010000) {
+        affinity_flag = (0x02 << 16);
+    } else if (params->flags == 0x00020000) {
+        affinity_flag = (0x04 << 16);
+    }
+    const ThreadStatePtr display_queue_thread = emuenv.kernel.create_thread(emuenv.mem, "SceGxmDisplayQueue", Ptr<void>(0), SCE_KERNEL_HIGHEST_PRIORITY_USER, affinity_flag, SCE_KERNEL_STACK_SIZE_USER_DEFAULT, nullptr);
     if (!display_queue_thread) {
         return RET_ERROR(SCE_GXM_ERROR_DRIVER);
     }
@@ -4052,6 +4060,8 @@ EXPORT(void, sceGxmSetViewport, SceGxmContext *context, float xOffset, float xSc
     // Set viewport to enable, enable more offset and scale to set
     if (context->state.viewport.offset.x != xOffset || (context->state.viewport.offset.y != yOffset) || (context->state.viewport.offset.z != zOffset)
         || (context->state.viewport.scale.x != xScale) || (context->state.viewport.scale.y != yScale) || (context->state.viewport.scale.z != zScale)) {
+        if (xOffset == 0 && xScale == 0 && yOffset == 0 && yScale == 0 && zOffset == 0 && zScale == 0)
+            return;
         context->state.viewport.offset.x = xOffset;
         context->state.viewport.offset.y = yOffset;
         context->state.viewport.offset.z = zOffset;

@@ -66,7 +66,7 @@ struct State {
     int last_scene_id = 0;
 
     uint32_t shaders_count_compiled = 0;
-    uint32_t programs_count_pre_compiled = 0;
+    volatile uint32_t programs_count_pre_compiled = 0;
 
     bool should_display;
 
@@ -94,6 +94,10 @@ struct State {
     virtual void unmap_memory(MemState &mem, Ptr<void> address) {}
     virtual std::vector<std::string> get_gpu_list() {
         return { "Automatic" };
+    }
+
+    virtual std::string get_gpu_name() {
+        return "";
     }
 
     virtual void precompile_shader(const ShadersHash &hash) = 0;

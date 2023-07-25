@@ -19,6 +19,8 @@
 #include "public/tracy/Tracy.hpp"
 #endif
 
+#include <windows.h>
+
 #include <kernel/state.h>
 
 #include <kernel/thread/thread_state.h>
@@ -30,7 +32,7 @@
 #include <util/find.h>
 #include <util/log.h>
 
-#include <SDL_thread.h>
+#include <semaphore>
 #include <spdlog/fmt/fmt.h>
 #include <util/lock_and_find.h>
 
@@ -51,27 +53,36 @@ void CorenumAllocator::set_max_core_count(const std::size_t max) {
     alloc.set_maximum(max);
 }
 
-// TODO implement cross platform debug thread name setter and eliminate SDL thread
 struct ThreadParams {
     KernelState *kernel = nullptr;
     SceUID thid = SCE_KERNEL_ERROR_ILLEGAL_THREAD_ID;
-    std::shared_ptr<SDL_semaphore> host_may_destroy_params = std::shared_ptr<SDL_semaphore>(SDL_CreateSemaphore(0), SDL_DestroySemaphore);
+    std::shared_ptr<std::binary_semaphore> host_may_destroy_params = std::make_shared<std::binary_semaphore>(0);
 };
 
-static int SDLCALL thread_function(void *data) {
+static int thread_function(void *data) {
     assert(data != nullptr);
     const ThreadParams params = *static_cast<const ThreadParams *>(data);
-    SDL_SemPost(params.host_may_destroy_params.get());
+    params.host_may_destroy_params->release();
     const ThreadStatePtr thread = lock_and_find(params.thid, params.kernel->threads, params.kernel->mutex);
 #ifdef TRACY_ENABLE
-    if (!thread->name.empty()) {
-        tracy::SetThreadName(thread->name.c_str());
-    } else {
-        std::string th_name = "TID:" + std::to_string(thread->id);
-        tracy::SetThreadName(th_name.c_str());
-    }
+    std::string th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
+    tracy::SetThreadName(th_name.c_str());
 #endif
-
+    /*
+if (thread->affinity_mask != 0x70000) {
+    uint32_t affinity_mask = 0;
+    if (thread->affinity_mask & 0x10000) {
+        affinity_mask = affinity_mask | 1;
+    }
+    if (thread->affinity_mask & 0x20000) {
+        affinity_mask = affinity_mask | 4;
+    }
+    if (thread->affinity_mask & 0x40000) {
+        affinity_mask = affinity_mask | 16;
+    }
+    SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
+};
+*/
     thread->run_loop();
     const uint32_t r0 = read_reg(*thread->cpu, 0);
 
@@ -142,6 +153,10 @@ ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<c
     ThreadStatePtr thread = std::make_shared<ThreadState>(get_next_uid(), mem);
     if (thread->init(*this, name, entry_point, init_priority, affinity_mask, stack_size, option) < 0)
         return nullptr;
+    thread->affinity_mask = affinity_mask & 0x70000;
+    if (thread->affinity_mask == 0) {
+        thread->affinity_mask = 0x70000;
+    }
     const auto lock = std::lock_guard(mutex);
     threads.emplace(thread->id, thread);
 
@@ -149,8 +164,10 @@ ThreadStatePtr KernelState::create_thread(MemState &mem, const char *name, Ptr<c
     params.kernel = this;
     params.thid = thread->id;
 
-    SDL_CreateThread(&thread_function, thread->name.c_str(), &params);
-    SDL_SemWait(params.host_may_destroy_params.get());
+    std::thread th(thread_function, &params);
+    params.host_may_destroy_params->acquire();
+    th.detach();
+
     return thread;
 }
 
@@ -158,7 +175,7 @@ Ptr<Ptr<void>> KernelState::get_thread_tls_addr(MemState &mem, SceUID thread_id,
     Ptr<Ptr<void>> address(0);
     // magic numbers taken from decompiled source. There is 0x400 unused bytes of unknown usage
     if (key <= 0x100 && key >= 0) {
-        const ThreadStatePtr thread = util::find(thread_id, threads);
+        const ThreadStatePtr thread = get_thread(thread_id);
         address = thread->tls.get_ptr<Ptr<void>>() + key;
     } else {
         LOG_ERROR("Wrong tls slot index. TID:{} index:{}", thread_id, key);

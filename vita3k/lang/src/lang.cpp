@@ -71,7 +71,8 @@ void init_lang(LangState &lang, EmuEnvState &emuenv) {
     const auto lang_path{ fs::path(emuenv.base_path) / "lang" };
     const auto lang_xml_path = (lang_path / (lang.user_lang[GUI] + ".xml")).string();
     if (fs::exists(lang_xml_path)) {
-        if (lang_xml.load_file(lang_xml_path.c_str())) {
+        auto load_xml_res = lang_xml.load_file(lang_xml_path.c_str());
+        if (load_xml_res) {
             // Lang
             const auto lang_child = lang_xml.child("lang");
             if (!lang_child.empty()) {
@@ -343,8 +344,10 @@ void init_lang(LangState &lang, EmuEnvState &emuenv) {
                 // Welcome
                 set_lang_string(lang.welcome, lang_child.child("welcome"));
             }
-        } else
+        } else {
             LOG_ERROR("Error open lang file xml: {}", lang_xml_path);
+            LOG_DEBUG("error: {} position: {}", load_xml_res.description(), load_xml_res.offset);
+        }
     }
 }
 

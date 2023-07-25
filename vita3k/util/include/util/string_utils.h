@@ -37,3 +37,7 @@ std::string tolower(const std::string &s);
 int stoi_def(const std::string &str, int default_value = 0, const char *name = "value");
 
 } // namespace string_utils
+
+namespace CppCommon {
+std::string OSVersion();
+} // namespace CppCommon

@@ -364,7 +364,8 @@ EXPORT(int, _sceKernelGetRWLockInfo, SceUID rwlockId, SceKernelRWLockInfo *info)
         info->numReadWaitThreads = 0;
         info->numWriteWaitThreads = 0;
         if (rwlock->waiting_threads->size() > 0) {
-            STUBBED("info for rw lock with waiting threads is not implemented");
+            STUBBED("info for rw lock with waiting threads not implemented");
+            LOG_TRACE("state:{}, owners.count:{}, waiting_threads->size:{}", (int)(rwlock->state), rwlock->owners.size(), rwlock->waiting_threads->size());
         }
     } else {
         if (rwlock->owners.size() == 1) {
@@ -377,13 +378,15 @@ EXPORT(int, _sceKernelGetRWLockInfo, SceUID rwlockId, SceKernelRWLockInfo *info)
             info->lockCount = lock_count;
             info->writeOwnerId = owner_id;
         } else {
-            STUBBED("info for locked rw lock is not implemented");
+            STUBBED("info for locked rw lock not implemented");
+            LOG_TRACE("state:{}, owners.count:{}, waiting_threads->size:{}", (int)(rwlock->state), rwlock->owners.size(), rwlock->waiting_threads->size());
         }
         if (rwlock->waiting_threads->size() == 0) {
             info->numReadWaitThreads = 0;
             info->numWriteWaitThreads = 0;
         } else {
-            STUBBED("info for rw lock with waiting threads is not implemented");
+            STUBBED("info for rw lock with waiting threads not implemented");
+            LOG_TRACE("state:{}, owners.count:{}, waiting_threads->size:{}", (int)(rwlock->state), rwlock->owners.size(), rwlock->waiting_threads->size());
         }
     }
     return UNIMPLEMENTED();
@@ -1028,6 +1031,7 @@ EXPORT(int, sceKernelCreateThreadForUser, const char *name, SceKernelThreadEntry
     const ThreadStatePtr thread = emuenv.kernel.create_thread(emuenv.mem, name, entry.cast<void>(), init_priority, options->cpu_affinity_mask, options->stack_size, options->option.get(emuenv.mem));
     if (!thread)
         return RET_ERROR(SCE_KERNEL_ERROR_ERROR);
+    LOG_TRACE("tid: {} cpu_affinity_mask: {}", thread->id, log_hex(options->cpu_affinity_mask));
     return thread->id;
 }
 

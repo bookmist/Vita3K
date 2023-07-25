@@ -127,13 +127,18 @@ public:
     T MemoryRead(Dynarmic::A32::VAddr addr) {
         Ptr<T> ptr{ addr };
         if (!ptr || !ptr.valid(*parent->mem) || ptr.address() < parent->mem->page_size) {
-            LOG_ERROR("Invalid read of uint{}_t at address: 0x{:x}\n{}", sizeof(T) * 8, addr, this->cpu->save_context().description());
+            LOG_ERROR("Invalid read of uint{}_t at address: 0x{:x} on thread {}\n{}", sizeof(T) * 8, addr, this->parent->thread_id, this->cpu->save_context().description());
 
             auto pc = this->cpu->get_pc();
             if (pc < parent->mem->page_size)
                 LOG_CRITICAL("PC is 0x{:x}", pc);
             else
                 LOG_ERROR("Executing: {}", disassemble(*parent, pc, nullptr));
+            if constexpr (sizeof(T) == 4) {
+                if (ptr.address() == 0 && pc == 0) {
+                    return 0xe1a0f00e; // mov pc, lr - Return to the caller.
+                }
+            }
             return 0;
         }
 

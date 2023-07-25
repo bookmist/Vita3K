@@ -17,6 +17,8 @@
 
 #include "SceDisplay.h"
 
+#include "io/state.h"
+
 #include <display/functions.h>
 #include <display/state.h>
 #include <kernel/state.h>

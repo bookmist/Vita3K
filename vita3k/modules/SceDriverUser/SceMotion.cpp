@@ -17,8 +17,10 @@
 
 #include "SceMotion.h"
 
+#include <kernel/state.h>
 #include <motion/functions.h>
 #include <motion/motion.h>
+#include <rtc/rtc.h>
 
 #include <util/tracy.h>
 TRACY_MODULE_NAME(SceMotion);
@@ -68,6 +70,11 @@ EXPORT(SceBool, sceMotionGetMagnetometerState) {
 
 EXPORT(int, sceMotionGetSensorState, SceMotionSensorState *sensorState, int numRecords) {
     TRACY_FUNC(sceMotionGetSensorState, sensorState, numRecords);
+    memset(sensorState, 0, sizeof(SceMotionSensorState) * numRecords);
+    for (int i = 0; i < numRecords; i++) {
+        sensorState[i].timestamp = (rtc_get_ticks(emuenv.kernel.base_tick.tick) - i * 10) & (0xffffffff);
+        sensorState[i].hostTimestamp = rtc_get_ticks(emuenv.kernel.base_tick.tick) - i * 10;
+    }
     return UNIMPLEMENTED();
 }
 

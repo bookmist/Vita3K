@@ -25,55 +25,70 @@
 
 // universal to string converters for module specific types (usually enums)
 template <typename T>
-std::string to_debug_str(const MemState &mem, T data) {
+std::string to_debug_str(const MemState &mem, T type) {
     std::stringstream datass;
-    datass << data;
+    datass << type;
     return datass.str();
 }
 
 // Override pointers, we want to print the address in hex
 template <typename U>
-std::string to_debug_str(const MemState &mem, U *data) {
+std::string to_debug_str(const MemState &mem, U *type) {
     std::stringstream datass;
-    datass << log_hex(Ptr<U>(data, mem).address()); // Convert host ptr to guest
+    datass << log_hex(Ptr<U>(type, mem).address()); // Convert host ptr to guest
     return datass.str();
 }
 
 // Override for guest pointers, we want to print the guest address
 template <typename U>
-std::string to_debug_str(const MemState &mem, Ptr<U> data) {
+std::string to_debug_str(const MemState &mem, Ptr<U> type) {
     std::stringstream datass;
-    datass << log_hex(data.address());
+    datass << log_hex(type.address());
     return datass.str();
 }
 
 template <>
-inline std::string to_debug_str(const MemState &mem, Ptr<char> data) {
-    return std::string(data.address() ? log_hex(data.address()) + " " + data.get(mem) : "0x0 NULLPTR");
+inline std::string to_debug_str(const MemState &mem, Ptr<char> type) {
+    return std::string(type.address() ? log_hex(type.address()) + " " + type.get(mem) : "0x0 NULLPTR");
 }
 
 // Override for char pointers as the contents are readable
 template <>
-inline std::string to_debug_str(const MemState &mem, char *data) {
+inline std::string to_debug_str(const MemState &mem, char *type) {
     // Format for correct char* should be "(address in hex (0x12345)) (string)", this is just in the
     // extreme case that the string is actually "0x0 NULLPTR" and be confusing
-    return std::string(data ? log_hex(Ptr<char *>(data, mem).address()) + " " + data : "0x0 NULLPTR");
+    return std::string(type ? log_hex(Ptr<char *>(type, mem).address()) + " " + type : "0x0 NULLPTR");
 }
 
 // Override for char pointers as the contents are readable
 template <>
-inline std::string to_debug_str(const MemState &mem, const char *data) {
-    return std::string(data ? log_hex(Ptr<const char *>(data, mem).address()) + " " + data : "0x0 NULLPTR");
+inline std::string to_debug_str(const MemState &mem, const char *type) {
+    return std::string(type ? log_hex(Ptr<const char *>(type, mem).address()) + " " + type : "0x0 NULLPTR");
 }
 
 template <>
-inline std::string to_debug_str<std::string>(const MemState &mem, std::string data) {
-    return data;
+inline std::string to_debug_str<std::string>(const MemState &mem, std::string type) {
+    return type;
 }
 
 inline std::string to_debug_str(const MemState &mem) {
     return "";
 }
+
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
+#define __ENUM_TO_STRING_GEN_CASE_ITEM(r, enum_name, enum_item) \
+    case enum_name::enum_item:                                  \
+        return BOOST_PP_STRINGIZE(enum_item);
+
+#define ENUM_TO_STRING_GEN(enum_name, ...)                                                                          \
+    template <>                                                                                                     \
+    inline std::string to_debug_str<enum_name>(const MemState &mem, enum_name type) {                               \
+        switch (type) {                                                                                             \
+            BOOST_PP_SEQ_FOR_EACH(__ENUM_TO_STRING_GEN_CASE_ITEM, enum_name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+        default: return std::to_string(static_cast<typename std::underlying_type<enum_name>::type>(type));          \
+        }                                                                                                           \
+    }
 
 #ifdef TRACY_ENABLE
 
