@@ -45,6 +45,64 @@ bool ThreadSignal::send() {
     return true;
 }
 
+enum SceTlsItems {
+    SCE_TLS_PROCESS_ID = 0,
+    SCE_TLS_THREAD_ID = 1,
+    SCE_TLS_SP_TOP = 2,
+    SCE_TLS_SP_BOTTOM = 3,
+    SCE_TLS_VFP_EXCEPTION = 4,
+    SCE_TLS_RESERVED_5,
+    SCE_TLS_RESERVED_6, // libc reserved longjump addr
+    SCE_TLS_RESERVED_7, // libc reserved some memory address mask
+    SCE_TLS_CURRENT_PRIORITY = 8,
+    SCE_TLS_CPU_AFFINITY_MASK = 9,
+    SCE_TLS_NET_ERRNO = 0x40,
+    SCE_TLS_LIBC_ERRNO = 0x88,
+};
+/*
+further is from libc
+asctime buf char[0x1a]
+sceKernelGetTLSAddr(0x80);
+
+libc tls addr (3*int)[address, size, module_counter]
+sceKernelGetTLSAddr(0x8c)
+
+mbrlen buf mbstate len=2*int
+sceKernelGetTLSAddr(0x98);
+
+mbrtowc buf mbstate len=2*int
+sceKernelGetTLSAddr(0xa0);
+
+mbsrtowcs buf mbstate len=2*int
+sceKernelGetTLSAddr(0xa8);
+
+mbtowc buf mbstate len=2*int
+sceKernelGetTLSAddr(0xb0);
+
+wcrtomb buf mbstate len=2*int
+sceKernelGetTLSAddr(0xb8);
+
+wcsrtombs buf mbstate len=2*int
+sceKernelGetTLSAddr(0xc0);
+
+wctomb buf mbstate len=2*int
+sceKernelGetTLSAddr(0xc3);
+
+unknown error strerror_ buf. 17 bytes
+sceKernelGetTLSAddr(0xc6);
+
+gmtime/localtime buf len=0x24
+sceKernelGetTLSAddr(0xcb);
+
+strtok buf size unknown looks like char**
+sceKernelGetTLSAddr(0xd5);
+
+sceKernelGetTLSAddr(0xd6);
+
+sceKernelGetTLSAddr(0xdf);
+
+*/
+
 int ThreadState::init(const char *name, Ptr<const void> entry_point, int init_priority, SceInt32 affinity_mask, int stack_size, const SceKernelThreadOptParam *option = nullptr) {
     constexpr size_t KERNEL_TLS_SIZE = 0x800;
 
@@ -92,13 +150,20 @@ int ThreadState::init(const char *name, Ptr<const void> entry_point, int init_pr
     const Ptr<uint8_t> base_tls_ptr = tls.get_ptr<uint8_t>();
     memset(base_tls_ptr.get(mem), 0, tls_size);
 
-    if (kernel.tls_address) {
+    int *tls_array = tls.get_ptr<int>().get(mem);
+
+    tls_array[SCE_TLS_PROCESS_ID] = 1; // stubbed. unused
+    tls_array[SCE_TLS_THREAD_ID] = id;
+    tls_array[SCE_TLS_SP_TOP] = stack.get();
+    tls_array[SCE_TLS_SP_BOTTOM] = stack.get() + stack_size;
+    tls_array[SCE_TLS_CURRENT_PRIORITY] = priority;
+    tls_array[SCE_TLS_CPU_AFFINITY_MASK] = affinity_mask;
+
         const Ptr<uint8_t> user_tls_ptr = base_tls_ptr + KERNEL_TLS_SIZE;
         write_tpidruro(*cpu, user_tls_ptr.address());
+    if (kernel.tls_address) {
         assert(kernel.tls_psize <= kernel.tls_msize);
         memcpy(user_tls_ptr.get(mem), kernel.tls_address.get(mem), kernel.tls_psize);
-    } else {
-        write_tpidruro(*cpu, 0);
     }
 
     CPUContext ctx;
@@ -178,6 +243,7 @@ void ThreadState::exit_delete(bool exit) {
 bool ThreadState::run_loop() {
     int res = 0;
     int run_level = std::max(call_level, 1);
+
     std::unique_lock<std::mutex> lock(mutex);
 
     auto run_thread_end_callback = [&]() {
@@ -408,11 +474,13 @@ std::string ThreadState::log_stack_traceback() const {
     const Address sp = read_sp(*cpu);
     for (Address addr = sp - START_OFFSET; addr <= sp + END_OFFSET; addr += 4) {
         if (Ptr<uint32_t>(addr).valid(mem)) {
-            const Address value = *Ptr<uint32_t>(addr).get(mem);
-            const auto mod = kernel.find_module_by_addr(value);
-            if (mod)
-                ss << fmt::format("{} (module: {})\n", log_hex(value), mod->module_name);
-        }
+        const Address value = *Ptr<uint32_t>(addr).get(mem);
+        const auto mod = kernel.find_module_by_addr(value);
+            if (mod) {
+                const Address in_file_value = value - mod->segments[0].vaddr.address();
+                ss << fmt::format("{}\t{}\t(module: {})\n", log_hex(value), log_hex(in_file_value), mod->module_name);
+            }
+    }
     }
     return ss.str();
 }
