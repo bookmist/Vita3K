@@ -482,6 +482,18 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
                 emuenv.kernel.loaded_sysmodules[module_id] = {};
         }
     };
+    if (is_lle_module("libkernel", emuenv))
+        lib_load_list.emplace_back("os0:us/libkernel.suprx");
+    if (is_lle_module("driver_us", emuenv))
+        lib_load_list.emplace_back("os0:us/driver_us.suprx");
+    if (is_lle_module("avcodec_us", emuenv))
+        lib_load_list.emplace_back("os0:us/avcodec_us.suprx");
+    if (is_lle_module("libgpu_es4", emuenv))
+        lib_load_list.emplace_back("os0:us/libgpu_es4.suprx");
+    if (is_lle_module("libgxm_es4", emuenv))
+        lib_load_list.emplace_back("os0:us/libgxm_es4.suprx");
+    if (is_lle_module("libgxm_dbg_es4", emuenv))
+        lib_load_list.emplace_back("os0:us/libgxm_dbg_es4.suprx"); // if DEVELOPMENT_MODE dipsw is set
     add_preload_module(0x00010000, SCE_SYSMODULE_INVALID, "libc", is_app);
     add_preload_module(0x00020000, SCE_SYSMODULE_DBG, "libdbg", false);
     add_preload_module(0x00080000, SCE_SYSMODULE_INVALID, "libshellsvc", false);
@@ -623,21 +635,21 @@ bool handle_events(EmuEnvState &emuenv, GuiState &gui) {
         case SCE_CTRL_PSBUTTON:
             gui.is_key_locked = true;
             if (allow_switch_state) {
-                // Show/Hide Live Area during app running
-                const auto live_area_app_index = gui::get_live_area_current_open_apps_list_index(gui, emuenv.io.app_path);
-                if (live_area_app_index == gui.live_area_current_open_apps_list.end())
-                    gui::open_live_area(gui, emuenv, emuenv.io.app_path);
-                else {
-                    // If current live area app open is not the current app running, set it as current
-                    if ((gui.live_area_app_current_open < 0) || (gui.live_area_current_open_apps_list[gui.live_area_app_current_open] != emuenv.io.app_path))
-                        gui.live_area_app_current_open = static_cast<int32_t>(std::distance(live_area_app_index, gui.live_area_current_open_apps_list.end()) - 1);
+        // Show/Hide Live Area during app running
+            const auto live_area_app_index = gui::get_live_area_current_open_apps_list_index(gui, emuenv.io.app_path);
+            if (live_area_app_index == gui.live_area_current_open_apps_list.end())
+                gui::open_live_area(gui, emuenv, emuenv.io.app_path);
+            else {
+                // If current live area app open is not the current app running, set it as current
+                if ((gui.live_area_app_current_open < 0) || (gui.live_area_current_open_apps_list[gui.live_area_app_current_open] != emuenv.io.app_path))
+                    gui.live_area_app_current_open = static_cast<int32_t>(std::distance(live_area_app_index, gui.live_area_current_open_apps_list.end()) - 1);
 
-                    // Switch Live Area state
-                    gui.vita_area.information_bar = !gui.vita_area.information_bar;
-                    gui.vita_area.live_area_screen = !gui.vita_area.live_area_screen;
-                }
+                // Switch Live Area state
+                gui.vita_area.information_bar = !gui.vita_area.information_bar;
+                gui.vita_area.live_area_screen = !gui.vita_area.live_area_screen;
+            }
 
-                app::switch_state(emuenv, !emuenv.kernel.is_threads_paused());
+            app::switch_state(emuenv, !emuenv.kernel.is_threads_paused());
 
             } else if (!gui::get_sys_apps_state(gui))
                 gui::close_system_app(gui, emuenv);
@@ -705,9 +717,9 @@ bool handle_events(EmuEnvState &emuenv, GuiState &gui) {
             if (ImGui::GetIO().WantTextInput || gui.is_key_locked)
                 continue;
 
-            // toggle gui state
+                // toggle gui state
             if (allow_switch_state && (event.key.keysym.scancode == emuenv.cfg.keyboard_gui_toggle_gui))
-                emuenv.display.imgui_render = !emuenv.display.imgui_render;
+                    emuenv.display.imgui_render = !emuenv.display.imgui_render;
             if (event.key.keysym.scancode == emuenv.cfg.keyboard_gui_toggle_touch && !gui.is_key_capture_dropped)
                 toggle_touchscreen();
             if (event.key.keysym.scancode == emuenv.cfg.keyboard_gui_fullscreen && !gui.is_key_capture_dropped)
@@ -799,7 +811,6 @@ ExitCode load_app(int32_t &main_module_id, EmuEnvState &emuenv) {
         emuenv.kernel.debugger.wait_for_debugger = true;
         server_open(emuenv);
     }
-
 #if USE_DISCORD
     if (emuenv.cfg.discord_rich_presence)
         discordrpc::update_presence(emuenv.io.title_id, emuenv.current_app_title);

@@ -72,6 +72,9 @@ void get_modules_list(GuiState &gui, EmuEnvState &emuenv) {
             if (module.path().extension() == ".suprx")
                 gui.modules.emplace_back(module.path().filename().replace_extension().string(), false);
         }
+        for (const auto module : { "libkernel", "driver_us", "avcodec_us", "libgpu_es4", "libgxm_es4", "libgxm_dbg_es4", "libsmart", "libface" }) {
+            gui.modules.emplace_back(module, false);
+        }
 
         for (auto &m : gui.modules)
             m.second = vector_utils::contains(config.lle_modules, m.first);
