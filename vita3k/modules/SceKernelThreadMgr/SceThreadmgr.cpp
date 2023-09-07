@@ -772,7 +772,11 @@ EXPORT(SceInt32, _sceKernelWaitEventFlagCB, SceUID evfId, SceUInt32 bitPattern, 
 
 EXPORT(int, _sceKernelWaitException) {
     TRACY_FUNC(_sceKernelWaitException);
-    return UNIMPLEMENTED();
+    STUBBED("Inifinite wait");
+    ThreadStatePtr thread = emuenv.kernel.get_thread(thread_id);
+    thread->suspend();
+    return 0;
+
 }
 
 EXPORT(int, _sceKernelWaitExceptionCB) {
