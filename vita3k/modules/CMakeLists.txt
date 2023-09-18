@@ -207,6 +207,7 @@ set(SOURCE_LIST
 	SceVshBridge/SceDrmBridge.cpp
 	SceVshBridge/SceVshBridge.cpp
 	SceWlanBt/SceWlan.cpp
+	taihen/taihen.cpp
 )
 
 add_library(modules STATIC ${SOURCE_LIST})

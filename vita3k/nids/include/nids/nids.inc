@@ -7662,3 +7662,50 @@ NID(sceWlanGetWakeOnTargetProcess, 0x18E6AFB2)
 NID(sceWlanRegisterCallback, 0xAA2E46F6)
 NID(sceWlanSetConfiguration, 0xDBE8AEF2)
 NID(sceWlanUnregisterCallback, 0x826DC04F)
+// Module "taihen"
+// Module nid 0x68db16c
+// Library "taihen"
+// Library nid 0x203d1a28
+NID(taiHookFunctionExportForUser, 0x8746a1ce)
+NID(taiHookFunctionImportForUser, 0x53636e5d)
+NID(taiHookFunctionOffsetForUser, 0x535225a)
+NID(taiGetModuleInfo, 0xa5899384)
+NID(taiHookRelease, 0x1c30e799)
+NID(taiInjectAbs, 0x4a588904)
+NID(taiInjectDataForUser, 0xce25b9bc)
+NID(taiInjectRelease, 0x21a4c8a6)
+NID(taiGetModuleExportFunc, 0x6231aad1)
+// Library "taihenUnsafe"
+// Library nid 0xb2b67326
+NID(taiLoadKernelModule, 0xd6d086e4)
+NID(taiStartKernelModuleForUser, 0xa9eb128e)
+NID(taiLoadStartKernelModuleForUser, 0x9890a8d3)
+NID(taiLoadStartModuleForPidForUser, 0xe853abcb)
+NID(taiStopKernelModuleForUser, 0x1cb59a88)
+NID(taiUnloadKernelModule, 0x4c099402)
+NID(taiStopUnloadKernelModuleForUser, 0x4c1df0f8)
+NID(taiStopModuleForPidForUser, 0x2c9d2a25)
+NID(taiUnloadModuleForPid, 0xf4ca2439)
+NID(taiStopUnloadModuleForPidForUser, 0x612a461a)
+NID(taiMemcpyUserToKernel, 0xf6b202ee)
+NID(taiMemcpyKernelToUser, 0x89bb6025)
+NID(taiReloadConfig, 0x1873c71b)
+// Library "taihenForKernel"
+// Library nid 0xcfe3e8c0
+NID(taiHookFunctionAbs, 0xd6e4f68f)
+NID(taiHookFunctionExportForKernel, 0x45ccffc0)
+NID(taiHookFunctionImportForKernel, 0x4519d882)
+NID(taiHookFunctionOffsetForKernel, 0x8f319d77)
+NID(taiGetModuleInfoForKernel, 0x6e931197)
+NID(taiHookReleaseForKernel, 0xd22678ca)
+NID(taiInjectAbsForKernel, 0xfc2f926f)
+NID(taiInjectDataForKernel, 0x9fa50038)
+NID(taiInjectReleaseForKernel, 0x51bb3ec9)
+NID(taiLoadPluginsForTitleForKernel, 0x9c4228ea)
+NID(taiReloadConfigForKernel, 0x6a549e56)
+// Library "taihenModuleUtils"
+// Library nid 0x3efe2349
+NID(module_get_by_name_nid, 0x87e73973)
+NID(module_get_offset, 0x85fddcb0)
+NID(module_get_export_func, 0xf28e9a36)
+NID(module_get_import_func, 0xf2aa3654)
