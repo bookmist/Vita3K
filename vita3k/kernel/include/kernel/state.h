@@ -48,6 +48,10 @@ struct KernelModule {
 };
 typedef std::shared_ptr<KernelModule> SceKernelModulePtr;
 
+struct KernelInernalModuleInfo;
+typedef std::shared_ptr<KernelInernalModuleInfo> KernelInernalModuleInfoPtr;
+typedef std::map<SceUID, KernelInernalModuleInfoPtr> KernelInernalModuleInfos;
+
 typedef std::shared_ptr<ThreadState> ThreadStatePtr;
 typedef std::map<SceUID, CodecEngineBlock> CodecEngineBlocks;
 typedef std::map<SceUID, Ptr<Ptr<void>>> SlotToAddress;
@@ -129,6 +133,7 @@ struct KernelState {
     FuncBindingInfos func_binding_infos;
     VarBindingInfos var_binding_infos;
     ModuleUidByNid module_uid_by_nid;
+    KernelInernalModuleInfos internal_module_infos;
 
     bool cpu_opt;
     CPUBackend cpu_backend;
