@@ -72,6 +72,9 @@ void get_modules_list(GuiState &gui, EmuEnvState &emuenv) {
             if (module.path().extension() == ".suprx")
                 gui.modules.emplace_back(module.path().filename().replace_extension().string(), false);
         }
+        for (const auto module : { "libkernel", "driver_us", "avcodec_us", "libgpu_es4", "libgxm_es4", "libgxm_dbg_es4", "libsmart", "libface", "taihen" }) {
+            gui.modules.emplace_back(module, false);
+        }
 
         for (auto &m : gui.modules)
             m.second = vector_utils::contains(config.lle_modules, m.first);
@@ -504,7 +507,7 @@ void draw_settings_dialog(GuiState &gui, EmuEnvState &emuenv) {
             ImGui::Spacing();
             ImGui::RadioButton(lang.core["automatic"].c_str(), &config.modules_mode, 0);
             SetTooltipEx(lang.core["automatic_description"].c_str());
-            ImGui::SameLine();
+                    ImGui::SameLine();
             ImGui::RadioButton(lang.core["auto_manual"].c_str(), &config.modules_mode, 1);
             SetTooltipEx(lang.core["auto_manual_description"].c_str());
             ImGui::SameLine();
@@ -1151,28 +1154,28 @@ void draw_settings_dialog(GuiState &gui, EmuEnvState &emuenv) {
         // Primitive Tracy implementation
         ImGui::Checkbox("Primitive implementation", &emuenv.cfg.tracy_primitive_impl);
         SetTooltipEx("The primitive Tracy implementation for HLE modules allows for\n"
-                     "all HLE module calls to be logged without manual instrumentation needed.\n"
-                     "However it is just a general workaround that doesn't count for statistic\n"
-                     "analysis neither for trace searching on Tracy.\n\n"
-                     "Due to the amount of functions being logged due to this implementation\n"
-                     "Tracy logs can become gigabytes long in a matter of minutes. Because of this\n"
-                     "it is only recommended to be used when the module(s) to debug aren't available for\n"
-                     "advanced profiling or a more general overview of the function calls is needed and\n"
-                     "in a PC with at least 12GB (Linux) or 16GB (Windows) of RAM.");
+                              "all HLE module calls to be logged without manual instrumentation needed.\n"
+                              "However it is just a general workaround that doesn't count for statistic\n"
+                              "analysis neither for trace searching on Tracy.\n\n"
+                              "Due to the amount of functions being logged due to this implementation\n"
+                              "Tracy logs can become gigabytes long in a matter of minutes. Because of this\n"
+                              "it is only recommended to be used when the module(s) to debug aren't available for\n"
+                              "advanced profiling or a more general overview of the function calls is needed and\n"
+                              "in a PC with at least 12GB (Linux) or 16GB (Windows) of RAM.");
 
         // ImGui::Text("The Tracy profiler is not available in Release builds, please compile Vita3K\nfrom source using"
         // " either the RelWithDebInfo or Debug builds in order to use it.");
 
         // Text to display along the modules list
         const char *tracy_modules_list_label = "Available modules for advanced profiling\n\n"
-                                               "Modules enabled for advanced profiling don't\n"
-                                               "only provide function call timings but\n"
-                                               "also log the arguments they were called\n"
-                                               "with for every single function call\n"
-                                               "except arguments driving a large amount\n"
-                                               "of data such as large sized arrays.\n\n"
-                                               "Advanced profiling requires functions to\n"
-                                               "be manually instrumented in source code.";
+                                                     "Modules enabled for advanced profiling don't\n"
+                                                     "only provide function call timings but\n"
+                                                     "also log the arguments they were called\n"
+                                                     "with for every single function call\n"
+                                                     "except arguments driving a large amount\n"
+                                                     "of data such as large sized arrays.\n\n"
+                                                     "Advanced profiling requires functions to\n"
+                                                     "be manually instrumented in source code.";
 
         // Tracy modules list
         if (ImGui::BeginListBox(tracy_modules_list_label, { 0.0f, ImGui::GetTextLineHeightWithSpacing() * 8.25f + ImGui::GetStyle().FramePadding.y * 2.0f })) {
