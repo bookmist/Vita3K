@@ -30,6 +30,63 @@
 #include <optional>
 #include <string>
 
+
+class ArmDynarmicLog : public Dynarmic::A32::Coprocessor {
+    int coproc_id;
+
+public:
+    using CoprocReg = Dynarmic::A32::CoprocReg;
+
+    explicit ArmDynarmicLog(int coproc_id)
+        : coproc_id(coproc_id) {
+    }
+
+    ~ArmDynarmicLog() override = default;
+
+    std::optional<Callback> CompileInternalOperation(bool two, unsigned opc1, CoprocReg CRd,
+        CoprocReg CRn, CoprocReg CRm,
+        unsigned opc2) override {
+        LOG_ERROR("coproc_id:{}, two:{}, opc1:{}, CRd:{}, CRn:{}, CRm:{}, opc2:{}", coproc_id, two, opc1, (int)CRd, (int)CRn, (int)CRm, opc2);
+        return std::nullopt;
+    }
+
+    CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
+        CoprocReg CRm, unsigned opc2) override {
+        LOG_ERROR("coproc_id:{}, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", coproc_id, two, opc1, (int)CRn, (int)CRm, opc2);
+        return CallbackOrAccessOneWord{};
+    }
+
+    CallbackOrAccessTwoWords CompileSendTwoWords(bool two, unsigned opc, CoprocReg CRm) override {
+        LOG_ERROR("coproc_id:{}, two:{}, opc:{}, CRm:{}", coproc_id, two, opc, (int)CRm);
+        return CallbackOrAccessTwoWords{};
+    }
+
+    CallbackOrAccessOneWord CompileGetOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm,
+        unsigned opc2) override {
+        LOG_ERROR("coproc_id:{}, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", coproc_id, two, opc1, (int)CRn, (int)CRm, opc2);
+        return CallbackOrAccessOneWord{};
+    }
+
+    CallbackOrAccessTwoWords CompileGetTwoWords(bool two, unsigned opc, CoprocReg CRm) override {
+        LOG_ERROR("coproc_id:{}, two:{}, opc:{}, CRm:{}", coproc_id, two, opc, (int)CRm);
+        return CallbackOrAccessTwoWords{};
+    }
+
+    std::optional<Callback> CompileLoadWords(bool two, bool long_transfer, CoprocReg CRd,
+        std::optional<std::uint8_t> option) override {
+        LOG_ERROR("coproc_id:{}, two:{}, long_transfer:{}, CRd:{}, option:{}", coproc_id, two, long_transfer, (int)CRd, option.has_value());
+        return std::nullopt;
+    }
+
+    std::optional<Callback> CompileStoreWords(bool two, bool long_transfer, CoprocReg CRd,
+        std::optional<std::uint8_t> option) override {
+        LOG_ERROR("coproc_id:{}, two:{}, long_transfer:{}, CRd:{}, option:{}", coproc_id, two, long_transfer, (int)CRd, option.has_value());
+        return std::nullopt;
+    }
+};
+
+ArmDynarmicLog def_ArmDynarmicLogger();
+
 class ArmDynarmicCP15 : public Dynarmic::A32::Coprocessor {
     uint32_t tpidruro;
 
@@ -45,15 +102,18 @@ public:
     std::optional<Callback> CompileInternalOperation(bool two, unsigned opc1, CoprocReg CRd,
         CoprocReg CRn, CoprocReg CRm,
         unsigned opc2) override {
+        LOG_ERROR("two:{}, opc1:{}, CRd:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRd, (int)CRn, (int)CRm, opc2);
         return std::nullopt;
     }
 
     CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
         CoprocReg CRm, unsigned opc2) override {
+        LOG_ERROR("two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
         return CallbackOrAccessOneWord{};
     }
 
     CallbackOrAccessTwoWords CompileSendTwoWords(bool two, unsigned opc, CoprocReg CRm) override {
+        LOG_ERROR("two:{}, opc:{}, CRm:{}", two, opc, (int)CRm);
         return CallbackOrAccessTwoWords{};
     }
 
@@ -62,21 +122,24 @@ public:
         if (CRn == CoprocReg::C13 && CRm == CoprocReg::C0 && opc1 == 0 && opc2 == 3) {
             return &tpidruro;
         }
-
+        LOG_ERROR("two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
         return CallbackOrAccessOneWord{};
     }
 
     CallbackOrAccessTwoWords CompileGetTwoWords(bool two, unsigned opc, CoprocReg CRm) override {
+        LOG_ERROR("two:{}, opc:{}, CRm:{}", two, opc, (int)CRm);
         return CallbackOrAccessTwoWords{};
     }
 
     std::optional<Callback> CompileLoadWords(bool two, bool long_transfer, CoprocReg CRd,
         std::optional<std::uint8_t> option) override {
+        LOG_ERROR("two:{}, long_transfer:{}, CRd:{}, option:{}", two, long_transfer, (int)CRd, option.has_value());
         return std::nullopt;
     }
 
     std::optional<Callback> CompileStoreWords(bool two, bool long_transfer, CoprocReg CRd,
         std::optional<std::uint8_t> option) override {
+        LOG_ERROR("two:{}, long_transfer:{}, CRd:{}, option:{}", two, long_transfer, (int)CRd, option.has_value());
         return std::nullopt;
     }
 
@@ -315,6 +378,8 @@ std::unique_ptr<Dynarmic::A32::Jit> DynarmicCPU::make_jit() {
     config.hook_hint_instructions = true;
     config.enable_cycle_counting = false;
     config.global_monitor = monitor;
+    for (int i = 0; i < 15; i++)
+        config.coprocessors[i] = std::make_shared<ArmDynarmicLog>(i);
     config.coprocessors[15] = cp15;
     config.processor_id = core_id;
     config.optimizations = cpu_opt ? Dynarmic::all_safe_optimizations : Dynarmic::no_optimizations;
