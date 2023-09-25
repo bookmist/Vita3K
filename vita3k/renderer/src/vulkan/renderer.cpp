@@ -74,7 +74,8 @@ const static std::vector<const char *> required_device_extensions = {
     // needed in order to use storage buffers
     VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME,
     // needed in order to use negative viewport height
-    VK_KHR_MAINTENANCE1_EXTENSION_NAME
+    VK_KHR_MAINTENANCE1_EXTENSION_NAME,
+    VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME
 };
 
 namespace renderer::vulkan {
