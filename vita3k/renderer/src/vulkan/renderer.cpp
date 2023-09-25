@@ -145,7 +145,8 @@ const static std::vector<const char *> required_device_extensions = {
     // needed in order to use storage buffers
     vk::KHRStorageBufferStorageClassExtensionName,
     // needed in order to use negative viewport height
-    vk::KHRMaintenance1ExtensionName
+    vk::KHRMaintenance1ExtensionName,
+    vk::KHRSamplerMirrorClampToEdgeExtensionName
 };
 
 namespace renderer::vulkan {
