@@ -43,6 +43,26 @@ inline std::string to_debug_str<DecoderQuery>(const MemState &mem, DecoderQuery 
     }
 }
 
+template <typename E>
+constexpr std::string_view enum_name(E value);
+
+template <>
+std::string_view enum_name<DecoderQuery>(DecoderQuery type) {
+    switch (type) {
+    case DecoderQuery::WIDTH: return "WIDTH";
+    case DecoderQuery::HEIGHT: return "HEIGHT";
+    case DecoderQuery::CHANNELS: return "CHANNELS";
+    case DecoderQuery::BIT_RATE: return "BIT_RATE";
+    case DecoderQuery::SAMPLE_RATE: return "SAMPLE_RATE";
+    case DecoderQuery::AT9_SAMPLE_PER_FRAME: return "AT9_SAMPLE_PER_FRAME";
+    case DecoderQuery::AT9_SAMPLE_PER_SUPERFRAME: return "AT9_SAMPLE_PER_SUPERFRAME";
+    case DecoderQuery::AT9_FRAMES_IN_SUPERFRAME: return "AT9_FRAMES_IN_SUPERFRAME";
+    case DecoderQuery::AT9_SUPERFRAME_SIZE: return "AT9_SUPERFRAME_SIZE";
+    default: return std::to_string(static_cast<std::underlying_type_t<DecoderQuery>>(type));
+    }
+}
+
+
 template <>
 inline std::string to_debug_str<SceAudiodecCodec>(const MemState &mem, SceAudiodecCodec type) {
     switch (type) {
