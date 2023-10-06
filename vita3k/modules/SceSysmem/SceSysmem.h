@@ -19,5 +19,23 @@
 
 #include <module/module.h>
 
+#include <modules/module_parent.h>
+
+#include <kernel/state.h>
+#include <kernel/types.h>
+
+struct SceKernelAllocMemBlockOpt {
+    SceSize size;
+    SceUInt32 attr;
+    SceSize alignment;
+    SceUInt32 uidBaseBlock;
+    const char *strBaseBlockName;
+    int flags;
+    int reserved[10];
+};
+
 DECL_EXPORT(SceUID, sceKernelFindMemBlockByAddr, Address addr, uint32_t size);
 DECL_EXPORT(int, sceKernelFreeMemBlock, SceUID uid);
+DECL_EXPORT(SceUID, sceKernelAllocMemBlock, const char *pName, SceKernelMemBlockType type, SceSize size, SceKernelAllocMemBlockOpt *optp);
+DECL_EXPORT(int, sceKernelGetMemBlockBase, SceUID uid, Ptr<void> *basep);
+

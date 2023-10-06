@@ -23,6 +23,7 @@
 #include <ngs/state.h>
 #include <ngs/system.h>
 #include <util/log.h>
+#include <util/log_to_file.h>
 #include <util/tracy.h>
 
 TRACY_MODULE_NAME(SceNgs);
