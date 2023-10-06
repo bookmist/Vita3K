@@ -41,8 +41,10 @@ EXPORT(int, ksceKernelAddressSpaceVAtoPABySW) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelAllocHeapMemory) {
-    return UNIMPLEMENTED();
+EXPORT(Ptr<void>, ksceKernelAllocHeapMemory, SceUID uid, SceSize size) {
+    STUBBED("");
+    return CALL_EXPORT(sceClibMspaceMalloc, Ptr<void>(uid), size);
+    // return UNIMPLEMENTED();
 }
 
 EXPORT(int, ksceKernelAllocHeapMemoryFromGlobalHeap) {

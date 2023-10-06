@@ -20,3 +20,15 @@
 #include <module/module.h>
 
 DECL_EXPORT(SceInt32, sceKernelGetThreadCurrentPriority);
+
+DECL_EXPORT(Ptr<void>, sceClibMspaceCalloc, Ptr<void> space, uint32_t elements, uint32_t size);
+
+DECL_EXPORT(Ptr<void>, sceClibMspaceCreate, Ptr<void> base, uint32_t capacity);
+
+DECL_EXPORT(uint32_t, sceClibMspaceDestroy, Ptr<void> space);
+
+DECL_EXPORT(void, sceClibMspaceFree, Ptr<void> space, Ptr<void> address);
+
+DECL_EXPORT(int, sceClibMspaceIsHeapEmpty);
+
+DECL_EXPORT(Ptr<void>, sceClibMspaceMalloc, Ptr<void> space, uint32_t size);
