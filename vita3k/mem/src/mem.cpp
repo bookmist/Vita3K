@@ -430,7 +430,7 @@ void add_external_mapping(MemState &mem, Address addr, uint32_t size, uint8_t *a
     uint64_t addr_value = std::bit_cast<uint64_t>(addr_ptr);
     uint8_t *page_table_entry = addr_ptr - addr;
     uint8_t *original_address = &mem.memory[addr];
-    for (int block = 0; block < size / KiB(4); block++) {
+    for (size_t block = 0; block < size / KiB(4); block++) {
         // this is not thread write safe, but hopefully not other thread is busy copying while this happens
         memcpy(addr_ptr + block * KiB(4), original_address + block * KiB(4), KiB(4));
         mem.page_table[addr / KiB(4) + block] = page_table_entry;

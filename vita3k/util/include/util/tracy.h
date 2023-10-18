@@ -30,7 +30,7 @@ std::string to_debug_str(const MemState &mem, T type) {
     datass << type;
     return datass.str();
 }
-
+/*
 // Override pointers, we want to print the address in hex
 template <typename U>
 std::string to_debug_str(const MemState &mem, U *type) {
@@ -38,7 +38,7 @@ std::string to_debug_str(const MemState &mem, U *type) {
     datass << log_hex(Ptr<U>(type, mem).address()); // Convert host ptr to guest
     return datass.str();
 }
-
+*/
 // Override for guest pointers, we want to print the guest address
 template <typename U>
 std::string to_debug_str(const MemState &mem, Ptr<U> type) {
