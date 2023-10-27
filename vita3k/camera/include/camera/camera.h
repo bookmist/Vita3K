@@ -228,6 +228,15 @@ enum SceCameraBuffer {
     SCE_CAMERA_BUFFER_SETBYREAD = 1
 };
 
+/* Camera Raw8 Format Pattern */
+enum SceCameraRaw8Format {
+    SCE_CAMERA_RAW8_FORMAT_UNKNOWN = 0,
+    SCE_CAMERA_RAW8_FORMAT_BGGR = 1,
+    SCE_CAMERA_RAW8_FORMAT_GRBG = 2,
+    SCE_CAMERA_RAW8_FORMAT_RGGB = 3,
+    SCE_CAMERA_RAW8_FORMAT_GBRG = 4
+};
+
 struct SceCameraInfo {
     SceSize size; //!< sizeof(SceCameraInfo)
     uint16_t priority; //!< Process priority (one of ::SceCameraPriority)
@@ -267,48 +276,52 @@ struct SceCameraRead {
     Ptr<void> pVBase;
 };
 
+#ifdef USE_OPENCV
 namespace cv {
 class VideoCapture;
 }
+#endif // USE_OPENCV
+
+enum class CameraAttributes {
+    Saturation,
+    Brightness,
+    Contrast,
+    Sharpness,
+    Reverse,
+    Effect,
+    EV,
+    Zoom,
+    AntiFlicker,
+    ISO,
+    Gain,
+    WhiteBalance,
+    Backlight,
+    Nightmode,
+    ExposureCeiling,
+    AutoControlHold,
+    ImageQuality,
+    NoiseReduction,
+    SharpnessOff
+};
 
 class Camera {
 private:
-    std::unique_ptr<cv::VideoCapture> capture;
-
+    class CameraImpl;
+    std::unique_ptr<CameraImpl> pImpl; // opaque type here
 public:
-    SceCameraSaturation saturation;
-    int brightness;
-    int contrast;
-    int sharpness;
-    SceCameraReverse reverse;
-    SceCameraEffect effect;
-    int ev;
-    int zoom;
-    SceCameraAntiFlicker anti_flicker;
-    SceCameraISO iso;
-    SceCameraGain gain;
-    SceCameraWhiteBalance white_balance;
-    SceCameraBacklight backlight;
-    SceCameraNightmode nightmode;
-    int exposure_ceiling;
-    int auto_control_hold;
-    int image_quality;
-    int noise_reduction;
-    int sharpness_off;
-    //
-
-    bool is_open{};
     SceCameraInfo info;
+    bool is_opened{};
     bool is_started{};
     uint64_t frame_idx{};
     uint64_t base_ticks{}; // emuenv.kernel.base_tick.tick for timestamp
     //
+    int get_attribute(CameraAttributes attribute);
+    int set_attribute(CameraAttributes attribute, int value);
     int open(SceCameraInfo *info);
     int close();
     int start();
     int stop();
-    int read(EmuEnvState &emuenv, SceCameraRead *read);
-    int is_active();
+    int read(EmuEnvState &emuenv, SceCameraRead *read, void *pIBase, void *pUBase, void *pVBase, SceSize sizeIBase, SceSize sizeUBase, SceSize sizeVBase);
     Camera();
     ~Camera();
 

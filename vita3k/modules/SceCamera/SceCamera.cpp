@@ -25,27 +25,30 @@
 #include <util/tracy.h>
 TRACY_MODULE_NAME(SceCamera);
 
-template <>
-std::string to_debug_str<SceCameraDevice>(const MemState &mem, SceCameraDevice type) {
-    switch (type) {
-    case SCE_CAMERA_DEVICE_FRONT: return "SCE_CAMERA_DEVICE_FRONT";
-    case SCE_CAMERA_DEVICE_BACK: return "SCE_CAMERA_DEVICE_BACK";
-    }
-    return std::to_string(type);
-}
+template <typename T>
+std::string_view enum_name(T type);
 
 template <>
-std::string to_debug_str<SceCameraPriority>(const MemState &mem, SceCameraPriority type) {
-    switch (type) {
+std::string_view enum_name<SceCameraDevice>(SceCameraDevice value) {
+    switch (value) {
+    case SCE_CAMERA_DEVICE_FRONT: return "SCE_CAMERA_DEVICE_FRONT";
+    case SCE_CAMERA_DEVICE_BACK: return "SCE_CAMERA_DEVICE_BACK";
+    case SCE_CAMERA_DEVICE_UNKNOWN: return "SCE_CAMERA_DEVICE_UNKNOWN";
+    }
+    return {};
+}
+template <>
+std::string_view enum_name<SceCameraPriority>(SceCameraPriority value) {
+    switch (value) {
     case SCE_CAMERA_PRIORITY_SHARE: return "SCE_CAMERA_PRIORITY_SHARE";
     case SCE_CAMERA_PRIORITY_EXCLUSIVE: return "SCE_CAMERA_PRIORITY_EXCLUSIVE";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraFormat>(const MemState &mem, SceCameraFormat type) {
-    switch (type) {
+std::string_view enum_name<SceCameraFormat>(SceCameraFormat value) {
+    switch (value) {
     case SCE_CAMERA_FORMAT_INVALID: return "SCE_CAMERA_FORMAT_INVALID";
     case SCE_CAMERA_FORMAT_YUV422_PLANE: return "SCE_CAMERA_FORMAT_YUV422_PLANE";
     case SCE_CAMERA_FORMAT_YUV422_PACKED: return "SCE_CAMERA_FORMAT_YUV422_PACKED";
@@ -54,12 +57,12 @@ std::string to_debug_str<SceCameraFormat>(const MemState &mem, SceCameraFormat t
     case SCE_CAMERA_FORMAT_ABGR: return "SCE_CAMERA_FORMAT_ABGR";
     case SCE_CAMERA_FORMAT_RAW8: return "SCE_CAMERA_FORMAT_RAW8";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraResolution>(const MemState &mem, SceCameraResolution type) {
-    switch (type) {
+std::string_view enum_name<SceCameraResolution>(SceCameraResolution value) {
+    switch (value) {
     case SCE_CAMERA_RESOLUTION_0_0: return "SCE_CAMERA_RESOLUTION_0_0";
     case SCE_CAMERA_RESOLUTION_640_480: return "SCE_CAMERA_RESOLUTION_640_480";
     case SCE_CAMERA_RESOLUTION_320_240: return "SCE_CAMERA_RESOLUTION_320_240";
@@ -69,12 +72,12 @@ std::string to_debug_str<SceCameraResolution>(const MemState &mem, SceCameraReso
     case SCE_CAMERA_RESOLUTION_480_272: return "SCE_CAMERA_RESOLUTION_480_272";
     case SCE_CAMERA_RESOLUTION_640_360: return "SCE_CAMERA_RESOLUTION_640_360";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraFrameRate>(const MemState &mem, SceCameraFrameRate type) {
-    switch (type) {
+std::string_view enum_name<SceCameraFrameRate>(SceCameraFrameRate value) {
+    switch (value) {
     case SCE_CAMERA_FRAMERATE_3_FPS: return "SCE_CAMERA_FRAMERATE_3_FPS";
     case SCE_CAMERA_FRAMERATE_5_FPS: return "SCE_CAMERA_FRAMERATE_5_FPS";
     case SCE_CAMERA_FRAMERATE_7_FPS: return "SCE_CAMERA_FRAMERATE_7_FPS";
@@ -85,12 +88,12 @@ std::string to_debug_str<SceCameraFrameRate>(const MemState &mem, SceCameraFrame
     case SCE_CAMERA_FRAMERATE_60_FPS: return "SCE_CAMERA_FRAMERATE_60_FPS";
     case SCE_CAMERA_FRAMERATE_120_FPS: return "SCE_CAMERA_FRAMERATE_120_FPS";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraExposureCompensation>(const MemState &mem, SceCameraExposureCompensation type) {
-    switch (type) {
+std::string_view enum_name<SceCameraExposureCompensation>(SceCameraExposureCompensation value) {
+    switch (value) {
     case SCE_CAMERA_EV_NEGATIVE_20: return "SCE_CAMERA_EV_NEGATIVE_20";
     case SCE_CAMERA_EV_NEGATIVE_17: return "SCE_CAMERA_EV_NEGATIVE_17";
     case SCE_CAMERA_EV_NEGATIVE_15: return "SCE_CAMERA_EV_NEGATIVE_15";
@@ -109,12 +112,12 @@ std::string to_debug_str<SceCameraExposureCompensation>(const MemState &mem, Sce
     case SCE_CAMERA_EV_POSITIVE_17: return "SCE_CAMERA_EV_POSITIVE_17";
     case SCE_CAMERA_EV_POSITIVE_20: return "SCE_CAMERA_EV_POSITIVE_20";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraEffect>(const MemState &mem, SceCameraEffect type) {
-    switch (type) {
+std::string_view enum_name<SceCameraEffect>(SceCameraEffect value) {
+    switch (value) {
     case SCE_CAMERA_EFFECT_NORMAL: return "SCE_CAMERA_EFFECT_NORMAL";
     case SCE_CAMERA_EFFECT_NEGATIVE: return "SCE_CAMERA_EFFECT_NEGATIVE";
     case SCE_CAMERA_EFFECT_BLACKWHITE: return "SCE_CAMERA_EFFECT_BLACKWHITE";
@@ -123,23 +126,23 @@ std::string to_debug_str<SceCameraEffect>(const MemState &mem, SceCameraEffect t
     case SCE_CAMERA_EFFECT_RED: return "SCE_CAMERA_EFFECT_RED";
     case SCE_CAMERA_EFFECT_GREEN: return "SCE_CAMERA_EFFECT_GREEN";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraReverse>(const MemState &mem, SceCameraReverse type) {
-    switch (type) {
+std::string_view enum_name<SceCameraReverse>(SceCameraReverse value) {
+    switch (value) {
     case SCE_CAMERA_REVERSE_OFF: return "SCE_CAMERA_REVERSE_OFF";
     case SCE_CAMERA_REVERSE_MIRROR: return "SCE_CAMERA_REVERSE_MIRROR";
     case SCE_CAMERA_REVERSE_FLIP: return "SCE_CAMERA_REVERSE_FLIP";
     case SCE_CAMERA_REVERSE_MIRROR_FLIP: return "SCE_CAMERA_REVERSE_MIRROR_FLIP";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraSaturation>(const MemState &mem, SceCameraSaturation type) {
-    switch (type) {
+std::string_view enum_name<SceCameraSaturation>(SceCameraSaturation value) {
+    switch (value) {
     case SCE_CAMERA_SATURATION_0: return "SCE_CAMERA_SATURATION_0";
     case SCE_CAMERA_SATURATION_5: return "SCE_CAMERA_SATURATION_5";
     case SCE_CAMERA_SATURATION_10: return "SCE_CAMERA_SATURATION_10";
@@ -147,44 +150,44 @@ std::string to_debug_str<SceCameraSaturation>(const MemState &mem, SceCameraSatu
     case SCE_CAMERA_SATURATION_30: return "SCE_CAMERA_SATURATION_30";
     case SCE_CAMERA_SATURATION_40: return "SCE_CAMERA_SATURATION_40";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraSharpness>(const MemState &mem, SceCameraSharpness type) {
-    switch (type) {
+std::string_view enum_name<SceCameraSharpness>(SceCameraSharpness value) {
+    switch (value) {
     case SCE_CAMERA_SHARPNESS_100: return "SCE_CAMERA_SHARPNESS_100";
     case SCE_CAMERA_SHARPNESS_200: return "SCE_CAMERA_SHARPNESS_200";
     case SCE_CAMERA_SHARPNESS_300: return "SCE_CAMERA_SHARPNESS_300";
     case SCE_CAMERA_SHARPNESS_400: return "SCE_CAMERA_SHARPNESS_400";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraAntiFlicker>(const MemState &mem, SceCameraAntiFlicker type) {
-    switch (type) {
+std::string_view enum_name<SceCameraAntiFlicker>(SceCameraAntiFlicker value) {
+    switch (value) {
     case SCE_CAMERA_ANTIFLICKER_AUTO: return "SCE_CAMERA_ANTIFLICKER_AUTO";
     case SCE_CAMERA_ANTIFLICKER_50HZ: return "SCE_CAMERA_ANTIFLICKER_50HZ";
     case SCE_CAMERA_ANTIFLICKER_60HZ: return "SCE_CAMERA_ANTIFLICKER_60HZ";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraISO>(const MemState &mem, SceCameraISO type) {
-    switch (type) {
+std::string_view enum_name<SceCameraISO>(SceCameraISO value) {
+    switch (value) {
     case SCE_CAMERA_ISO_AUTO: return "SCE_CAMERA_ISO_AUTO";
     case SCE_CAMERA_ISO_100: return "SCE_CAMERA_ISO_100";
     case SCE_CAMERA_ISO_200: return "SCE_CAMERA_ISO_200";
     case SCE_CAMERA_ISO_400: return "SCE_CAMERA_ISO_400";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraGain>(const MemState &mem, SceCameraGain type) {
-    switch (type) {
+std::string_view enum_name<SceCameraGain>(SceCameraGain value) {
+    switch (value) {
     case SCE_CAMERA_GAIN_AUTO: return "SCE_CAMERA_GAIN_AUTO";
     case SCE_CAMERA_GAIN_1: return "SCE_CAMERA_GAIN_1";
     case SCE_CAMERA_GAIN_2: return "SCE_CAMERA_GAIN_2";
@@ -203,38 +206,38 @@ std::string to_debug_str<SceCameraGain>(const MemState &mem, SceCameraGain type)
     case SCE_CAMERA_GAIN_15: return "SCE_CAMERA_GAIN_15";
     case SCE_CAMERA_GAIN_16: return "SCE_CAMERA_GAIN_16";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraWhiteBalance>(const MemState &mem, SceCameraWhiteBalance type) {
-    switch (type) {
+std::string_view enum_name<SceCameraWhiteBalance>(SceCameraWhiteBalance value) {
+    switch (value) {
     case SCE_CAMERA_WB_AUTO: return "SCE_CAMERA_WB_AUTO";
     case SCE_CAMERA_WB_DAY: return "SCE_CAMERA_WB_DAY";
     case SCE_CAMERA_WB_CWF: return "SCE_CAMERA_WB_CWF";
     case SCE_CAMERA_WB_SLSA: return "SCE_CAMERA_WB_SLSA";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraBacklight>(const MemState &mem, SceCameraBacklight type) {
-    switch (type) {
+std::string_view enum_name<SceCameraBacklight>(SceCameraBacklight value) {
+    switch (value) {
     case SCE_CAMERA_BACKLIGHT_OFF: return "SCE_CAMERA_BACKLIGHT_OFF";
     case SCE_CAMERA_BACKLIGHT_ON: return "SCE_CAMERA_BACKLIGHT_ON";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
-std::string to_debug_str<SceCameraNightmode>(const MemState &mem, SceCameraNightmode type) {
-    switch (type) {
+std::string_view enum_name<SceCameraNightmode>(SceCameraNightmode value) {
+    switch (value) {
     case SCE_CAMERA_NIGHTMODE_OFF: return "SCE_CAMERA_NIGHTMODE_OFF";
     case SCE_CAMERA_NIGHTMODE_LESS10: return "SCE_CAMERA_NIGHTMODE_LESS10";
     case SCE_CAMERA_NIGHTMODE_LESS100: return "SCE_CAMERA_NIGHTMODE_LESS100";
     case SCE_CAMERA_NIGHTMODE_OVER100: return "SCE_CAMERA_NIGHTMODE_OVER100";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
@@ -243,7 +246,7 @@ inline std::string to_debug_str<SceCameraBuffer>(const MemState &mem, SceCameraB
     case SceCameraBuffer::SCE_CAMERA_BUFFER_SETBYOPEN: return "SCE_CAMERA_BUFFER_SETBYOPEN";
     case SceCameraBuffer::SCE_CAMERA_BUFFER_SETBYREAD: return "SCE_CAMERA_BUFFER_SETBYREAD";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
@@ -252,7 +255,7 @@ inline std::string to_debug_str<SceCameraReadMode>(const MemState &mem, SceCamer
     case SCE_CAMERA_READ_MODE_WAIT_NEXTFRAME_ON: return "SCE_CAMERA_READ_MODE_WAIT_NEXTFRAME_ON";
     case SCE_CAMERA_READ_MODE_WAIT_NEXTFRAME_OFF: return "SCE_CAMERA_READ_MODE_WAIT_NEXTFRAME_OFF";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
@@ -261,7 +264,7 @@ inline std::string to_debug_str<SceCameraReadGetExposureTime>(const MemState &me
     case SCE_CAMERA_READ_GET_EXPOSURE_TIME_OFF: return "SCE_CAMERA_READ_GET_EXPOSURE_TIME_OFF";
     case SCE_CAMERA_READ_GET_EXPOSURE_TIME_ON: return "SCE_CAMERA_READ_GET_EXPOSURE_TIME_ON";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
@@ -274,7 +277,7 @@ inline std::string to_debug_str<SceCameraStatus>(const MemState &mem, SceCameraS
     case SCE_CAMERA_STATUS_IS_ALREADY_READ: return "SCE_CAMERA_STATUS_IS_ALREADY_READ";
     case SCE_CAMERA_STATUS_IS_NOT_STABLE: return "SCE_CAMERA_STATUS_IS_NOT_STABLE";
     }
-    return std::to_string(type);
+    return {};
 }
 
 template <>
@@ -283,8 +286,33 @@ inline std::string to_debug_str<SceCameraDataRange>(const MemState &mem, SceCame
     case SCE_CAMERA_DATA_RANGE_FULL: return "SCE_CAMERA_DATA_RANGE_FULL";
     case SCE_CAMERA_DATA_RANGE_BT601: return "SCE_CAMERA_DATA_RANGE_BT601";
     }
-    return std::to_string(type);
+    return {};
 }
+
+template <typename T>
+    requires std::is_enum<T>::value
+std::string to_debug_str(const MemState &mem, T type) {
+    auto name = enum_name(type);
+    if (name.empty())
+        return {};
+    return std::string(name);
+}
+
+struct res_rec {
+    SceCameraResolution res;
+    uint16_t width;
+    uint16_t height;
+};
+const std::array<res_rec, 8> resolutions = { {
+    { SCE_CAMERA_RESOLUTION_0_0, 0, 0 },
+    { SCE_CAMERA_RESOLUTION_640_480, 640, 480 },
+    { SCE_CAMERA_RESOLUTION_320_240, 320, 240 },
+    { SCE_CAMERA_RESOLUTION_160_120, 160, 120 },
+    { SCE_CAMERA_RESOLUTION_352_288, 352, 288 },
+    { SCE_CAMERA_RESOLUTION_176_144, 176, 144 },
+    { SCE_CAMERA_RESOLUTION_480_272, 480, 272 },
+    { SCE_CAMERA_RESOLUTION_640_360, 640, 360 },
+} };
 
 EXPORT(int, sceCameraOpen, SceCameraDevice devnum, SceCameraInfo *pInfo) {
     TRACY_FUNC(sceCameraOpen, devnum, pInfo);
@@ -292,28 +320,19 @@ EXPORT(int, sceCameraOpen, SceCameraDevice devnum, SceCameraInfo *pInfo) {
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
         return SCE_CAMERA_ERROR_PARAM;
-    UNIMPLEMENTED();
-    emuenv.camera.front_camera.base_ticks = emuenv.kernel.base_tick.tick;
-    emuenv.camera.back_camera.base_ticks = emuenv.kernel.base_tick.tick;
-    auto res = emuenv.camera.get_camera(devnum).open(pInfo);
-    LOG_TRACE("devnum:{}", to_debug_str(emuenv.mem, devnum));
-    LOG_TRACE("size:{}", to_debug_str(emuenv.mem, pInfo->size));
-    LOG_TRACE("priority:{}", to_debug_str(emuenv.mem, (SceCameraPriority)pInfo->priority));
-    LOG_TRACE("format:{}", to_debug_str(emuenv.mem, (SceCameraFormat)pInfo->format));
-    LOG_TRACE("resolution:{}", to_debug_str(emuenv.mem, (SceCameraResolution)pInfo->resolution));
-    LOG_TRACE("framerate:{}", to_debug_str(emuenv.mem, (SceCameraFrameRate)pInfo->framerate));
-    LOG_TRACE("width:{}", to_debug_str(emuenv.mem, pInfo->width));
-    LOG_TRACE("height:{}", to_debug_str(emuenv.mem, pInfo->height));
-    LOG_TRACE("range:{}", to_debug_str(emuenv.mem, (SceCameraDataRange)pInfo->range));
-    LOG_TRACE("pad:{}", to_debug_str(emuenv.mem, pInfo->pad));
-    LOG_TRACE("sizeIBase:{}", to_debug_str(emuenv.mem, pInfo->sizeIBase));
-    LOG_TRACE("sizeUBase:{}", to_debug_str(emuenv.mem, pInfo->sizeUBase));
-    LOG_TRACE("sizeVBase:{}", to_debug_str(emuenv.mem, pInfo->sizeVBase));
-    LOG_TRACE("pIBase:{}", to_debug_str(emuenv.mem, pInfo->pIBase));
-    LOG_TRACE("pUBase:{}", to_debug_str(emuenv.mem, pInfo->pUBase));
-    LOG_TRACE("pVBase:{}", to_debug_str(emuenv.mem, pInfo->pVBase));
-    LOG_TRACE("pitch:{}", to_debug_str(emuenv.mem, pInfo->pitch));
-    LOG_TRACE("buffer:{}", to_debug_str(emuenv.mem, (SceCameraBuffer)pInfo->buffer));
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (camera.is_opened) {
+        return RET_ERROR(SCE_CAMERA_ERROR_ALREADY_OPEN);
+    }
+    for (auto res : resolutions) {
+        if (res.res == pInfo->resolution) {
+            pInfo->width = res.width;
+            pInfo->height = res.height;
+            break;
+        }
+    }
+    camera.base_ticks = emuenv.kernel.base_tick.tick;
+    auto res = camera.open(pInfo);
     return res;
 }
 
@@ -323,9 +342,11 @@ EXPORT(int, sceCameraClose, SceCameraDevice devnum) {
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
         return SCE_CAMERA_ERROR_PARAM;
-    UNIMPLEMENTED();
-    return emuenv.camera.get_camera(devnum).close();
-    // return UNIMPLEMENTED();
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened) {
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    }
+    return camera.close();
 }
 
 EXPORT(int, sceCameraStart, SceCameraDevice devnum) {
@@ -334,8 +355,14 @@ EXPORT(int, sceCameraStart, SceCameraDevice devnum) {
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
         return SCE_CAMERA_ERROR_PARAM;
-    UNIMPLEMENTED();
-    return emuenv.camera.get_camera(devnum).start();
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened) {
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    }
+    if (camera.is_started) {
+        return RET_ERROR(SCE_CAMERA_ERROR_ALREADY_START);
+    }
+    return camera.start();
 }
 
 EXPORT(int, sceCameraStop, SceCameraDevice devnum) {
@@ -344,8 +371,14 @@ EXPORT(int, sceCameraStop, SceCameraDevice devnum) {
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
         return SCE_CAMERA_ERROR_PARAM;
-    UNIMPLEMENTED();
-    return emuenv.camera.get_camera(devnum).stop();
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened) {
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    }
+    if (!camera.is_started) {
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_START);
+    }
+    return camera.stop();
 }
 
 EXPORT(int, sceCameraRead, SceCameraDevice devnum, SceCameraRead *pRead) {
@@ -354,27 +387,46 @@ EXPORT(int, sceCameraRead, SceCameraDevice devnum, SceCameraRead *pRead) {
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
         return SCE_CAMERA_ERROR_PARAM;
-    UNIMPLEMENTED();
-    int res = emuenv.camera.get_camera(devnum).is_active();
-    if (res >= 0)
-        res = emuenv.camera.get_camera(devnum).read(emuenv, pRead);
-    /*
-    LOG_TRACE("size:{}", to_debug_str(emuenv.mem, pRead->size));
-    LOG_TRACE("mode:{}", to_debug_str(emuenv.mem, (SceCameraReadMode)pRead->mode));
-    LOG_TRACE("pad:{}", to_debug_str(emuenv.mem, (SceCameraReadGetExposureTime)pRead->pad));
-    LOG_TRACE("status:{}", to_debug_str(emuenv.mem, (SceCameraStatus)pRead->status));
-    LOG_TRACE("frame:{}", to_debug_str(emuenv.mem, pRead->frame));
-    LOG_TRACE("timestamp:{}", to_debug_str(emuenv.mem, pRead->timestamp));
-    LOG_TRACE("exposure_time:{}", to_debug_str(emuenv.mem, pRead->exposure_time));
-    LOG_TRACE("exposure_time_gap:{}", to_debug_str(emuenv.mem, pRead->exposure_time_gap));
-    LOG_TRACE("raw8_format:{}", to_debug_str(emuenv.mem, pRead->raw8_format));
-    LOG_TRACE("sizeIBase:{}", to_debug_str(emuenv.mem, pRead->sizeIBase));
-    LOG_TRACE("sizeUBase:{}", to_debug_str(emuenv.mem, pRead->sizeUBase));
-    LOG_TRACE("sizeVBase:{}", to_debug_str(emuenv.mem, pRead->sizeVBase));
-    LOG_TRACE("pIBase:{}", to_debug_str(emuenv.mem, pRead->pIBase));
-    LOG_TRACE("pUBase:{}", to_debug_str(emuenv.mem, pRead->pUBase));
-    LOG_TRACE("pVBase:{}", to_debug_str(emuenv.mem, pRead->pVBase));
-    /**/
+    if (pRead->size != sizeof(SceCameraRead))
+        return RET_ERROR(SCE_CAMERA_ERROR_PARAM);
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    if (!camera.is_started)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_START);
+    std::chrono::steady_clock::time_point read_start;
+    if (pRead->mode == SCE_CAMERA_READ_MODE_WAIT_NEXTFRAME_ON) {
+        read_start = std::chrono::high_resolution_clock::now();
+    }
+    char *pIBase;
+    char *pUBase;
+    char *pVBase;
+    SceSize sizeIBase;
+    SceSize sizeUBase;
+    SceSize sizeVBase;
+    if (camera.info.buffer == SCE_CAMERA_BUFFER_SETBYREAD) {
+        pIBase = pRead->pIBase.cast<char>().get(emuenv.mem);
+        pUBase = pRead->pUBase.cast<char>().get(emuenv.mem);
+        pVBase = pRead->pVBase.cast<char>().get(emuenv.mem);
+        sizeIBase = pRead->sizeIBase;
+        sizeUBase = pRead->sizeUBase;
+        sizeVBase = pRead->sizeVBase;
+    } else {
+        pIBase = camera.info.pIBase.cast<char>().get(emuenv.mem);
+        pUBase = camera.info.pUBase.cast<char>().get(emuenv.mem);
+        pVBase = camera.info.pVBase.cast<char>().get(emuenv.mem);
+        sizeIBase = camera.info.sizeIBase;
+        sizeUBase = camera.info.sizeUBase;
+        sizeVBase = camera.info.sizeVBase;
+    }
+    auto res = camera.read(emuenv, pRead, pIBase, pUBase, pVBase, sizeIBase, sizeUBase, sizeVBase);
+    if (pRead->status == SCE_CAMERA_STATUS_IS_ACTIVE && pRead->mode == SCE_CAMERA_READ_MODE_WAIT_NEXTFRAME_ON) {
+        auto wait_interval = std::chrono::high_resolution_clock::now() - read_start;
+        auto frame_delay = std::chrono::milliseconds(1000 / camera.info.framerate);
+        if (wait_interval < frame_delay) {
+            std::this_thread::sleep_for(frame_delay - wait_interval);
+        }
+    }
     return res;
 }
 
@@ -384,349 +436,237 @@ EXPORT(int, sceCameraIsActive, SceCameraDevice devnum) {
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
         return SCE_CAMERA_ERROR_PARAM;
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened) {
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    }
+    if (!camera.is_started) {
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_START);
+    }
+    // 0 means camera is used by system and camera image cannot be obtained. 1 means that camera image can be obtained.
+    return 1;
+}
+
+int camera_get_attribute(EmuEnvState &emuenv, SceUID thread_id, const char *export_name, SceCameraDevice devnum, CameraAttributes attribute, int *pValue) {
+    if (emuenv.cfg.pstv_mode)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_MOUNTED);
+    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
+        return RET_ERROR(SCE_CAMERA_ERROR_PARAM);
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    if (!camera.is_started)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_START);
+
+    *pValue = camera.get_attribute(attribute);
+    return STUBBED("Default value");
+}
+
+int camera_set_attribute(EmuEnvState &emuenv, SceUID thread_id, const char *export_name, SceCameraDevice devnum, CameraAttributes attribute, int value) {
+    if (emuenv.cfg.pstv_mode)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_MOUNTED);
+    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
+        return RET_ERROR(SCE_CAMERA_ERROR_PARAM);
+    auto &camera = emuenv.camera.get_camera(devnum);
+    if (!camera.is_opened)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_OPEN);
+    if (!camera.is_started)
+        return RET_ERROR(SCE_CAMERA_ERROR_NOT_START);
+
     UNIMPLEMENTED();
-    return emuenv.camera.is_active(devnum);
+    return camera.set_attribute(CameraAttributes::Saturation, value);
 }
 
-EXPORT(int, sceCameraGetSaturation, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetSaturation, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetSaturation, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetSaturation, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetSaturation", devnum, CameraAttributes::Saturation, pValue);
 }
 
-EXPORT(int, sceCameraSetSaturation, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetSaturation, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetSaturation, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetSaturation, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetSaturation", devnum, CameraAttributes::Saturation, value);
+}
+EXPORT(int, sceCameraGetBrightness, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetBrightness, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetBrightness", devnum, CameraAttributes::Brightness, pValue);
 }
 
-EXPORT(int, sceCameraGetBrightness, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetBrightness, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetBrightness, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetBrightness, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetBrightness", devnum, CameraAttributes::Brightness, value);
 }
 
-EXPORT(int, sceCameraSetBrightness, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetBrightness, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetContrast, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetContrast, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetContrast", devnum, CameraAttributes::Contrast, pValue);
 }
 
-EXPORT(int, sceCameraGetContrast, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetContrast, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetContrast, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetContrast, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetContrast", devnum, CameraAttributes::Contrast, value);
 }
 
-EXPORT(int, sceCameraSetContrast, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetContrast, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetSharpness, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetSharpness, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetSharpness", devnum, CameraAttributes::Sharpness, pValue);
 }
 
-EXPORT(int, sceCameraGetSharpness, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetSharpness, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetSharpness, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetSharpness, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetSharpness", devnum, CameraAttributes::Sharpness, value);
 }
 
-EXPORT(int, sceCameraSetSharpness, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetSharpness, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetReverse, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetReverse, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetReverse", devnum, CameraAttributes::Reverse, pValue);
 }
 
-EXPORT(int, sceCameraGetReverse, SceCameraDevice devnum, SceCameraReverse *pMode) {
-    TRACY_FUNC(sceCameraGetReverse, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetReverse, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetReverse, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetReverse", devnum, CameraAttributes::Reverse, value);
 }
 
-EXPORT(int, sceCameraSetReverse, SceCameraDevice devnum, SceCameraReverse mode) {
-    TRACY_FUNC(sceCameraSetReverse, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetEffect, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetEffect, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetEffect", devnum, CameraAttributes::Effect, pValue);
 }
 
-EXPORT(int, sceCameraGetEffect, SceCameraDevice devnum, SceCameraEffect *pMode) {
-    TRACY_FUNC(sceCameraGetEffect, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetEffect, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetEffect, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetEffect", devnum, CameraAttributes::Effect, value);
 }
 
-EXPORT(int, sceCameraSetEffect, SceCameraDevice devnum, SceCameraEffect mode) {
-    TRACY_FUNC(sceCameraSetEffect, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetEV, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetEV, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetEV", devnum, CameraAttributes::EV, pValue);
 }
 
-EXPORT(int, sceCameraGetEV, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetEV, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetEV, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetEV, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetEV", devnum, CameraAttributes::EV, value);
 }
 
-EXPORT(int, sceCameraSetEV, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetEV, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetZoom, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetZoom, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetZoom", devnum, CameraAttributes::Zoom, pValue);
 }
 
-EXPORT(int, sceCameraGetZoom, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetZoom, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetZoom, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetZoom, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetZoom", devnum, CameraAttributes::Zoom, value);
 }
 
-EXPORT(int, sceCameraSetZoom, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetZoom, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetAntiFlicker, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetAntiFlicker, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetAntiFlicker", devnum, CameraAttributes::AntiFlicker, pValue);
 }
 
-EXPORT(int, sceCameraGetAntiFlicker, SceCameraDevice devnum, SceCameraAntiFlicker *pMode) {
-    TRACY_FUNC(sceCameraGetAntiFlicker, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetAntiFlicker, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetAntiFlicker, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetAntiFlicker", devnum, CameraAttributes::AntiFlicker, value);
 }
 
-EXPORT(int, sceCameraSetAntiFlicker, SceCameraDevice devnum, SceCameraAntiFlicker mode) {
-    TRACY_FUNC(sceCameraSetAntiFlicker, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetISO, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetISO, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetISO", devnum, CameraAttributes::ISO, pValue);
 }
 
-EXPORT(int, sceCameraGetISO, SceCameraDevice devnum, SceCameraISO *pMode) {
-    TRACY_FUNC(sceCameraGetISO, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetISO, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetISO, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetISO", devnum, CameraAttributes::ISO, value);
 }
 
-EXPORT(int, sceCameraSetISO, SceCameraDevice devnum, SceCameraISO mode) {
-    TRACY_FUNC(sceCameraSetISO, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetGain, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetGain, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetGain", devnum, CameraAttributes::Gain, pValue);
 }
 
-EXPORT(int, sceCameraGetGain, SceCameraDevice devnum, int *pMode) {
-    TRACY_FUNC(sceCameraGetGain, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetGain, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetGain, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetGain", devnum, CameraAttributes::Gain, value);
 }
 
-EXPORT(int, sceCameraSetGain, SceCameraDevice devnum, int mode) {
-    TRACY_FUNC(sceCameraSetGain, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetWhiteBalance, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetWhiteBalance, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetWhiteBalance", devnum, CameraAttributes::WhiteBalance, pValue);
 }
 
-EXPORT(int, sceCameraGetWhiteBalance, SceCameraDevice devnum, SceCameraWhiteBalance *pMode) {
-    TRACY_FUNC(sceCameraGetWhiteBalance, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetWhiteBalance, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetWhiteBalance, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetWhiteBalance", devnum, CameraAttributes::WhiteBalance, value);
 }
 
-EXPORT(int, sceCameraSetWhiteBalance, SceCameraDevice devnum, SceCameraWhiteBalance mode) {
-    TRACY_FUNC(sceCameraSetWhiteBalance, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetBacklight, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetBacklight, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetBacklight", devnum, CameraAttributes::Backlight, pValue);
 }
 
-EXPORT(int, sceCameraGetBacklight, SceCameraDevice devnum, int *pMode) {
-    TRACY_FUNC(sceCameraGetBacklight, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetBacklight, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetBacklight, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetBacklight", devnum, CameraAttributes::Backlight, value);
 }
 
-EXPORT(int, sceCameraSetBacklight, SceCameraDevice devnum, int mode) {
-    TRACY_FUNC(sceCameraSetBacklight, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetNightmode, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetNightmode, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetNightmode", devnum, CameraAttributes::Nightmode, pValue);
 }
 
-EXPORT(int, sceCameraGetNightmode, SceCameraDevice devnum, SceCameraNightmode *pMode) {
-    TRACY_FUNC(sceCameraGetNightmode, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetNightmode, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetNightmode, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetNightmode", devnum, CameraAttributes::Nightmode, value);
 }
 
-EXPORT(int, sceCameraSetNightmode, SceCameraDevice devnum, SceCameraNightmode mode) {
-    TRACY_FUNC(sceCameraSetNightmode, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetExposureCeiling, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetExposureCeiling, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetExposureCeiling", devnum, CameraAttributes::ExposureCeiling, pValue);
 }
 
-EXPORT(int, sceCameraGetExposureCeiling, SceCameraDevice devnum, int *pMode) {
-    TRACY_FUNC(sceCameraGetExposureCeiling, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetExposureCeiling, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetExposureCeiling, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetExposureCeiling", devnum, CameraAttributes::ExposureCeiling, value);
 }
 
-EXPORT(int, sceCameraSetExposureCeiling, SceCameraDevice devnum, int mode) {
-    TRACY_FUNC(sceCameraSetExposureCeiling, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetAutoControlHold, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetAutoControlHold, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetAutoControlHold", devnum, CameraAttributes::AutoControlHold, pValue);
 }
 
-EXPORT(int, sceCameraGetAutoControlHold, SceCameraDevice devnum, int *pMode) {
-    TRACY_FUNC(sceCameraGetAutoControlHold, devnum, pMode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraSetAutoControlHold, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetAutoControlHold, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetAutoControlHold", devnum, CameraAttributes::AutoControlHold, value);
 }
 
-EXPORT(int, sceCameraSetAutoControlHold, SceCameraDevice devnum, int mode) {
-    TRACY_FUNC(sceCameraSetAutoControlHold, devnum, mode);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
+EXPORT(int, sceCameraGetImageQuality, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetImageQuality, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetImageQuality", devnum, CameraAttributes::ImageQuality, pValue);
+}
+
+EXPORT(int, sceCameraSetImageQuality, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetImageQuality, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetImageQuality", devnum, CameraAttributes::ImageQuality, value);
+}
+
+EXPORT(int, sceCameraGetNoiseReduction, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetNoiseReduction, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetNoiseReduction", devnum, CameraAttributes::NoiseReduction, pValue);
+}
+
+EXPORT(int, sceCameraSetNoiseReduction, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetNoiseReduction, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetNoiseReduction", devnum, CameraAttributes::NoiseReduction, value);
+}
+EXPORT(int, sceCameraGetSharpnessOff, SceCameraDevice devnum, int *pValue) {
+    TRACY_FUNC(sceCameraGetSharpnessOff, devnum, pValue);
+    return camera_get_attribute(emuenv, thread_id, "sceCameraGetSharpnessOff", devnum, CameraAttributes::SharpnessOff, pValue);
+}
+
+EXPORT(int, sceCameraSetSharpnessOff, SceCameraDevice devnum, int value) {
+    TRACY_FUNC(sceCameraSetSharpnessOff, devnum, value);
+    return camera_set_attribute(emuenv, thread_id, "sceCameraSetSharpnessOff", devnum, CameraAttributes::SharpnessOff, value);
 }
 
 EXPORT(int, sceCameraGetDeviceLocation, SceCameraDevice devnum, SceFVector3 *pLocation) {
     TRACY_FUNC(sceCameraGetDeviceLocation, devnum, pLocation);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
-}
-
-EXPORT(int, sceCameraGetImageQuality, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetImageQuality, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
-}
-EXPORT(int, sceCameraSetImageQuality, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetImageQuality, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
-}
-EXPORT(int, sceCameraGetNoiseReduction, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetNoiseReduction, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
-}
-EXPORT(int, sceCameraSetNoiseReduction, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetNoiseReduction, devnum, level);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
-}
-EXPORT(int, sceCameraGetSharpnessOff, SceCameraDevice devnum, int *pLevel) {
-    TRACY_FUNC(sceCameraGetSharpnessOff, devnum, pLevel);
-    if (emuenv.cfg.pstv_mode)
-        return SCE_CAMERA_ERROR_NOT_MOUNTED;
-    if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)
-        return SCE_CAMERA_ERROR_PARAM;
-    return UNIMPLEMENTED();
-}
-EXPORT(int, sceCameraSetSharpnessOff, SceCameraDevice devnum, int level) {
-    TRACY_FUNC(sceCameraSetSharpnessOff, devnum, level);
     if (emuenv.cfg.pstv_mode)
         return SCE_CAMERA_ERROR_NOT_MOUNTED;
     if (devnum != SCE_CAMERA_DEVICE_BACK && devnum != SCE_CAMERA_DEVICE_FRONT)

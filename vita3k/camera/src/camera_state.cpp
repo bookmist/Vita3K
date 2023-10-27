@@ -15,14 +15,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#pragma once
+#include <camera/state.h>
 
-#include "camera.h"
-
-struct CameraState {
-    // Put variable used by app here
-    SceCameraDevice active_camera{ SCE_CAMERA_DEVICE_UNKNOWN };
-    Camera front_camera;
-    Camera back_camera;
-    Camera &get_camera(SceCameraDevice devnum);
-};
+Camera &CameraState::get_camera(SceCameraDevice devnum) {
+    if (devnum == SCE_CAMERA_DEVICE_FRONT) {
+        return this->front_camera;
+    } else if (devnum == SCE_CAMERA_DEVICE_BACK) {
+        return this->back_camera;
+    } else {
+        throw std::runtime_error("Invalid camera device");
+    }
+}

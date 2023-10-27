@@ -5,6 +5,7 @@ add_library(
 	include/camera/camera.h
 	include/camera/state.h
 	src/camera.cpp
+	src/camera_state.cpp
 )
 
 target_include_directories(camera PUBLIC include)
