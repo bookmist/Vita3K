@@ -58,6 +58,12 @@ struct VarImportsHeader {
 };
 static_assert(sizeof(VarImportsHeader) == sizeof(uint32_t));
 
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const Ptr<T> obj) {
+    os << log_hex_full(obj.address());
+    return os;
+}
+
 static bool load_var_imports(const uint32_t *nids, const Ptr<uint32_t> *entries, size_t count, const SegmentInfosForReloc &segments, KernelState &kernel, MemState &mem, uint32_t module_id) {
     const std::lock_guard<std::mutex> guard(kernel.export_nids_mutex);
     for (size_t i = 0; i < count; ++i) {
@@ -66,7 +72,7 @@ static bool load_var_imports(const uint32_t *nids, const Ptr<uint32_t> *entries,
 
         if (kernel.debugger.log_imports) {
             const char *const name = import_name(nid);
-            LOG_DEBUG("\tNID {} ({}). entry: {}, *entry: {}", log_hex(nid), name, log_hex(entry.address()), log_hex(*entry.get(mem)));
+            LOG_DEBUG("\tNID {} ({}). entry: {}, *entry: {}", log_hex(nid), name, entry, log_hex(*entry.get(mem)));
         }
 
         VarImportsHeader *const var_reloc_header = reinterpret_cast<VarImportsHeader *>(entry.get(mem));
