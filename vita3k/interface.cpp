@@ -478,7 +478,7 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
                     lib_load_list.emplace_back(fmt::format("app0:sce_module/{}", module_name_file));
                 else if (fs::exists(emuenv.pref_path / "vs0/sys/external" / module_name_file))
                     lib_load_list.emplace_back(fmt::format("vs0:sys/external/{}", module_name_file));
-            }
+        }
 
             if (module_id != SCE_SYSMODULE_INVALID)
                 emuenv.kernel.loaded_sysmodules[module_id] = {};
@@ -505,8 +505,10 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
     add_preload_module(0x00800000, SCE_SYSMODULE_INVALID, "libSceFt2", false);
     add_preload_module(0x01000000, SCE_SYSMODULE_INVALID, "libpvf", false);
     add_preload_module(0x02000000, SCE_SYSMODULE_PERF, "libperf", false); // if DEVELOPMENT_MODE dipsw is set
-    // if (is_lle_module("taihen", emuenv))
-    //     lib_load_list.emplace_back("os0:us/VitaGrafix.suprx");
+    if (is_lle_module("taihen", emuenv))
+        lib_load_list.emplace_back("os0:us/taihen.suprx");
+    if (is_lle_module("VitaGrafix", emuenv))
+        lib_load_list.emplace_back("os0:us/VitaGrafix.suprx");
 
     for (const auto &module_path : lib_load_list) {
         auto res = load_module(emuenv, module_path);
