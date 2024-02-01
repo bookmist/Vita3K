@@ -467,10 +467,6 @@ static bool load_exports(SceKernelModuleInfo *kernel_module_info, const sce_modu
     return true;
 }
 
-struct KernelInernalModuleInfo {
-    const sce_module_info_raw *const module_info;
-};
-
 /**
  * \return Negative on failure
  */
@@ -762,9 +758,6 @@ SceUID load_self(KernelState &kernel, MemState &mem, const void *self, const std
     {
         const std::lock_guard<std::mutex> lock(kernel.mutex);
         kernel.loaded_modules[uid] = kernelModuleInfo;
-        KernelInernalModuleInfoPtr t = std::make_shared<KernelInernalModuleInfo>(module_info);
-        //KernelInernalModuleInfo t(module_info);
-        kernel.internal_module_infos.emplace(uid, t);
     }
     {
         const std::lock_guard<std::mutex> guard(kernel.export_nids_mutex);

@@ -133,7 +133,6 @@ struct KernelState {
     FuncBindingInfos func_binding_infos;
     VarBindingInfos var_binding_infos;
     ModuleUidByNid module_uid_by_nid;
-    KernelInernalModuleInfos internal_module_infos;
 
     bool cpu_opt;
     CPUBackend cpu_backend;
