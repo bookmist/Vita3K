@@ -419,6 +419,18 @@ void init_lang(LangState &lang, EmuEnvState &emuenv) {
         } else {
             LOG_ERROR("Error open lang file xml: {}", lang_xml_path);
             LOG_DEBUG("error: {} position: {}", load_xml_res.description(), load_xml_res.offset);
+            constexpr int preiew_window = 20;
+            fs::ifstream file(lang_xml_path, std::ios::binary);
+            if (file.is_open()) {
+                file.seekg(load_xml_res.offset - preiew_window, std::ios::beg);
+                if (!file.eof()) {
+                    std::string error_preiew;
+                    error_preiew.resize(preiew_window * 2); // Resize the string to the desired length
+                    file.read(error_preiew.data(), preiew_window * 2);
+                    LOG_DEBUG("Error preview: {}|{}", error_preiew.substr(1, preiew_window), error_preiew.substr(preiew_window + 1));
+                }
+                file.close();
+            }
         }
     } else
         LOG_ERROR("Lang file xml not found: {}", lang_xml_path);
