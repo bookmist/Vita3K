@@ -440,8 +440,10 @@ std::string ThreadState::log_stack_traceback() const {
         if (Ptr<uint32_t>(addr).valid(mem)) {
             const Address value = *Ptr<uint32_t>(addr).get(mem);
             const auto mod = kernel.find_module_by_addr(value);
-            if (mod)
-                fmt::format_to(std::back_inserter(str), "0x{:X} (module: {})\n", value, mod->module_name);
+            if (mod) {
+                const Address in_file_value = value - mod->segments[0].vaddr.address();
+                fmt::format_to(std::back_inserter(str), "0x{:X}\t0x{:X}\t(module: {})\n", value, in_file_value, mod->module_name);
+            }
         }
     }
     return str;
