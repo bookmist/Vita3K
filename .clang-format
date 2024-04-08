@@ -63,6 +63,7 @@ IncludeIsMainRegex: '$'
 IndentCaseLabels: false
 IndentWidth:     4
 IndentWrappedFunctionNames: false
+InsertNewlineAtEOF: true
 JavaScriptQuotes: Leave
 JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -82,6 +83,9 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 ReflowComments:  true
+RemoveParentheses: MultipleParentheses
+RemoveSemicolon: true
+RequiresClausePosition: OwnLine
 SortIncludes:    true
 SpaceAfterCStyleCast: false
 SpaceAfterTemplateKeyword: true

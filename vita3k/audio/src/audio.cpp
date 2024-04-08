@@ -54,7 +54,7 @@ static void mix_out_port(uint8_t *stream, uint8_t *temp_buffer, int len, float g
     }
 
     if (bytes_available == 0)
-        return;		
+        return;
 
     // Mix as much as we need.
     const int bytes_to_get = std::min(len, bytes_available);

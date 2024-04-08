@@ -159,8 +159,8 @@ int ThreadState::init(const char *name, Ptr<const void> entry_point, int init_pr
     tls_array[SCE_TLS_CURRENT_PRIORITY] = priority;
     tls_array[SCE_TLS_CPU_AFFINITY_MASK] = affinity_mask;
 
-        const Ptr<uint8_t> user_tls_ptr = base_tls_ptr + KERNEL_TLS_SIZE;
-        write_tpidruro(*cpu, user_tls_ptr.address());
+    const Ptr<uint8_t> user_tls_ptr = base_tls_ptr + KERNEL_TLS_SIZE;
+    write_tpidruro(*cpu, user_tls_ptr.address());
     if (kernel.tls_address) {
         assert(kernel.tls_psize <= kernel.tls_msize);
         memcpy(user_tls_ptr.get(mem), kernel.tls_address.get(mem), kernel.tls_psize);
@@ -474,13 +474,13 @@ std::string ThreadState::log_stack_traceback() const {
     const Address sp = read_sp(*cpu);
     for (Address addr = sp - START_OFFSET; addr <= sp + END_OFFSET; addr += 4) {
         if (Ptr<uint32_t>(addr).valid(mem)) {
-        const Address value = *Ptr<uint32_t>(addr).get(mem);
-        const auto mod = kernel.find_module_by_addr(value);
+            const Address value = *Ptr<uint32_t>(addr).get(mem);
+            const auto mod = kernel.find_module_by_addr(value);
             if (mod) {
                 const Address in_file_value = value - mod->segments[0].vaddr.address();
                 ss << fmt::format("{}\t{}\t(module: {})\n", log_hex(value), log_hex(in_file_value), mod->module_name);
             }
-    }
+        }
     }
     return ss.str();
 }

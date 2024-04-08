@@ -62,7 +62,6 @@ std::string_view enum_name<DecoderQuery>(DecoderQuery type) {
     }
 }
 
-
 template <>
 inline std::string to_debug_str<SceAudiodecCodec>(const MemState &mem, SceAudiodecCodec type) {
     switch (type) {

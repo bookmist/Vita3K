@@ -149,7 +149,7 @@ static SharedGLObject compile_program(ProgramCache &program_cache, const SharedG
 
     if (cache_mutex) {
         const std::lock_guard<std::mutex> lock(*cache_mutex);
-    program_cache.emplace(hashes, program);
+        program_cache.emplace(hashes, program);
     } else {
         program_cache.emplace(hashes, program);
     }
@@ -179,7 +179,7 @@ static SharedGLObject compile_shader(const fs::path &shader_cache_path, const st
     // Push shader Compiled
     if (cache_mutex) {
         const std::lock_guard<std::mutex> lock(*cache_mutex);
-    cache.emplace(hash, obj);
+        cache.emplace(hash, obj);
     } else {
         cache.emplace(hash, obj);
     }

@@ -38,4 +38,3 @@ DECL_EXPORT(SceUID, sceKernelFindMemBlockByAddr, Address addr, uint32_t size);
 DECL_EXPORT(int, sceKernelFreeMemBlock, SceUID uid);
 DECL_EXPORT(SceUID, sceKernelAllocMemBlock, const char *pName, SceKernelMemBlockType type, SceSize size, SceKernelAllocMemBlockOpt *optp);
 DECL_EXPORT(int, sceKernelGetMemBlockBase, SceUID uid, Ptr<void> *basep);
-

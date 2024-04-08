@@ -109,7 +109,7 @@ std::vector<std::string>::iterator get_live_area_current_open_apps_list_index(Gu
 void update_live_area_current_open_apps_list(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path) {
     if ((get_live_area_current_open_apps_list_index(gui, app_path) != gui.live_area_current_open_apps_list.end()) && (gui.live_area_current_open_apps_list.front() != app_path))
         gui.live_area_current_open_apps_list.erase(get_live_area_current_open_apps_list_index(gui, app_path));
-    if ((get_live_area_current_open_apps_list_index(gui, app_path) == gui.live_area_current_open_apps_list.end()))
+    if (get_live_area_current_open_apps_list_index(gui, app_path) == gui.live_area_current_open_apps_list.end())
         gui.live_area_current_open_apps_list.insert(gui.live_area_current_open_apps_list.begin(), app_path);
     gui.live_area_app_current_open = 0;
     if (gui.live_area_current_open_apps_list.size() > 6) {
@@ -556,9 +556,9 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
             last_time["home"] += emuenv.cfg.delay_background;
 
             if (gui.users[emuenv.io.user_id].use_theme_bg)
-                gui.current_theme_bg = (gui.current_theme_bg+1) % uint64_t(gui.theme_backgrounds.size());
+                gui.current_theme_bg = (gui.current_theme_bg + 1) % uint64_t(gui.theme_backgrounds.size());
             else if (gui.user_backgrounds.size() > 1)
-                gui.current_user_bg = (gui.current_user_bg+1) % uint64_t(gui.user_backgrounds.size());
+                gui.current_user_bg = (gui.current_user_bg + 1) % uint64_t(gui.user_backgrounds.size());
         }
     }
 

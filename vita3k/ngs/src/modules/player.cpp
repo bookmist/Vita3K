@@ -121,7 +121,7 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
             else if (state->current_byte_position_in_buffer >= params->buffer_params[state->current_buffer].bytes_count) {
                 const int32_t prev_index = state->current_buffer;
                 state->current_byte_position_in_buffer = 0;
-                    state->current_loop_count++;
+                state->current_loop_count++;
 
                 voice_lock.unlock();
                 scheduler_lock.unlock();
@@ -129,31 +129,31 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
                 // Enable looping over the buffer if needed
                 if (params->buffer_params[state->current_buffer].loop_count != -1
                     && state->current_loop_count > params->buffer_params[state->current_buffer].loop_count) {
-                        state->current_buffer = params->buffer_params[state->current_buffer].next_buffer_index;
-                        state->current_loop_count = 0;
+                    state->current_buffer = params->buffer_params[state->current_buffer].next_buffer_index;
+                    state->current_loop_count = 0;
 
                     if (state->current_buffer == -1
                         || !params->buffer_params[state->current_buffer].buffer) {
-                            data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_END_OF_DATA, 0, 0);
+                        data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_END_OF_DATA, 0, 0);
 
                         // we are done
-                            finished = true;
-                            scheduler_lock.lock();
-                            voice_lock.lock();
-                            break;
-                        } else {
-                            std::this_thread::sleep_for(std::chrono::microseconds(10));
-                            data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_SWAPPED_BUFFER, prev_index,
-                                params->buffer_params[state->current_buffer].buffer.address());
-                        }
+                        finished = true;
+                        scheduler_lock.lock();
+                        voice_lock.lock();
+                        break;
+                    } else {
+                        std::this_thread::sleep_for(std::chrono::microseconds(10));
+                        data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_SWAPPED_BUFFER, prev_index,
+                            params->buffer_params[state->current_buffer].buffer.address());
+                    }
                 } else {
                     data.invoke_callback(kern, mem, thread_id, SCE_NGS_PLAYER_LOOPED_BUFFER, state->current_loop_count,
                         params->buffer_params[state->current_buffer].buffer.address());
                 }
 
-                    scheduler_lock.lock();
-                    voice_lock.lock();
-                }
+                scheduler_lock.lock();
+                voice_lock.lock();
+            }
 
             if (data.extra_storage.size() < sizeof(float) * 2 * granularity
                 && state->current_buffer != -1

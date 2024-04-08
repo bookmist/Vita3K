@@ -76,21 +76,21 @@ static bool load_var_imports(const uint32_t *nids, const Ptr<uint32_t> *entries,
         const char *const name = import_name(nid);
         Address export_address;
         kernel.var_binding_infos.emplace(nid, VarBindingInfo{ var_reloc_entries, reloc_size, module_id });
-        const ExportNids::iterator export_address_it = kernel.export_nids.find(nid);
-        if (export_address_it != kernel.export_nids.end()) {
-            export_address = export_address_it->second;
-        } else {
-            constexpr auto STUB_SYMVAL = 0xDEADBEEF;
+            const ExportNids::iterator export_address_it = kernel.export_nids.find(nid);
+            if (export_address_it != kernel.export_nids.end()) {
+                export_address = export_address_it->second;
+            } else {
+                constexpr auto STUB_SYMVAL = 0xDEADBEEF;
             LOG_DEBUG("\tNID NOT FOUND {} ({}) at {}, setting to stub value {}", log_hex(nid), name, log_hex(entry.address()), log_hex(STUB_SYMVAL));
 
-            auto alloc_name = fmt::format("Stub var import reloc symval, NID {} ({})", log_hex(nid), name);
-            auto stub_symval_ptr = Ptr<uint32_t>(alloc(mem, 4, alloc_name.c_str()));
-            *stub_symval_ptr.get(mem) = STUB_SYMVAL;
+                auto alloc_name = fmt::format("Stub var import reloc symval, NID {} ({})", log_hex(nid), name);
+                auto stub_symval_ptr = Ptr<uint32_t>(alloc(mem, 4, alloc_name.c_str()));
+                *stub_symval_ptr.get(mem) = STUB_SYMVAL;
 
-            export_address = stub_symval_ptr.address();
+                export_address = stub_symval_ptr.address();
 
-            // Use same stub for other var imports
-            kernel.export_nids.emplace(nid, export_address);
+                // Use same stub for other var imports
+                kernel.export_nids.emplace(nid, export_address);
         }
 
         if (reloc_size)
@@ -265,7 +265,7 @@ static bool load_func_exports(SceKernelModuleInfo *kernel_module_info, const uin
             continue;
         }
 
-        kernel.export_nids.emplace(nid, entry.address());
+            kernel.export_nids.emplace(nid, entry.address());
 
         if (kernel.debugger.log_exports) {
             const char *const name = import_name(nid);
@@ -335,14 +335,14 @@ static bool load_var_exports(const uint32_t *nids, const Ptr<uint32_t> *entries,
         Address old_entry_address = 0;
         auto nid_it = kernel.export_nids.find(nid);
         if (nid_it != kernel.export_nids.end()) {
-            LOG_DEBUG("Found previously not found variable. nid:{}, new_entry_point:{}", log_hex(nid), log_hex(entry.address()));
+                LOG_DEBUG("Found previously not found variable. nid:{}, new_entry_point:{}", log_hex(nid), log_hex(entry.address()));
             old_entry_address = kernel.export_nids[nid];
-            kernel.export_nids[nid] = entry.address();
+                kernel.export_nids[nid] = entry.address();
         }
 
-        bool reloc_success = true;
+                bool reloc_success = true;
         auto range = kernel.var_binding_infos.equal_range(nid);
-        for (auto i = range.first; i != range.second; ++i) {
+                for (auto i = range.first; i != range.second; ++i) {
             auto &var_binding_info = i->second;
             if (var_binding_info.size == 0)
                 continue;
@@ -363,22 +363,22 @@ static bool load_var_exports(const uint32_t *nids, const Ptr<uint32_t> *entries,
 
             // Note: We make the assumption that variables are not imported into executable code (wouldn't make a lot of sense)
             // If this is not the case, uncomment the following
-            /* if (!seg.empty()) {
-                for (const auto &[key, value] : seg) {
-                    kernel.invalidate_jit_cache(value.addr, value.size);
-                }
-            }*/
+                            /* if (!seg.empty()) {
+                                for (const auto &[key, value] : seg) {
+                                    kernel.invalidate_jit_cache(value.addr, value.size);
+                                }
+                            }*/
 
-            if (!seg.empty()) {
+                        if (!seg.empty()) {
                 if (!relocate(var_binding_info.entries, var_binding_info.size, seg, mem, true, entry.address())) {
-                    reloc_success = false;
-                    LOG_ERROR("Failed to relocate late binding info");
-                }
-            }
-        }
+                                reloc_success = false;
+                                LOG_ERROR("Failed to relocate late binding info");
+                            }
+                        }
+                    }
         if (old_entry_address)
-            free(mem, old_entry_address);
-    }
+                    free(mem, old_entry_address);
+                }
     return true;
 }
 
@@ -419,11 +419,11 @@ static bool unload_var_exports(const uint32_t *nids, const Ptr<uint32_t> *entrie
                     const auto &segment = module_info->info.segments[i];
                     if (segment.size > 0) {
                         seg[i] = { segment.vaddr.address(), 0, segment.memsz }; // p_vaddr is not used in variable relocations
-                    }
-                }
             }
+        }
+    }
 
-            if (!seg.empty()) {
+    if (!seg.empty()) {
                 if (!relocate(var_binding_info.entries, var_binding_info.size, seg, mem, true, entry.address())) {
                     reloc_success = false;
                     LOG_ERROR("Failed to relocate late binding info");
@@ -713,7 +713,7 @@ SceUID load_self(KernelState &kernel, MemState &mem, const void *self, const std
     sceKernelModuleInfo->extab_top = Ptr<const void>(module_info->extab_top);
     sceKernelModuleInfo->extab_btm = Ptr<const void>(module_info->extab_end);
 
-    sceKernelModuleInfo->tlsInit = Ptr<const void>((!module_info->tls_start ? 0 : (module_info_segment_address.address() + module_info->tls_start)));
+    sceKernelModuleInfo->tlsInit = Ptr<const void>(!module_info->tls_start ? 0 : (module_info_segment_address.address() + module_info->tls_start));
     sceKernelModuleInfo->tlsInitSize = module_info->tls_filesz;
     sceKernelModuleInfo->tlsAreaSize = module_info->tls_memsz;
 

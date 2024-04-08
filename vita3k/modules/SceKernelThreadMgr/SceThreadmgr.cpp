@@ -776,7 +776,6 @@ EXPORT(int, _sceKernelWaitException) {
     ThreadStatePtr thread = emuenv.kernel.get_thread(thread_id);
     thread->suspend();
     return 0;
-
 }
 
 EXPORT(int, _sceKernelWaitExceptionCB) {

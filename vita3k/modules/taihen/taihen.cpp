@@ -449,7 +449,7 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
     LOG_CONSOLE(taiGetModuleInfo, module_name, info);
     if (info->size != sizeof(tai_module_info_t)) {
         LOG_ERROR("Structure size too small: %d", info->size);
- return TAI_ERROR_SYSTEM;
+        return TAI_ERROR_SYSTEM;
     }
 
     int module_id = 0;
@@ -459,11 +459,11 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
                 module_id = module_id_;
             }
         }
- } else {
+    } else {
         for (auto &[module_id_, module] : emuenv.kernel.loaded_modules) {
             if (strncmp(module->info.module_name, module_name, sizeof(module->info.module_name)) == 0) {
                 module_id = module_id_;
- }
+            }
         }
     }
     if (module_id == 0) {
@@ -471,7 +471,7 @@ EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) 
     }
     auto &module_info = emuenv.kernel.loaded_modules[module_id];
     const sce_module_info_raw *int_mod_info = reinterpret_cast<const sce_module_info_raw *>(module_info->info_segment_address.get(emuenv.mem) + module_info->info_offset);
-                info->modid = module_id;
+    info->modid = module_id;
     info->module_nid = int_mod_info->module_nid;
     info->exports_start = int_mod_info->export_top;
     info->exports_end = int_mod_info->export_end;

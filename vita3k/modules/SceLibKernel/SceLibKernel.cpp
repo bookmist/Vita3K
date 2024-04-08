@@ -1208,7 +1208,7 @@ EXPORT(int, sceKernelCreateMsgPipeWithLR) {
 
 EXPORT(int, sceKernelCreateMutex, const char *name, SceUInt attr, int init_count, SceKernelMutexOptParam *opt_param) {
     TRACY_FUNC(sceKernelCreateMutex, name, attr, init_count, opt_param);
-    if ((attr & SCE_KERNEL_MUTEX_ATTR_CEILING)) {
+    if (attr & SCE_KERNEL_MUTEX_ATTR_CEILING) {
         STUBBED("priority ceiling feature is not supported");
     }
 

@@ -57,7 +57,7 @@ int Camera::get_attribute(CameraAttributes attribute) {
 }
 
 int Camera::set_attribute(CameraAttributes attribute, int value) {
-	return 0;
+    return 0;
 }
 
 int Camera::open(SceCameraInfo *info) {
