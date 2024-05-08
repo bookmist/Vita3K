@@ -157,6 +157,18 @@ COMMAND(handle_memory_map) {
     TRACY_FUNC_COMMANDS(handle_memory_map);
     const Ptr<void> addr = helper.pop<Ptr<void>>();
     const uint32_t size = helper.pop<uint32_t>();
+#ifdef TRACY_ENABLE
+    {
+        const std::string arg_str = "addr: " + to_debug_str(mem, addr);
+        ___tracy_scoped_zone.Text(arg_str.c_str(), arg_str.size());
+    }
+#endif
+#ifdef TRACY_ENABLE
+    {
+        const std::string arg_str = "size: " + to_debug_str(mem, size);
+        ___tracy_scoped_zone.Text(arg_str.c_str(), arg_str.size());
+    }
+#endif
 
     if (renderer.current_backend == Backend::Vulkan) {
         dynamic_cast<vulkan::VKState &>(renderer).map_memory(mem, addr, size);
@@ -169,6 +181,12 @@ COMMAND(handle_memory_unmap) {
     TRACY_FUNC_COMMANDS(handle_memory_unmap);
 
     const Ptr<void> addr = helper.pop<Ptr<void>>();
+#ifdef TRACY_ENABLE
+    {
+        const std::string arg_str = "addr: " + to_debug_str(mem, addr);
+        ___tracy_scoped_zone.Text(arg_str.c_str(), arg_str.size());
+    }
+#endif
 
     if (renderer.current_backend == Backend::Vulkan) {
         dynamic_cast<vulkan::VKState &>(renderer).unmap_memory(mem, addr);
