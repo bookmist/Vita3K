@@ -113,7 +113,7 @@ GLenum translate_internal_format(SceGxmColorBaseFormat base_format) {
         return GL_RGBA16F;
 
     case SCE_GXM_COLOR_BASE_FORMAT_U2U10U10U10:
-        return GL_RGB10_A2;
+        return GL_RGB10_A2UI;
 
     case SCE_GXM_COLOR_BASE_FORMAT_F11F11F10:
         return GL_R11F_G11F_B10F;
@@ -133,8 +133,38 @@ GLenum translate_internal_format(SceGxmColorBaseFormat base_format) {
     case SCE_GXM_COLOR_BASE_FORMAT_U8U8:
         return GL_RG8;
 
+    case SCE_GXM_COLOR_BASE_FORMAT_U2F10F10F10:
+        return GL_RGB10_A2;
+    case SCE_GXM_COLOR_BASE_FORMAT_U16:
+        return GL_R16;
+
+    case SCE_GXM_COLOR_BASE_FORMAT_U16U16:
+        return GL_RG16;
+    case SCE_GXM_COLOR_BASE_FORMAT_S16:
+        return GL_R16_SNORM;
+    case SCE_GXM_COLOR_BASE_FORMAT_S16S16:
+        return GL_RG16_SNORM;
+    case SCE_GXM_COLOR_BASE_FORMAT_U5U6U5:
+        return GL_RGB565;
+    case SCE_GXM_COLOR_BASE_FORMAT_U1U5U5U5:
+        return GL_RGB5_A1;
+
+    case SCE_GXM_COLOR_BASE_FORMAT_U4U4U4U4:
+        return GL_RGBA4;
+    case SCE_GXM_COLOR_BASE_FORMAT_F16F16:
+        return GL_RG16F;
+    case SCE_GXM_COLOR_BASE_FORMAT_S8:
+        return GL_R8_SNORM;
+    case SCE_GXM_COLOR_BASE_FORMAT_S8S8:
+        return GL_RG8_SNORM;
+    case SCE_GXM_COLOR_BASE_FORMAT_SE5M9M9M9:
+        return GL_RGB9_E5;
+    case SCE_GXM_COLOR_BASE_FORMAT_S5S5U6:
+    case SCE_GXM_COLOR_BASE_FORMAT_U8U3U3U2:
+    case SCE_GXM_COLOR_BASE_FORMAT_U8S8S8U8:
+
     default:
-        LOG_ERROR("Unknown base format {}", log_hex(base_format));
+        LOG_ERROR_ONCE("Unknown base format {}", log_hex(base_format));
         return GL_RGBA8;
     }
 }
