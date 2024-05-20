@@ -181,6 +181,37 @@ inline const tracy_module_utils::tracy_module_helper tracy_renderer_command_id("
     bool _tracy_activation_state = tracy_module_utils::is_tracy_active(tracy_renderer_command_id); \
     ZoneNamedN(___tracy_scoped_zone, #name, _tracy_activation_state);
 
+#if (defined(_MSC_VER) && !defined(__clang__) && (!defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL))
+#define __TRACY_LOG_ARG_IF_R(arg)                                                         \
+    if constexpr ((#arg "")[0] != '\0') {                                                 \
+        const std::string arg_str = #arg ": " + to_debug_str(mem __ARGS_WITH_COMMA(arg)); \
+        ___tracy_scoped_zone.Text(arg_str.c_str(), arg_str.size());                       \
+    }
+#else
+#define __TRACY_LOG_ARG_IF3_R(arg)                                      \
+    {                                                                   \
+        const std::string arg_str = #arg ": " + to_debug_str(mem, arg); \
+        ___tracy_scoped_zone.Text(arg_str.c_str(), arg_str.size());     \
+    }
+
+#define __TRACY_LOG_ARG_IF2_R(dummy, ...) __VA_OPT__(__TRACY_LOG_ARG_IF3_R(__VA_ARGS__))
+
+#define __TRACY_LOG_ARG_IF_R(arg) __TRACY_LOG_ARG_IF2_R(dummy, arg)
+#endif
+
+#define __TRACY_FUNC_COMMANDS_ARGS(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, ...) \
+    if (_tracy_activation_state) {                                                            \
+        __TRACY_LOG_ARG_IF_R(arg1)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg2)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg3)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg4)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg5)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg6)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg7)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg8)                                                            \
+        __TRACY_LOG_ARG_IF_R(arg9)                                                            \
+    }
+
 // workaround for variadic macro in "traditional" MSVC preprocessor.
 // https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=msvc-170#macro-arguments-are-unpacked
 #if (defined(_MSC_VER) && !defined(__clang__) && (!defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL))
@@ -189,11 +220,13 @@ inline const tracy_module_utils::tracy_module_helper tracy_renderer_command_id("
 #define TRACY_FUNC_N(module_name_var, name, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) __TRACY_FUNC(module_name_var, name, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 #define TRACY_FUNC_COMMANDS(name) __TRACY_FUNC_COMMANDS(name)
 #define TRACY_FUNC_COMMANDS_SET_STATE(name) __TRACY_FUNC_COMMANDS_SET_STATE(name)
+#define TRACY_FUNC_COMMANDS_ARGS(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) __TRACY_FUNC_COMMANDS_ARGS(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 #else
 #define TRACY_FUNC(name, ...) __TRACY_FUNC(tracy_module_id, name, ##__VA_ARGS__, , , , , , , , , )
 #define TRACY_FUNC_N(module_name_var, name, ...) __TRACY_FUNC(module_name_var, name, ##__VA_ARGS__, , , , , , , , , )
 #define TRACY_FUNC_COMMANDS(name) __TRACY_FUNC_COMMANDS(name)
 #define TRACY_FUNC_COMMANDS_SET_STATE(name) __TRACY_FUNC_COMMANDS_SET_STATE(name)
+#define TRACY_FUNC_COMMANDS_ARGS(...) __TRACY_FUNC_COMMANDS_ARGS(##__VA_ARGS__, , , , , , , , , )
 #endif // "traditional" MSVC preprocessor
 #else // if not TRACY_ENABLE
 #define TRACY_FUNC(name, ...)
