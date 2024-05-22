@@ -109,14 +109,16 @@ bool init(MemState &state, const bool use_page_table) {
     };
     register_access_violation_handler(handler);
 
-    const Address null_address = alloc_inner(state, 0, 1, "null", true);
+    int constexpr null_pages = 16;
+
+    const Address null_address = alloc_inner(state, 0, null_pages, "null", true);
     assert(null_address == 0);
 #ifdef WIN32
     DWORD old_protect = 0;
-    const BOOL ret = VirtualProtect(state.memory.get(), state.page_size, PAGE_NOACCESS, &old_protect);
+    const BOOL ret = VirtualProtect(state.memory.get(), state.page_size * null_pages, PAGE_NOACCESS, &old_protect);
     LOG_CRITICAL_IF(!ret, "VirtualAlloc failed: {}", get_error_msg());
 #else
-    const int ret = mprotect(state.memory.get(), state.page_size, PROT_NONE);
+    const int ret = mprotect(state.memory.get(), state.page_size * null_pages, PROT_NONE);
     LOG_CRITICAL_IF(ret == -1, "mprotect failed: {}", get_error_msg());
 #endif
 
