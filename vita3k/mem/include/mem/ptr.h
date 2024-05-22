@@ -39,30 +39,14 @@ public:
     }
 
     template <class U>
-    [[deprecated]] Ptr(U *pointer, const MemState &mem) {
+    Ptr(U *pointer, const MemState &mem) {
         const uint8_t *const pointer_bytes = reinterpret_cast<const uint8_t *>(pointer);
         if (pointer_bytes == nullptr) {
             addr = 0;
-        } else { /*
-             if (mem.use_page_table) {
-                 auto new_addr = static_cast<Address>(pointer_bytes - &mem.memory[0]);
-                 if (mem.page_table[new_addr / KiB(4)] + new_addr != pointer_bytes) {
-                     size_t pointer_value = bit_cast<size_t>(pointer);
-                     // auto idx = pointer_value / KiB(4); // next line needs check and fix
-                     //  if (mem.page_table[idx] != &mem.memory[0] + idx) {
-                     for (auto &[ptr, mapping] : mem.external_mapping) {
-                         if (pointer_value >= ptr && pointer_value < ptr + mapping.size) {
-                             addr = static_cast<Address>(pointer_value - ptr + mapping.address);
-                             return;
-                         }
-                     }
-                     //  }
-                 } else {
-                     addr = static_cast<Address>(pointer_bytes - &mem.memory[0]);
-                 }*/
-            //            } else {
+        } else {
             addr = static_cast<Address>(pointer_bytes - &mem.memory[0]);
-            //          }
+            if (Ptr<U>(addr).get(mem) != pointer) {
+            }
         }
     }
 
