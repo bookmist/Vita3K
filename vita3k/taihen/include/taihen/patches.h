@@ -4,6 +4,7 @@
 #ifndef TAI_PATCHES_HEADER
 #define TAI_PATCHES_HEADER
 
+#include "kernel/cpu_protocol.h"
 #include "taihen_internal.h"
 
 /**
@@ -22,16 +23,16 @@
  */
 /** @{ */
 
-int patches_init(void);
-void patches_deinit(void);
+int patches_init(EmuEnvState &emuenv);
+void patches_deinit(EmuEnvState &emuenv);
 
-void cache_flush(SceUID pid, uintptr_t vma, size_t len);
-int tai_memcpy_to_kernel(SceUID src_pid, void *dst, const char *src, size_t size);
-SceUID tai_hook_func_abs(tai_hook_ref_t *p_hook, SceUID pid, void *dest_func, const void *hook_func);
-int tai_hook_release(SceUID uid, tai_hook_ref_t hook_ref);
-SceUID tai_inject_abs(SceUID pid, void *dest, const void *src, size_t size);
-int tai_inject_release(SceUID uid);
-int tai_try_cleanup_process(SceUID pid);
+void cache_flush(EmuEnvState &emuenv, SceUID pid, Address vma, SceSize len);
+int tai_memcpy_to_kernel(SceUID src_pid, void *dst, const char *src, SceSize size);
+SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid, Ptr<void> dest_func, Ptr<const void> hook_func);
+int tai_hook_release(EmuEnvState &emuenv, SceUID uid, tai_hook_ref_t hook_ref);
+SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, Ptr<void> dest, Ptr<const void> src, SceSize size);
+int tai_inject_release(EmuEnvState &emuenv, SceUID uid);
+int tai_try_cleanup_process(EmuEnvState &emuenv, SceUID pid);
 
 /** @} */
 

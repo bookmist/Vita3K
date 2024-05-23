@@ -5,19 +5,19 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
-#include <psp2kern/types.h>
+#include "taihen/error.h"
+#include "taihen/hen.h"
+#include "taihen/module.h"
+#include "taihen/patches.h"
+#include "taihen/plugin.h"
+#include "taihen/proc_map.h"
+#include "taihen/taihen_internal.h"
 #include <psp2kern/ctrl.h>
-#include <psp2kern/sblaimgr.h>
 #include <psp2kern/kernel/modulemgr.h>
 #include <psp2kern/kernel/threadmgr.h>
+#include <psp2kern/sblaimgr.h>
+#include <psp2kern/types.h>
 #include <taihen/parser.h>
-#include "error.h"
-#include "hen.h"
-#include "module.h"
-#include "patches.h"
-#include "plugin.h"
-#include "proc_map.h"
-#include "taihen_internal.h"
 
 /** For ordering log entries */
 unsigned char log_ctr = 0;
@@ -40,7 +40,7 @@ unsigned char log_ctr = 0;
  *             - TAI_ERROR_INVALID_KERNEL_ADDR if `pid` is kernel and address is in shared memory region
  */
 SceUID taiHookFunctionAbs(SceUID pid, tai_hook_ref_t *p_hook, void *dest_func, const void *hook_func) {
-  return tai_hook_func_abs(p_hook, pid, dest_func, hook_func);
+    return tai_hook_func_abs(p_hook, pid, dest_func, hook_func);
 }
 
 /**
@@ -71,15 +71,15 @@ SceUID taiHookFunctionAbs(SceUID pid, tai_hook_ref_t *p_hook, void *dest_func, c
  *               and `pid` is kernel
  */
 SceUID taiHookFunctionExportForKernel(SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t library_nid, uint32_t func_nid, const void *hook_func) {
-  int ret;
-  uintptr_t func;
+    int ret;
+    uintptr_t func;
 
-  ret = module_get_export_func(pid, module, library_nid, func_nid, &func);
-  if (ret < 0) {
-    LOG("Failed to find export for %s, NID:0x%08X: 0x%08X", module, func_nid, ret);
-    return ret;
-  }
-  return taiHookFunctionAbs(pid, p_hook, (void *)func, hook_func);
+    ret = module_get_export_func(pid, module, library_nid, func_nid, &func);
+    if (ret < 0) {
+        LOG("Failed to find export for %s, NID:0x%08X: 0x%08X", module, func_nid, ret);
+        return ret;
+    }
+    return taiHookFunctionAbs(pid, p_hook, (void *)func, hook_func);
 }
 
 /**
@@ -114,26 +114,26 @@ SceUID taiHookFunctionExportForKernel(SceUID pid, tai_hook_ref_t *p_hook, const 
  *               and `pid` is kernel
  */
 SceUID taiHookFunctionImportForKernel(SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t import_library_nid, uint32_t import_func_nid, const void *hook_func) {
-  int ret;
-  uintptr_t stubptr;
-  uint32_t stub[3];
+    int ret;
+    uintptr_t stubptr;
+    uint32_t stub[3];
 
-  ret = module_get_import_func(pid, module, import_library_nid, import_func_nid, &stubptr);
-  if (ret < 0) {
-    LOG("Failed to find stub for %s, NID:0x%08X: 0x%08X", module, import_func_nid, ret);
-    return ret;
-  }
-  ret = tai_memcpy_to_kernel(pid, stub, (const void *)(stubptr & ~1), sizeof(stub));
-  if (ret < 0) {
-    LOG("Failed to read stub %p, %x", stubptr, ret);
-    return ret;
-  }
-  // FIXME: find a better way to do this
-  if (stub[0] == 0xE24FC008 && stub[1] == 0xE12FFF1E) {
-    LOG("stub for %p has not been resolved yet!", import_func_nid);
-    return TAI_ERROR_STUB_NOT_RESOLVED;
-  }
-  return taiHookFunctionAbs(pid, p_hook, (void *)stubptr, hook_func);
+    ret = module_get_import_func(pid, module, import_library_nid, import_func_nid, &stubptr);
+    if (ret < 0) {
+        LOG("Failed to find stub for %s, NID:0x%08X: 0x%08X", module, import_func_nid, ret);
+        return ret;
+    }
+    ret = tai_memcpy_to_kernel(pid, stub, (const void *)(stubptr & ~1), sizeof(stub));
+    if (ret < 0) {
+        LOG("Failed to read stub %p, %x", stubptr, ret);
+        return ret;
+    }
+    // FIXME: find a better way to do this
+    if (stub[0] == 0xE24FC008 && stub[1] == 0xE12FFF1E) {
+        LOG("stub for %p has not been resolved yet!", import_func_nid);
+        return TAI_ERROR_STUB_NOT_RESOLVED;
+    }
+    return taiHookFunctionAbs(pid, p_hook, (void *)stubptr, hook_func);
 }
 
 /**
@@ -158,18 +158,18 @@ SceUID taiHookFunctionImportForKernel(SceUID pid, tai_hook_ref_t *p_hook, const 
  *             - TAI_ERROR_INVALID_KERNEL_ADDR if `pid` is kernel and address is in shared memory region
  */
 SceUID taiHookFunctionOffsetForKernel(SceUID pid, tai_hook_ref_t *p_hook, SceUID modid, int segidx, uint32_t offset, int thumb, const void *hook_func) {
-  int ret;
-  uintptr_t addr;
+    int ret;
+    uintptr_t addr;
 
-  ret = module_get_offset(pid, modid, segidx, offset, &addr);
-  if (ret < 0) {
-    LOG("Failed to find offset for mod:%x, segidx:%d, offset:0x%08X: 0x%08X", modid, segidx, offset, ret);
-    return ret;
-  }
-  if (thumb) {
-    addr = addr | 1;
-  }
-  return taiHookFunctionAbs(pid, p_hook, (void *)addr, hook_func);
+    ret = module_get_offset(pid, modid, segidx, offset, &addr);
+    if (ret < 0) {
+        LOG("Failed to find offset for mod:%x, segidx:%d, offset:0x%08X: 0x%08X", modid, segidx, offset, ret);
+        return ret;
+    }
+    if (thumb) {
+        addr = addr | 1;
+    }
+    return taiHookFunctionAbs(pid, p_hook, (void *)addr, hook_func);
 }
 
 /**
@@ -190,7 +190,7 @@ SceUID taiHookFunctionOffsetForKernel(SceUID pid, tai_hook_ref_t *p_hook, SceUID
  *               and `pid` is kernel
  */
 int taiGetModuleInfoForKernel(SceUID pid, const char *module, tai_module_info_t *info) {
-  return module_get_by_name_nid(pid, module, TAI_IGNORE_MODULE_NID, info);
+    return module_get_by_name_nid(pid, module, TAI_IGNORE_MODULE_NID, info);
 }
 
 /**
@@ -203,7 +203,7 @@ int taiGetModuleInfoForKernel(SceUID pid, const char *module, tai_module_info_t 
  *             - TAI_ERROR_HOOK_ERROR if an internal error occurred trying to restore the function
  */
 int taiHookReleaseForKernel(SceUID tai_uid, tai_hook_ref_t hook) {
-  return tai_hook_release(tai_uid, hook);
+    return tai_hook_release(tai_uid, hook);
 }
 
 /**
@@ -218,7 +218,7 @@ int taiHookReleaseForKernel(SceUID tai_uid, tai_hook_ref_t hook) {
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
 SceUID taiInjectAbsForKernel(SceUID pid, void *dest, const void *src, size_t size) {
-  return tai_inject_abs(pid, dest, src, size);
+    return tai_inject_abs(pid, dest, src, size);
 }
 
 /**
@@ -235,15 +235,15 @@ SceUID taiInjectAbsForKernel(SceUID pid, void *dest, const void *src, size_t siz
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
 SceUID taiInjectDataForKernel(SceUID pid, SceUID modid, int segidx, uint32_t offset, const void *data, size_t size) {
-  int ret;
-  uintptr_t addr;
+    int ret;
+    uintptr_t addr;
 
-  ret = module_get_offset(pid, modid, segidx, offset, &addr);
-  if (ret < 0) {
-    LOG("Failed to find offset for mod:%x, segidx:%d, offset:0x%08X: 0x%08X", modid, segidx, offset, ret);
-    return ret;
-  }
-  return taiInjectAbsForKernel(pid, (void *)addr, data, size);
+    ret = module_get_offset(pid, modid, segidx, offset, &addr);
+    if (ret < 0) {
+        LOG("Failed to find offset for mod:%x, segidx:%d, offset:0x%08X: 0x%08X", modid, segidx, offset, ret);
+        return ret;
+    }
+    return taiInjectAbsForKernel(pid, (void *)addr, data, size);
 }
 
 /**
@@ -254,7 +254,7 @@ SceUID taiInjectDataForKernel(SceUID pid, SceUID modid, int segidx, uint32_t off
  * @return     Zero on success, < 0 on error
  */
 int taiInjectReleaseForKernel(SceUID tai_uid) {
-  return tai_inject_release(tai_uid);
+    return tai_inject_release(tai_uid);
 }
 
 /**
@@ -271,7 +271,7 @@ int taiInjectReleaseForKernel(SceUID tai_uid) {
  *             - TAI_ERROR_SYSTEM if the config file is invalid
  */
 int taiLoadPluginsForTitleForKernel(SceUID pid, const char *titleid, int flags) {
-  return plugin_load_all(pid, titleid);
+    return plugin_load_all(pid, titleid);
 }
 
 /**
@@ -294,14 +294,14 @@ int taiLoadPluginsForTitleForKernel(SceUID pid, const char *titleid, int flags) 
  *               `schedule` _is not set_.
  */
 int taiReloadConfigForKernel(int schedule, int load_kernel) {
-  int ret;
+    int ret;
 
-  ret = plugin_load_config();
-  if (ret == TAI_ERROR_BLOCKING && schedule) {
-    plugin_delayed_load_config(load_kernel);
-    ret = TAI_SUCCESS;
-  }
-  return ret;
+    ret = plugin_load_config();
+    if (ret == TAI_ERROR_BLOCKING && schedule) {
+        plugin_delayed_load_config(load_kernel);
+        ret = TAI_SUCCESS;
+    }
+    return ret;
 }
 
 /**
@@ -320,49 +320,49 @@ int taiReloadConfigForKernel(int schedule, int load_kernel) {
  * @return     Success always
  */
 int module_start(SceSize argc, const void *args) {
-  SceCtrlData ctrl;
-  int ret;
-  LOG("starting taihen...");
-  ret = proc_map_init();
-  if (ret < 0) {
-    LOG("proc map init failed: %x", ret);
-    return SCE_KERNEL_START_FAILED;
-  }
-  ret = patches_init();
-  if (ret < 0) {
-    LOG("patches init failed: %x", ret);
-    return SCE_KERNEL_START_FAILED;
-  }
-  ret = plugin_init();
-  if (ret < 0) {
-    LOG("plugin init failed: %x", ret);
-    return SCE_KERNEL_START_FAILED;
-  }
-  ret = hen_add_patches();
-  if (ret < 0) {
-    LOG("HEN patches failed: %x", ret);
-    return SCE_KERNEL_START_FAILED;
-  }
-  ksceCtrlPeekBufferPositive(0, &ctrl, 1);
-  LOG("buttons held: 0x%08X", ctrl.buttons);
-  if (!(ctrl.buttons & (SCE_CTRL_LTRIGGER | SCE_CTRL_L1))) {
-    ret = plugin_load_config();
+    SceCtrlData ctrl;
+    int ret;
+    LOG("starting taihen...");
+    ret = proc_map_init();
     if (ret < 0) {
-      LOG("HEN config load failed: %x", ret);
-      return SCE_KERNEL_START_FAILED;
+        LOG("proc map init failed: %x", ret);
+        return SCE_KERNEL_START_FAILED;
     }
-    plugin_load_all(KERNEL_PID, "KERNEL");
-  } else {
-    LOG("skipping plugin loading");
-  }
-  return SCE_KERNEL_START_SUCCESS;
+    ret = patches_init();
+    if (ret < 0) {
+        LOG("patches init failed: %x", ret);
+        return SCE_KERNEL_START_FAILED;
+    }
+    ret = plugin_init();
+    if (ret < 0) {
+        LOG("plugin init failed: %x", ret);
+        return SCE_KERNEL_START_FAILED;
+    }
+    ret = hen_add_patches();
+    if (ret < 0) {
+        LOG("HEN patches failed: %x", ret);
+        return SCE_KERNEL_START_FAILED;
+    }
+    ksceCtrlPeekBufferPositive(0, &ctrl, 1);
+    LOG("buttons held: 0x%08X", ctrl.buttons);
+    if (!(ctrl.buttons & (SCE_CTRL_LTRIGGER | SCE_CTRL_L1))) {
+        ret = plugin_load_config();
+        if (ret < 0) {
+            LOG("HEN config load failed: %x", ret);
+            return SCE_KERNEL_START_FAILED;
+        }
+        plugin_load_all(KERNEL_PID, "KERNEL");
+    } else {
+        LOG("skipping plugin loading");
+    }
+    return SCE_KERNEL_START_SUCCESS;
 }
 
 /**
  * @brief      Alias to inhibit compiler warning
  * @private
  */
-void _start() __attribute__ ((weak, alias ("module_start")));
+void _start() __attribute__((weak, alias("module_start")));
 
 /**
  * @brief      Module cleanup
@@ -378,12 +378,12 @@ void _start() __attribute__ ((weak, alias ("module_start")));
  * @return     Success always
  */
 int module_stop(SceSize argc, const void *args) {
-  // TODO: release everything
-  hen_remove_patches();
-  plugin_deinit();
-  patches_deinit();
-  proc_map_deinit();
-  return SCE_KERNEL_STOP_SUCCESS;
+    // TODO: release everything
+    hen_remove_patches();
+    plugin_deinit();
+    patches_deinit();
+    proc_map_deinit();
+    return SCE_KERNEL_STOP_SUCCESS;
 }
 
 /**
@@ -392,5 +392,4 @@ int module_stop(SceSize argc, const void *args) {
  *             This function is currently unused on retail units.
  */
 void module_exit(void) {
-
 }
