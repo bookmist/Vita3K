@@ -14,7 +14,7 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 #include "taihen/error.h"
-#include "taihen/taihen_internal.h"
+#include "taihen/taihen.h"
 
 #include <emuenv/state.h>
 #include <module/module.h>

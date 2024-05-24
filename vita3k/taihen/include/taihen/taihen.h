@@ -6,6 +6,7 @@
 #include "kernel/cpu_protocol.h"
 #include "kernel/types.h"
 #include "proc_map.h"
+#include "slab.h"
 
 #include <stdint.h>
 #include <string>
@@ -215,7 +216,8 @@ struct taihen_module_data {
     /** Set for delayed load of kernel plugins */
     int g_delayed_load_kernel_plugins;
 
-    std::map<int, _tai_patch> g_patches;
+    std::map<int, Ptr<_tai_patch>> g_patches;
+    int g_uid = 1;
 };
 struct EmuEnvState;
 taihen_module_data *get_module_data(EmuEnvState &emuenv);

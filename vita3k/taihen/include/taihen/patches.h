@@ -5,7 +5,7 @@
 #define TAI_PATCHES_HEADER
 
 #include "kernel/cpu_protocol.h"
-#include "taihen_internal.h"
+#include "taihen/taihen.h"
 
 /**
  * @defgroup   patches Patch System

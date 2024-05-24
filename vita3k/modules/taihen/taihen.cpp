@@ -28,7 +28,6 @@ TRACY_MODULE_NAME(taihen);
 #include "taihen/plugin.h"
 #include "taihen/proc_map.h"
 #include "taihen/taihen.h"
-#include "taihen/taihen_internal.h"
 
 /**
  * @brief      Add a hook given an absolute address

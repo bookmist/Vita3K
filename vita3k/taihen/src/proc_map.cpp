@@ -7,7 +7,7 @@
  */
 #include "taihen/proc_map.h"
 #include "taihen/slab.h"
-#include "taihen/taihen_internal.h"
+#include "taihen/taihen.h"
 
 /**
  * @brief      Patches are grouped by PID and stored in a linked list ordered by

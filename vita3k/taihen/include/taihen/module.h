@@ -4,7 +4,7 @@
 #ifndef TAI_MODULE_HEADER
 #define TAI_MODULE_HEADER
 
-#include "taihen_internal.h"
+#include "taihen.h"
 
 /**
  * @defgroup   module NID Lookup Interface

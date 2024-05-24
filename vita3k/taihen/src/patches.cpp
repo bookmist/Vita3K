@@ -11,7 +11,7 @@
 // #include "substitute/lib/substitute.h"
 #include "kernel/state.h"
 #include "taihen/error.h"
-#include "taihen/proc_map.h"
+// #include "taihen/proc_map.h"
 #include "taihen/slab.h"
 #include "taihen/taihen.h"
 
@@ -198,12 +198,13 @@ struct hook_args {
  *
  * @return     Zero on success, < 0 on error
  */
-static int tai_hook_function(Ptr<slab_chain> slab, Ptr<void> target_func, Ptr<const void> src_func, Ptr<void> *old, Ptr<void> *saved) {
+static int tai_hook_function(EmuEnvState &emuenv, Ptr<slab_chain> slab, Ptr<void> target_func, Ptr<const void> src_func, Ptr<void> *old, Ptr<void> *saved) {
     if (target_func.address() == src_func.address()) {
         LOG("no hook needed");
         return TAI_SUCCESS; // no need for hook
     }
-
+    // log all function params
+    LOG_INFO("tai_hook_function: slab: {}, target_func: {}, src_func: {}, old: {}, saved: {}", slab, target_func, src_func, *old, *saved);
     /*
     struct hook_args uargs;
     struct substitute_function_hook hook;
@@ -227,6 +228,7 @@ static int tai_hook_function(Ptr<slab_chain> slab, Ptr<void> target_func, Ptr<co
     }
     return TAI_SUCCESS;
     */
+    return TAI_SUCCESS;
 }
 
 /**
@@ -264,7 +266,7 @@ static int tai_unhook_function(Ptr<void> saved) {
  *
  * @return     Zero on success, < 0 on error
  */
-static int tai_force_memcpy(EmuEnvState emuenv, SceUID dst_pid, Ptr<void> dst, Ptr<const void> src, SceSize size) {
+static int tai_force_memcpy(EmuEnvState &emuenv, SceUID dst_pid, Ptr<void> dst, Ptr<const void> src, SceSize size) {
     memcpy(dst.get(emuenv.mem), src.get(emuenv.mem), size);
     /*
     int ret;
@@ -315,7 +317,7 @@ int tai_memcpy_to_kernel(SceUID src_pid, void *dst, const char *src, size_t size
  *
  * @return     Zero if new hook added, 1 if it exists, < 0 on error
  */
-static int hooks_add_hook(EmuEnvState emuenv, tai_hook_list_t *hooks, Ptr<tai_hook_t> item) {
+static int hooks_add_hook(EmuEnvState &emuenv, tai_hook_list_t *hooks, Ptr<tai_hook_t> item) {
     tai_hook_t *head;
     int ret;
 
@@ -324,13 +326,13 @@ static int hooks_add_hook(EmuEnvState emuenv, tai_hook_list_t *hooks, Ptr<tai_ho
     {
         std::lock_guard lock(module_data->g_hooks_lock);
         if (hooks->head.address() == 0) { // first hook for this list
-            ret = tai_hook_function(item.get(emuenv.mem)->patch.get(emuenv.mem)->slab, hooks->func, item.get(emuenv.mem)->u.func, &hooks->old, &hooks->saved);
+            ret = tai_hook_function(emuenv, item.get(emuenv.mem)->patch.get(emuenv.mem)->slab, hooks->func, item.get(emuenv.mem)->u.func, &hooks->old, &hooks->saved);
             if (ret >= 0) {
                 hooks->head = item;
                 item.get(emuenv.mem)->next = nullptr;
                 item.get(emuenv.mem)->u.next = nullptr;
                 item.get(emuenv.mem)->u.old = hooks->old;
-                cache_flush(item.get(emuenv.mem)->patch.get(emuenv.mem)->pid, slab_getmirror(item.get(emuenv.mem)->patch.get(emuenv.mem)->slab.address(), item), sizeof(tai_hook_t));
+                cache_flush(emuenv, item.get(emuenv.mem)->patch.get(emuenv.mem)->pid, slab_getmirror(emuenv.mem, item.get(emuenv.mem)->patch.get(emuenv.mem)->slab, item), sizeof(tai_hook_t));
             } else {
                 LOG("Hook failed, do not add to chain");
             }
@@ -340,11 +342,11 @@ static int hooks_add_hook(EmuEnvState emuenv, tai_hook_list_t *hooks, Ptr<tai_ho
             item.get(emuenv.mem)->u.next = head->u.next;
             item.get(emuenv.mem)->u.old = hooks->old;
             head->next = item;
-            head->u.next = slab_getmirror(item.get(emuenv.mem)->patch.get(emuenv.mem)->slab, item);
+            head->u.next = slab_getmirror(emuenv.mem, item.get(emuenv.mem)->patch.get(emuenv.mem)->slab, item);
             LOG("Added hook to existing chain %p", head);
             // flush cache for head + item, which were modified
-            cache_flush(item->patch->pid, slab_getmirror(item->patch->slab, head), sizeof(tai_hook_t));
-            cache_flush(item->patch->pid, head->u.next, sizeof(tai_hook_t));
+            cache_flush(emuenv, item.get(emuenv.mem)->patch.get(emuenv.mem)->pid, slab_getmirror(emuenv.mem, item.get(emuenv.mem)->patch.get(emuenv.mem)->slab, hooks->head), sizeof(tai_hook_t));
+            cache_flush(emuenv, item.get(emuenv.mem)->patch.get(emuenv.mem)->pid, head->u.next.address(), sizeof(tai_hook_t));
             ret = 1;
         }
     }
@@ -429,14 +431,14 @@ static int hooks_remove_hook(EmuEnvState &emuenv, tai_hook_list_t *hooks, Ptr<ta
  * @return     UID for the hook on success, < 0 on error
  */
 SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid, Ptr<void> dest_func, Ptr<const void> hook_func) {
-    SceCreateUidObjOpt opt;
+    // SceCreateUidObjOpt opt;
     tai_patch_t *patch, *tmp;
-    tai_hook_t *hook;
     int ret;
     struct slab_chain *slab;
-    uintptr_t exe_addr;
+    Address exe_addr;
 
-    LOG("Hooking %p to %p for pid %x", hook_func, dest_func, pid);
+    LOG("Hooking {} to {} for pid {}", hook_func, dest_func, pid);
+    /*
     if (hook_func >= MEM_SHARED_START) {
         if (pid == KERNEL_PID) {
             return TAI_ERROR_INVALID_KERNEL_ADDR; // invalid hook address
@@ -444,8 +446,8 @@ SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid
             return TAI_ERROR_NOT_IMPLEMENTED; // TODO: add support for this
         }
     }
-
-    hook = NULL;
+    */
+    /*
     if (pid == KERNEL_PID) {
         ret = ksceKernelCreateUidObj(&g_taihen_class, "tai_patch_hook", NULL, (SceObjectBase **)&patch);
     } else {
@@ -458,8 +460,14 @@ SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid
     if (ret < 0) {
         return ret;
     }
+    */
+    auto module_data = get_module_data(emuenv);
+    auto patch_p = Ptr<tai_patch_t>(alloc_guest_mem(emuenv, sizeof(tai_patch_t)));
+    ret = patch_p.address();
+    patch = patch_p.get(emuenv.mem);
 
-    ksceKernelLockMutex(g_hooks_lock, 1, NULL);
+    std::lock_guard lock(module_data->g_hooks_lock);
+
     patch->type = HOOKS;
     patch->uid = ret;
     patch->pid = pid;
@@ -469,6 +477,7 @@ SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid
     patch->data.hooks.func = dest_func;
     patch->data.hooks.saved = nullptr;
     patch->data.hooks.head = nullptr;
+    /*
     if (proc_map_try_insert(g_map, patch, &tmp) < 1) {
         // ret = ksceKernelDeleteUid(patch->uid);
         // LOG("ksceKernelDeleteUid(old): 0x%08X", ret);
@@ -483,36 +492,35 @@ SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid
             patch = tmp;
         }
     }
-
-    hook = slab_alloc(patch->slab, &exe_addr);
-    if (hook == NULL) {
+    */
+    Ptr<tai_hook_t> hook;
+    hook = slab_alloc(emuenv.mem, patch->slab, &exe_addr);
+    if (hook.address() == NULL) {
         ret = -1;
         goto err;
     }
-    hook->u.func = (void *)hook_func;
-    hook->patch = patch;
+    hook.get(emuenv.mem)->u.func = hook_func;
+    hook.get(emuenv.mem)->patch = patch_p;
 
     ret = hooks_add_hook(emuenv, &patch->data.hooks, hook);
-    if (ret < 0 && patch->data.hooks.head == NULL) {
+    if (ret < 0 && patch->data.hooks.head.address() == NULL) {
         LOG("failed to add hook and patch is now empty, freeing hook %p", hook);
-        slab_free(patch->slab, hook);
-        hook = NULL;
-        proc_map_remove(g_map, patch);
-        ksceKernelDeleteUid(patch->uid);
+        slab_free(emuenv.mem, patch->slab, hook);
+        hook = nullptr;
+        // proc_map_remove(g_map, patch);
+        // ksceKernelDeleteUid(patch->uid);
         patch = NULL;
     } else if (ret >= 0) {
         ret = patch->uid;
-        *p_hook = slab_getmirror(patch->slab, hook);
+        *p_hook = slab_getmirror(emuenv.mem, patch->slab, hook);
     }
 
 err:
     // error and we have allocated a hook
     if (ret < 0 && patch && hook) {
         LOG("freeing hook %p", hook);
-        slab_free(patch->slab, hook);
+        slab_free(emuenv.mem, patch->slab, hook);
     }
-
-    ksceKernelUnlockMutex(g_hooks_lock, 1);
 
     return ret;
 }
@@ -525,44 +533,48 @@ err:
  *
  * @return     Zero on success, < 0 on error
  */
-int tai_hook_release(SceUID uid, tai_hook_ref_t hook_ref) {
+int tai_hook_release(EmuEnvState &emuenv, SceUID uid, tai_hook_ref_t hook_ref) {
+    /*
     tai_hook_t **cur, *hook;
-    tai_patch_t *patch;
-    struct slab_chain *slab;
+    struct slab_chain *slab;*/
     int ret;
 
+    tai_patch_t *patch;
+
+    auto module_data = get_module_data(emuenv);
+    auto patch_p = Ptr<tai_patch_t>(alloc_guest_mem(emuenv, sizeof(tai_patch_t)));
+    ret = patch_p.address();
+    patch = patch_p.get(emuenv.mem);
+
+    std::lock_guard lock(module_data->g_hooks_lock);
+    /*
     ret = ksceKernelGetObjForUid(uid, &g_taihen_class, (SceObjectBase **)&patch);
     LOG("ksceKernelGetObjForUid(%x): 0x%08X", uid, ret);
     if (ret < 0) {
         return ret;
     }
     ksceKernelLockMutex(g_hooks_lock, 1, NULL);
-    slab = patch->slab;
-    for (cur = &patch->data.hooks.head; *cur != NULL; cur = &(*cur)->next) {
-        if (slab_getmirror(slab, *cur) == hook_ref) {
-            hook = *cur;
+    */
+    auto slab = patch->slab;
+    for (auto cur = patch->data.hooks.head; cur.address() != NULL; cur = cur.get(emuenv.mem)->next) {
+        if (slab_getmirror(emuenv.mem, slab, cur) == hook_ref.address()) {
+            auto hook = cur;
             LOG("Found hook %p for ref %p", hook, hook_ref);
-            ret = hooks_remove_hook(&patch->data.hooks, hook);
-            *cur = hook->next;
+            ret = hooks_remove_hook(emuenv, &patch->data.hooks, hook);
+            cur = hook.get(emuenv.mem)->next;
             LOG("freeing hook");
-            slab_free(slab, hook);
-            if (patch->data.hooks.head == NULL) {
+            slab_free(emuenv.mem, slab, hook);
+            if (patch->data.hooks.head.address() == NULL) {
                 LOG("patch is now empty, freeing it");
-                proc_map_remove(g_map, patch);
-                ksceKernelUidRelease(uid);
-                ksceKernelDeleteUid(patch->uid);
+                // proc_map_remove(g_map, patch);
+                // ksceKernelUidRelease(uid);
+                // ksceKernelDeleteUid(patch->uid);
             }
-            ret = TAI_SUCCESS;
-            goto end;
+            return TAI_SUCCESS;
         }
     }
     LOG("Cannot find hook for uid %x ref %p", uid, hook_ref);
-    ret = TAI_ERROR_NOT_FOUND;
-    ksceKernelUidRelease(uid);
-end:
-    ksceKernelUnlockMutex(g_hooks_lock, 1);
-
-    return ret;
+    return TAI_ERROR_NOT_FOUND;
 }
 
 /**
@@ -578,51 +590,63 @@ end:
  *             - TAI_ERROR_PATCH_EXISTS if a hook or injection is already
  *               inserted
  */
-SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, void *dest, const void *src, size_t size) {
-    tai_patch_t *patch, *tmp;
-    void *saved;
+SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, Ptr<void> dest, Ptr<const void> src, SceSize size) {
+    tai_patch_t *patch{};
+    tai_patch_t tmp{};
+    Address saved;
     int ret;
 
-    // TODO: Check that dest is not inside our slab structure... that could corrupt kernel code
+    auto module_data = get_module_data(emuenv);
 
+    // TODO: Check that dest is not inside our slab structure... that could corrupt kernel code
+    /*
     LOG("Injecting %p with %p for size 0x%08X at pid %x", dest, src, size, pid);
     ret = ksceKernelCreateUidObj(&g_taihen_class, "tai_patch_inject", NULL, (SceObjectBase **)&patch);
     LOG("ksceKernelCreateUidObj(tai_patch_inject): 0x%08X, %p", ret, patch);
     if (ret < 0) {
         return ret;
     }
-
-    saved = ksceKernelAllocHeapMemory(g_patch_pool, size);
-    LOG("ksceKernelAllocHeapMemory(g_patch_pool, 0x%08X): %p", size, saved);
+    */
+    // ret = module_data->g_uid++;
+    saved = alloc_guest_mem(emuenv, size);
+    // LOG("ksceKernelAllocHeapMemory(g_patch_pool, 0x%08X): %p", size, saved);
     if (saved == NULL) {
-        ksceKernelDeleteUid(ret);
         return TAI_ERROR_MEMORY;
     }
-
-    // try to save old data
-    if (tai_memcpy_to_kernel(pid, saved, dest, size) < 0) {
+    auto patch_p = Ptr<tai_patch_t>(alloc_guest_mem(emuenv, sizeof(tai_patch_t)));
+    ret = patch_p.address();
+    patch = patch_p.get(emuenv.mem);
+    // module_data->g_patches[ret] = patch;
+    //  try to save old data
+    memcpy(Ptr<void>(saved).get(emuenv.mem), dest.get(emuenv.mem), size);
+    /*
+    if (tai_memcpy_to_kernel(pid, Ptr<void>(saved).get(emuenv.mem), dest.get(emuenv.mem), size) < 0) {
         LOG("Invalid address for memcpy");
         ksceKernelDeleteUid(ret);
         ksceKernelFreeHeapMemory(g_patch_pool, saved);
         return TAI_ERROR_INVALID_ARGS;
-    }
+    }*/
 
-    ksceKernelLockMutex(g_hooks_lock, 1, NULL);
+    std::lock_guard lock(module_data->g_hooks_lock);
     patch->type = INJECTION;
     patch->uid = ret;
     patch->pid = pid;
-    patch->addr = (uintptr_t)dest;
+    patch->addr = dest.address();
     patch->size = size;
-    patch->next = NULL;
+    patch->next = nullptr;
     patch->data.inject.saved = saved;
     patch->data.inject.size = size;
-    patch->data.inject.patch = patch;
-    if (proc_map_try_insert(g_map, patch, &tmp) < 1) {
+    patch->data.inject.patch = patch_p;
+    /*
+     if (proc_map_try_insert(module_data->g_map, patch, &tmp) < 1) {
         ret = TAI_ERROR_PATCH_EXISTS;
     } else {
-        ret = tai_force_memcpy(pid, dest, src, size);
+        ret = tai_force_memcpy(emuenv, pid, dest, src, size);
     }
+    */
+    ret = tai_force_memcpy(emuenv, pid, dest, src, size);
 
+    /*
     if (ret < 0) {
         ksceKernelDeleteUid(patch->uid);
         ksceKernelFreeHeapMemory(g_patch_pool, saved);
@@ -631,8 +655,8 @@ SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, void *dest, const void *s
     }
 
     ksceKernelUnlockMutex(g_hooks_lock, 1);
-
-    return ret;
+    */
+    return patch->uid;
 }
 
 /**
@@ -643,42 +667,42 @@ SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, void *dest, const void *s
  * @return     Zero on success, < 0 on error
  */
 int tai_inject_release(EmuEnvState &emuenv, SceUID uid) {
-    tai_inject_t *inject;
-    tai_patch_t *patch;
-    void *saved;
-    void *dest;
-    size_t size;
     int ret;
-    SceUID pid;
 
+    auto module_data = get_module_data(emuenv);
+    tai_patch_t *patch = Ptr<tai_patch_t>(uid).get(emuenv.mem);
+    /*
     ret = ksceKernelGetObjForUid(uid, &g_taihen_class, (SceObjectBase **)&patch);
     LOG("ksceKernelGetObjForUid(%x): 0x%08X", uid, ret);
     if (ret < 0) {
         return ret;
-    }
+    }*/
     if (patch->type != INJECTION || patch->uid != uid) {
         LOG("internal error: trying to free an invalid injection");
-        ksceKernelUidRelease(uid);
+        // ksceKernelUidRelease(uid);
+        module_data->g_patches.erase(uid);
         return TAI_ERROR_SYSTEM;
     }
-    inject = &patch->data.inject;
-    LOG("Releasing injection %p for patch %p", inject, patch);
-    ksceKernelLockMutex(g_hooks_lock, 1, NULL);
-    pid = patch->pid;
-    dest = (void *)patch->addr;
-    saved = inject->saved;
-    size = inject->size;
-    if (!proc_map_remove(g_map, patch)) {
-        LOG("internal error, cannot remove patch from proc_map");
-        ret = TAI_ERROR_SYSTEM;
-        ksceKernelUidRelease(patch->uid);
-    } else {
-        ret = tai_force_memcpy(pid, dest, saved, size);
-        ksceKernelFreeHeapMemory(g_patch_pool, saved);
-        ksceKernelUidRelease(patch->uid);
-        ksceKernelDeleteUid(patch->uid);
-    }
-    ksceKernelUnlockMutex(g_hooks_lock, 1);
+    auto inject = &patch->data.inject;
+    // LOG("Releasing injection %p for patch %p", inject, patch);
+    std::lock_guard lock(module_data->g_hooks_lock);
+    // ksceKernelLockMutex(g_hooks_lock, 1, NULL);
+    auto pid = patch->pid;
+    auto dest = patch->addr;
+    auto saved = inject->saved;
+    auto size = inject->size;
+    /*    if (!proc_map_remove(g_map, patch)) {
+            LOG("internal error, cannot remove patch from proc_map");
+            ret = TAI_ERROR_SYSTEM;
+            ksceKernelUidRelease(patch->uid);
+        } else {*/
+    ret = tai_force_memcpy(emuenv, pid, Ptr<void>(dest), saved, size);
+    // ksceKernelFreeHeapMemory(g_patch_pool, saved);
+    // ksceKernelUidRelease(patch->uid);
+    // ksceKernelDeleteUid(patch->uid);
+    module_data->g_patches.erase(uid);
+    //}
+    // ksceKernelUnlockMutex(g_hooks_lock, 1);
 
     return ret;
 }
@@ -700,6 +724,7 @@ int tai_inject_release(EmuEnvState &emuenv, SceUID uid) {
  *
  * @return     Zero always
  */
+/*
 int tai_try_cleanup_process(SceUID pid) {
     tai_patch_t *patch, *next;
     LOG("Calling patches cleanup for pid %x", pid);
@@ -722,3 +747,4 @@ int tai_try_cleanup_process(SceUID pid) {
     ksceKernelUnlockMutex(g_hooks_lock, 1);
     return 0;
 }
+*/
