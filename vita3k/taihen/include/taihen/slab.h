@@ -1,40 +1,37 @@
 /* ref: https://github.com/bbu/userland-slab-allocator */
 
-#ifndef __GNUC__
-# error Can be compiled only with GCC.
-#endif
-
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-#include <psp2kern/types.h>
+#include <kernel/cpu_protocol.h>
+#include <mem/functions.h>
 
-extern const size_t slab_pagesize;
+#include <util/types.h>
+
+extern const SceSize slab_pagesize;
 
 struct slab_header {
-    struct slab_header *prev, *next;
+    Ptr<slab_header> prev, next;
     uint64_t slots;
-    uintptr_t refcount;
-    struct slab_header *page;
+    Address refcount;
+    Ptr<slab_header> page;
     SceUID write_res;
     SceUID exe_res;
-    uintptr_t exe_data;
-    uint8_t data[] __attribute__((aligned(sizeof(void *))));
+    Address exe_data;
+    Ptr<uint8_t> data;
 };
 
 struct slab_chain {
-    size_t itemsize, itemcount;
-    size_t slabsize, pages_per_alloc;
+    SceSize itemsize, itemcount;
+    SceSize slabsize, pages_per_alloc;
     uint64_t initial_slotmask, empty_slotmask;
-    uintptr_t alignment_mask;
-    struct slab_header *partial, *empty, *full;
+    Address alignment_mask;
+    Ptr<slab_header> partial, empty, full;
     SceUID pid;
 };
 
-void slab_init(struct slab_chain *, size_t, SceUID);
-void *slab_alloc(struct slab_chain *, uintptr_t *);
-void slab_free(struct slab_chain *, const void *);
-uintptr_t slab_getmirror(struct slab_chain *, const void *);
-void slab_traverse(const struct slab_chain *, void (*)(const void *));
-void slab_destroy(const struct slab_chain *);
+void slab_init(MemState &, Ptr<slab_chain>, SceSize, SceUID);
+Ptr<void> slab_alloc(MemState &, Ptr<slab_chain>, Address *);
+void slab_free(MemState &, Ptr<slab_chain>, Ptr<const void>);
+Address slab_getmirror(MemState &, Ptr<slab_chain>, Ptr<const void>);
+void slab_traverse(MemState &, Ptr<slab_chain>, void (*)(Ptr<const void>));
+void slab_destroy(MemState &, Ptr<slab_chain>);

@@ -14,11 +14,7 @@
  */
 /** @{ */
 
-/** Path to the taiHEN configuration file */
-#define TAIHEN_CONFIG_FILE "ux0:tai/config.txt"
-
-/** Fallback if the configuration file is not found. */
-#define TAIHEN_RECOVERY_CONFIG_FILE "ur0:tai/config.txt"
+#include "kernel/cpu_protocol.h"
 
 int plugin_init(void);
 void plugin_deinit(void);

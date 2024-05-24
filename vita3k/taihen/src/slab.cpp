@@ -1,47 +1,52 @@
 /* ref: https://github.com/bbu/userland-slab-allocator */
 
-#include "slab.h"
-#include "taihen_internal.h"
-#include <psp2kern/kernel/sysmem.h>
+#include "taihen/slab.h"
+#include "kernel/cpu_protocol.h"
+#include "taihen/taihen.h"
 
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
+#include <mem/functions.h>
+
+// #include <psp2kern/kernel/sysmem.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <util/log.h>
 
 #define assert(x) // turn off asserts
 
 #define SLAB_DUMP_COLOURED
 
 #ifdef SLAB_DUMP_COLOURED
-# define GRAY(s)   "\033[1;30m" s "\033[0m"
-# define RED(s)    "\033[0;31m" s "\033[0m"
-# define GREEN(s)  "\033[0;32m" s "\033[0m"
-# define YELLOW(s) "\033[1;33m" s "\033[0m"
+#define GRAY(s) "\033[1;30m" s "\033[0m"
+#define RED(s) "\033[0;31m" s "\033[0m"
+#define GREEN(s) "\033[0;32m" s "\033[0m"
+#define YELLOW(s) "\033[1;33m" s "\033[0m"
 #else
-# define GRAY(s)   s
-# define RED(s)    s
-# define GREEN(s)  s
-# define YELLOW(s) s
+#define GRAY(s) s
+#define RED(s) s
+#define GREEN(s) s
+#define YELLOW(s) s
 #endif
 
-#define SLOTS_ALL_ZERO ((uint64_t) 0)
-#define SLOTS_FIRST ((uint64_t) 1)
-#define FIRST_FREE_SLOT(s) ((size_t) __builtin_ctzll(s))
-#define FREE_SLOTS(s) ((size_t) __builtin_popcountll(s))
-#define ONE_USED_SLOT(slots, empty_slotmask) \
-    ( \
-        ( \
-            (~(slots) & (empty_slotmask))       & \
-            ((~(slots) & (empty_slotmask)) - 1)   \
-        ) == SLOTS_ALL_ZERO \
-    )
+#define SLOTS_ALL_ZERO ((uint64_t)0)
+#define SLOTS_FIRST ((uint64_t)1)
+#define FIRST_FREE_SLOT(s) ((SceSize)std::countr_zero(s))
+#define FREE_SLOTS(s) ((SceSize)std::popcount(s))
+#define ONE_USED_SLOT(slots, empty_slotmask)                                     \
+    (                                                                            \
+        (                                                                        \
+            (~(slots) & (empty_slotmask)) & ((~(slots) & (empty_slotmask)) - 1)) \
+        == SLOTS_ALL_ZERO)
 
-#define POWEROF2(x) ((x) != 0 && ((x) & ((x) - 1)) == 0)
+#define POWEROF2(x) ((x) != 0 && ((x) & ((x)-1)) == 0)
 
-#define LIKELY(exp) __builtin_expect(exp, 1)
-#define UNLIKELY(exp) __builtin_expect(exp, 0)
+// #define LIKELY(exp) __builtin_expect(exp, 1)
+// #define UNLIKELY(exp) __builtin_expect(exp, 0)
 
-const size_t slab_pagesize = 0x1000;
+#define LIKELY(exp) (exp)
+#define UNLIKELY(exp) (exp)
+
+const SceSize slab_pagesize = 0x1000;
 
 /**
  * @brief      Allocates a raw chunk of memory
@@ -57,13 +62,14 @@ const size_t slab_pagesize = 0x1000;
  *
  * @return     UID of writable memory on success, < 0 on error
  */
-static SceUID sce_exe_alloc(SceUID pid, void **ptr, uintptr_t *exe_addr, SceUID *exe_res, size_t align, size_t size) {
-    SceKernelAllocMemBlockKernelOpt opt;
-    SceKernelMemBlockType type;
-    SceUID res, blkid;
-
+static SceUID sce_exe_alloc(MemState &mem, SceUID pid, Ptr<void> *ptr, Address *exe_addr, SceUID *exe_res, SceSize align, SceSize size) {
+    //    SceKernelAllocMemBlockKernelOpt opt;
+    //    SceKernelMemBlockType type;
+    //    SceUID res, blkid;
+    Address res;
     LOG("Allocating exec slab for %x size 0x%08X", pid, size);
     // allocate exe mem
+    /*
     memset(&opt, 0, sizeof(opt));
     opt.size = sizeof(opt);
     opt.attr = 0xA0000000 | 0x400000;
@@ -79,7 +85,14 @@ static SceUID sce_exe_alloc(SceUID pid, void **ptr, uintptr_t *exe_addr, SceUID 
         type = SCE_KERNEL_MEMBLOCK_TYPE_USER_RX;
         opt.attr |= 0x80080;
         opt.pid = pid;
+    }*/
+    if (align) {
+        *exe_addr = alloc_aligned(mem, size, "taislab", align);
+    } else {
+        *exe_addr = alloc(mem, size, "taislab");
     }
+    *exe_res = *exe_addr;
+    /*
     *exe_res = ksceKernelAllocMemBlock("taislab", type, size, &opt);
     LOG("ksceKernelAllocMemBlock(taislab): 0x%08X", *exe_res);
     if (*exe_res < 0) {
@@ -127,7 +140,14 @@ static SceUID sce_exe_alloc(SceUID pid, void **ptr, uintptr_t *exe_addr, SceUID 
 err1:
     ksceKernelFreeMemBlock(blkid);
 err2:
-    ksceKernelFreeMemBlock(*exe_res);
+    ksceKernelFreeMemBlock(*exe_res);*/
+    if (align) {
+        res = alloc_aligned(mem, size, "taislab", align)
+    } else {
+        res = alloc(mem, size, "taislab");
+    }
+    *ptr = Ptr<void>(res);
+
     return res;
 }
 
@@ -139,10 +159,10 @@ err2:
  *
  * @return     Zero
  */
-static int sce_exe_free(SceUID write_res, SceUID exe_res) {
+static int sce_exe_free(MemState &mem, SceUID write_res, SceUID exe_res) {
     LOG("freeing slab %x, mirror %x", exe_res, write_res);
-    ksceKernelFreeMemBlock(write_res);
-    ksceKernelFreeMemBlock(exe_res);
+    free(mem, write_res);
+    free(mem, exe_res);
     return 0;
 }
 
@@ -165,196 +185,183 @@ static inline uint32_t next_pow_2(uint32_t v) {
     return v;
 }
 
-void slab_init(struct slab_chain *const sch, const size_t itemsize, SceUID pid)
-{
-    assert(sch != NULL);
+void slab_init(MemState &mem, const Ptr<slab_chain> sch_p, const SceSize itemsize, SceUID pid) {
+    assert(sch != nullptr);
     assert(itemsize >= 1 && itemsize <= SIZE_MAX);
     assert(POWEROF2(slab_pagesize));
-
+    auto sch = sch_p.get(mem);
     sch->itemsize = itemsize;
     sch->pid = pid;
 
-    const size_t data_offset = offsetof(struct slab_header, data);
-    const size_t least_slabsize = data_offset + 64 * sch->itemsize;
-    sch->slabsize = (size_t) next_pow_2(least_slabsize);
+    const SceSize data_offset = offsetof(struct slab_header, data);
+    const SceSize least_slabsize = data_offset + 64 * sch->itemsize;
+    sch->slabsize = (SceSize)next_pow_2(least_slabsize);
     sch->itemcount = 64;
 
     if (sch->slabsize - least_slabsize != 0) {
-        const size_t shrinked_slabsize = sch->slabsize >> 1;
+        const SceSize shrinked_slabsize = sch->slabsize >> 1;
 
-        if (data_offset < shrinked_slabsize &&
-            shrinked_slabsize - data_offset >= 2 * sch->itemsize) {
-
+        if (data_offset < shrinked_slabsize && shrinked_slabsize - data_offset >= 2 * sch->itemsize) {
             sch->slabsize = shrinked_slabsize;
             sch->itemcount = (shrinked_slabsize - data_offset) / sch->itemsize;
         }
     }
 
-    sch->pages_per_alloc = sch->slabsize > slab_pagesize ?
-        sch->slabsize : slab_pagesize;
+    sch->pages_per_alloc = sch->slabsize > slab_pagesize ? sch->slabsize : slab_pagesize;
 
     sch->empty_slotmask = ~SLOTS_ALL_ZERO >> (64 - sch->itemcount);
     sch->initial_slotmask = sch->empty_slotmask ^ SLOTS_FIRST;
     sch->alignment_mask = ~(sch->slabsize - 1);
-    sch->partial = sch->empty = sch->full = NULL;
+    sch->partial = sch->empty = sch->full = nullptr;
 
     assert(slab_is_valid(sch));
 }
 
-void *slab_alloc(struct slab_chain *const sch, uintptr_t *exe_addr)
-{
-    assert(sch != NULL);
+Ptr<void> slab_alloc(MemState &mem, const Ptr<slab_chain> sch_p, uintptr_t *exe_addr) {
+    assert(sch != nullptr);
     assert(slab_is_valid(sch));
 
-    if (LIKELY(sch->partial != NULL)) {
-        /* found a partial slab, locate the first free slot */
-        register const size_t slot = FIRST_FREE_SLOT(sch->partial->slots);
-        sch->partial->slots ^= SLOTS_FIRST << slot;
+    auto sch = sch_p.get(mem);
 
-        if (UNLIKELY(sch->partial->slots == SLOTS_ALL_ZERO)) {
+    if (LIKELY(sch->partial.address() != 0)) {
+        /* found a partial slab, locate the first free slot */
+        register const SceSize slot = FIRST_FREE_SLOT(sch->partial.get(mem)->slots);
+        sch->partial.get(mem)->slots ^= SLOTS_FIRST << slot;
+
+        if (UNLIKELY(sch->partial.get(mem)->slots == SLOTS_ALL_ZERO)) {
             /* slab has become full, change state from partial to full */
-            struct slab_header *const tmp = sch->partial;
+            const auto tmp = sch->partial;
 
             /* skip first slab from partial list */
-            if (LIKELY((sch->partial = sch->partial->next) != NULL))
-                sch->partial->prev = NULL;
+            if (LIKELY((sch->partial = sch->partial.get(mem)->next).address() != 0))
+                sch->partial.get(mem)->prev = nullptr;
 
-            if (LIKELY((tmp->next = sch->full) != NULL))
-                sch->full->prev = tmp;
+            if (LIKELY((tmp.get(mem)->next = sch->full).address() != 0))
+                sch->full.get(mem)->prev = tmp;
 
             sch->full = tmp;
-            *exe_addr = sch->full->exe_data + slot * sch->itemsize;
-            return sch->full->data + slot * sch->itemsize;
+            *exe_addr = sch->full.get(mem)->exe_data + slot * sch->itemsize;
+            return sch->full.get(mem)->data + slot * sch->itemsize;
         } else {
-            *exe_addr = sch->partial->exe_data + slot * sch->itemsize;
-            return sch->partial->data + slot * sch->itemsize;
+            *exe_addr = sch->partial.get(mem)->exe_data + slot * sch->itemsize;
+            return sch->partial.get(mem)->data + slot * sch->itemsize;
         }
-    } else if (LIKELY((sch->partial = sch->empty) != NULL)) {
+    } else if (LIKELY((sch->partial = sch->empty).address() != 0)) {
         /* found an empty slab, change state from empty to partial */
-        if (LIKELY((sch->empty = sch->empty->next) != NULL))
-            sch->empty->prev = NULL;
+        if (LIKELY((sch->empty = sch->empty.get(mem)->next).address() != 0))
+            sch->empty.get(mem)->prev = nullptr;
 
-        sch->partial->next = NULL;
+        sch->partial.get(mem)->next = nullptr;
 
         /* slab is located either at the beginning of page, or beyond */
-        UNLIKELY(sch->partial->refcount != 0) ?
-            sch->partial->refcount++ : sch->partial->page->refcount++;
+        UNLIKELY(sch->partial.get(mem)->refcount != 0) ? sch->partial.get(mem)->refcount++ : sch->partial.get(mem)->page.get(mem)->refcount++;
 
-        sch->partial->slots = sch->initial_slotmask;
-        *exe_addr = sch->partial->exe_data;
-        return sch->partial->data;
+        sch->partial.get(mem)->slots = sch->initial_slotmask;
+        *exe_addr = sch->partial.get(mem)->exe_data;
+        return sch->partial.get(mem)->data;
     } else {
         /* no empty or partial slabs available, create a new one */
         SceUID write_res, exe_res;
-        uintptr_t exe_data;
-        if ((write_res = sce_exe_alloc(sch->pid, (void **)&sch->partial, &exe_data,
-                          &exe_res, sch->slabsize, sch->pages_per_alloc)) < 0) {
+        Address exe_data;
+        if ((write_res = sce_exe_alloc(mem, sch->pid, (Ptr<void> *)&sch->partial, &exe_data,
+                 &exe_res, sch->slabsize, sch->pages_per_alloc))
+            < 0) {
             *exe_addr = 0;
-            return sch->partial = NULL;
+            return sch->partial = nullptr;
         }
-        sch->partial->write_res = write_res;
-        sch->partial->exe_res = exe_res;
-        sch->partial->exe_data = exe_data + offsetof(struct slab_header, data);
+        sch->partial.get(mem)->write_res = write_res;
+        sch->partial.get(mem)->exe_res = exe_res;
+        sch->partial.get(mem)->exe_data = exe_data + offsetof(struct slab_header, data);
         exe_data += sch->slabsize;
 
-        struct slab_header *prev = NULL;
+        Ptr<slab_header> prev{};
 
-        const char *const page_end =
-            (char *) sch->partial + sch->pages_per_alloc;
+        const auto page_end = sch->partial.address() + sch->pages_per_alloc;
 
-        union {
-            const char *c;
-            struct slab_header *const s;
-        } curr = {
-            .c = (const char *) sch->partial + sch->slabsize
-        };
+        auto curr = Ptr<slab_header>(sch->partial.address() + sch->slabsize);
 
-        __builtin_prefetch(sch->partial, 1);
+        //__builtin_prefetch(sch->partial, 1);
 
-        sch->partial->prev = sch->partial->next = NULL;
-        sch->partial->refcount = 1;
-        sch->partial->slots = sch->initial_slotmask;
+        sch->partial.get(mem)->prev = sch->partial.get(mem)->next = nullptr;
+        sch->partial.get(mem)->refcount = 1;
+        sch->partial.get(mem)->slots = sch->initial_slotmask;
 
-        if (LIKELY(curr.c != page_end)) {
-            curr.s->prev = NULL;
-            curr.s->refcount = 0;
-            curr.s->page = sch->partial;
-            curr.s->write_res = write_res;
-            curr.s->exe_res = exe_res;
-            curr.s->exe_data = exe_data;
+        if (LIKELY(curr.address() != page_end)) {
+            auto curr_s = curr.get(mem);
+            curr_s->prev = nullptr;
+            curr_s->refcount = 0;
+            curr_s->page = sch->partial;
+            curr_s->write_res = write_res;
+            curr_s->exe_res = exe_res;
+            curr_s->exe_data = exe_data;
             exe_data += sch->slabsize;
-            curr.s->slots = sch->empty_slotmask;
-            sch->empty = prev = curr.s;
+            curr_s->slots = sch->empty_slotmask;
+            sch->empty = prev = curr;
 
-            while (LIKELY((curr.c += sch->slabsize) != page_end)) {
-                prev->next = curr.s;
-                curr.s->prev = prev;
-                curr.s->refcount = 0;
-                curr.s->page = sch->partial;
-                curr.s->write_res = write_res;
-                curr.s->exe_res = exe_res;
-                curr.s->exe_data = exe_data;
+            while (LIKELY((curr = Ptr<slab_header>(curr.address() + sch->slabsize)).address() != page_end)) {
+                prev.get(mem)->next = curr;
+                curr_s->prev = prev;
+                curr_s->refcount = 0;
+                curr_s->page = sch->partial;
+                curr_s->write_res = write_res;
+                curr_s->exe_res = exe_res;
+                curr_s->exe_data = exe_data;
                 exe_data += sch->slabsize;
-                curr.s->slots = sch->empty_slotmask;
-                prev = curr.s;
+                curr_s->slots = sch->empty_slotmask;
+                prev = curr;
             }
 
-            prev->next = NULL;
+            prev.get(mem)->next = nullptr;
         }
 
-        *exe_addr = sch->partial->exe_data;
-        return sch->partial->data;
+        *exe_addr = sch->partial.get(mem)->exe_data;
+        return sch->partial.get(mem)->data;
     }
 
     /* unreachable */
 }
 
-void slab_free(struct slab_chain *const sch, const void *const addr)
-{
-    assert(sch != NULL);
+void slab_free(MemState &mem, const Ptr<slab_chain> sch, const Ptr<const void> addr) {
+    assert(sch != nullptr);
     assert(slab_is_valid(sch));
-    assert(addr != NULL);
+    assert(addr != nullptr);
 
-    struct slab_header *const slab = (void *)
-        ((uintptr_t) addr & sch->alignment_mask);
+    const auto slab = Ptr<slab_header>(addr.address() & sch.get(mem)->alignment_mask);
 
-    register const int slot = ((char *) addr - (char *) slab -
-        offsetof(struct slab_header, data)) / sch->itemsize;
+    const int slot = (addr.address() - slab.address() - offsetof(struct slab_header, data)) / sch.get(mem)->itemsize;
 
-    if (UNLIKELY(slab->slots == SLOTS_ALL_ZERO)) {
+    if (UNLIKELY(slab.get(mem)->slots == SLOTS_ALL_ZERO)) {
         /* target slab is full, change state to partial */
-        slab->slots = SLOTS_FIRST << slot;
+        slab.get(mem)->slots = SLOTS_FIRST << slot;
 
-        if (LIKELY(slab != sch->full)) {
-            if (LIKELY((slab->prev->next = slab->next) != NULL))
-                slab->next->prev = slab->prev;
+        if (LIKELY(slab != sch.get(mem)->full)) {
+            if (LIKELY((slab.get(mem)->prev.get(mem)->next = slab.get(mem)->next).address() != 0))
+                slab.get(mem)->next.get(mem)->prev = slab.get(mem)->prev;
 
-            slab->prev = NULL;
-        } else if (LIKELY((sch->full = sch->full->next) != NULL)) {
-            sch->full->prev = NULL;
+            slab.get(mem)->prev = nullptr;
+        } else if (LIKELY((sch.get(mem)->full = sch.get(mem)->full.get(mem)->next).address() != 0)) {
+            sch.get(mem)->full.get(mem)->prev = nullptr;
         }
 
-        slab->next = sch->partial;
+        slab.get(mem)->next = sch.get(mem)->partial;
 
-        if (LIKELY(sch->partial != NULL))
-            sch->partial->prev = slab;
+        if (LIKELY(sch.get(mem)->partial.address() != 0))
+            sch.get(mem)->partial.get(mem)->prev = slab;
 
-        sch->partial = slab;
-    } else if (UNLIKELY(ONE_USED_SLOT(slab->slots, sch->empty_slotmask))) {
+        sch.get(mem)->partial = slab;
+    } else if (UNLIKELY(ONE_USED_SLOT(slab.get(mem)->slots, sch.get(mem)->empty_slotmask))) {
         /* target slab is partial and has only one filled slot */
-        if (UNLIKELY(slab->refcount == 1 || (slab->refcount == 0 &&
-            slab->page->refcount == 1))) {
-
+        if (UNLIKELY(slab.get(mem)->refcount == 1 || (slab.get(mem)->refcount == 0 && slab.get(mem)->page.get(mem)->refcount == 1))) {
             /* unmap the whole page if this slab is the only partial one */
-            if (LIKELY(slab != sch->partial)) {
-                if (LIKELY((slab->prev->next = slab->next) != NULL))
-                    slab->next->prev = slab->prev;
-            } else if (LIKELY((sch->partial = sch->partial->next) != NULL)) {
-                sch->partial->prev = NULL;
+            if (LIKELY(slab != sch.get(mem)->partial)) {
+                if (LIKELY((slab.get(mem)->prev.get(mem)->next = slab.get(mem)->next).address() != 0))
+                    slab.get(mem)->next.get(mem)->prev = slab.get(mem)->prev;
+            } else if (LIKELY((sch.get(mem)->partial = sch.get(mem)->partial.get(mem)->next).address() != 0)) {
+                sch.get(mem)->partial.get(mem)->prev = nullptr;
             }
 
-            void *const page = UNLIKELY(slab->refcount != 0) ? slab : slab->page;
-            const char *const page_end = (char *) page + sch->pages_per_alloc;
+            auto page = UNLIKELY(slab.get(mem)->refcount != 0) ? slab : slab.get(mem)->page;
+            auto page_end = page.address() + sch.get(mem)->pages_per_alloc;
             char found_head = 0;
 
             union {
@@ -362,112 +369,108 @@ void slab_free(struct slab_chain *const sch, const void *const addr)
                 const struct slab_header *const s;
             } s;
 
-            for (s.c = page; s.c != page_end; s.c += sch->slabsize) {
-                if (UNLIKELY(s.s == sch->empty))
+            for (auto s = page; s.address() != page_end; s = Ptr<slab_header>(s.address() + sch.get(mem)->slabsize)) {
+                if (UNLIKELY(s == sch.get(mem)->empty))
                     found_head = 1;
-                else if (UNLIKELY(s.s == slab))
+                else if (UNLIKELY(s == slab))
                     continue;
-                else if (LIKELY((s.s->prev->next = s.s->next) != NULL))
-                    s.s->next->prev = s.s->prev;
+                else if (LIKELY((s.get(mem)->prev.get(mem)->next = s.get(mem)->next).address() != 0))
+                    s.get(mem)->next.get(mem)->prev = s.get(mem)->prev;
             }
 
-            if (UNLIKELY(found_head && (sch->empty = sch->empty->next) != NULL))
-                sch->empty->prev = NULL;
+            if (UNLIKELY(found_head && (sch.get(mem)->empty = sch.get(mem)->empty.get(mem)->next).address() != 0))
+                sch.get(mem)->empty.get(mem)->prev = nullptr;
 
-            sce_exe_free(slab->write_res, slab->exe_res);
+            sce_exe_free(mem, slab.get(mem)->write_res, slab.get(mem)->exe_res);
         } else {
-            slab->slots = sch->empty_slotmask;
+            slab.get(mem)->slots = sch.get(mem)->empty_slotmask;
 
-            if (LIKELY(slab != sch->partial)) {
-                if (LIKELY((slab->prev->next = slab->next) != NULL))
-                    slab->next->prev = slab->prev;
+            if (LIKELY(slab != sch.get(mem)->partial)) {
+                if (LIKELY((slab.get(mem)->prev.get(mem)->next = slab.get(mem)->next).address() != 0))
+                    slab.get(mem)->next.get(mem)->prev = slab.get(mem)->prev;
 
-                slab->prev = NULL;
-            } else if (LIKELY((sch->partial = sch->partial->next) != NULL)) {
-                sch->partial->prev = NULL;
+                slab.get(mem)->prev = nullptr;
+            } else if (LIKELY((sch.get(mem)->partial = sch.get(mem)->partial.get(mem)->next).address() != 0)) {
+                sch.get(mem)->partial.get(mem)->prev = nullptr;
             }
 
-            slab->next = sch->empty;
+            slab.get(mem)->next = sch.get(mem)->empty;
 
-            if (LIKELY(sch->empty != NULL))
-                sch->empty->prev = slab;
+            if (LIKELY(sch.get(mem)->empty.address() != 0))
+                sch.get(mem)->empty.get(mem)->prev = slab;
 
-            sch->empty = slab;
+            sch.get(mem)->empty = slab;
 
-            UNLIKELY(slab->refcount != 0) ?
-                slab->refcount-- : slab->page->refcount--;
+            UNLIKELY(slab.get(mem)->refcount != 0) ? slab.get(mem)->refcount-- : slab.get(mem)->page.get(mem)->refcount--;
         }
     } else {
         /* target slab is partial, no need to change state */
-        slab->slots |= SLOTS_FIRST << slot;
+        slab.get(mem)->slots |= SLOTS_FIRST << slot;
     }
 }
 
-uintptr_t slab_getmirror(struct slab_chain *const sch, const void *const addr)
-{
-    assert(sch != NULL);
+Address slab_getmirror(MemState &mem, const Ptr<slab_chain> sch, const Ptr<const void> addr) {
+    assert(sch != nullptr);
     assert(slab_is_valid(sch));
-    assert(addr != NULL);
+    assert(addr != nullptr);
 
-    struct slab_header *const slab = (void *)
-        ((uintptr_t) addr & sch->alignment_mask);
+    Ptr<slab_header> slab = Ptr<slab_header>(addr.address() & sch.get(mem)->alignment_mask);
 
-
-    return slab->exe_data - offsetof(struct slab_header, data) + (ptrdiff_t)((char *) addr - (char *) slab);
+    return slab.get(mem)->exe_data - offsetof(struct slab_header, data) + addr.address() - slab.address();
 }
 
-void slab_traverse(const struct slab_chain *const sch, void (*fn)(const void *))
-{
-    assert(sch != NULL);
-    assert(fn != NULL);
+void slab_traverse(MemState &mem, const Ptr<const slab_chain> sch, void (*fn)(Ptr<const void>)) {
+    assert(sch != nullptr);
+    assert(fn != nullptr);
     assert(slab_is_valid(sch));
 
-    const struct slab_header *slab;
-    const char *item, *end;
-    const size_t data_offset = offsetof(struct slab_header, data);
+    Ptr<const slab_header> slab;
+    Address item, end;
+    const SceSize data_offset = offsetof(struct slab_header, data);
 
-    for (slab = sch->partial; slab; slab = slab->next) {
-        item = (const char *) slab + data_offset;
-        end = item + sch->itemcount * sch->itemsize;
+    for (slab = sch.get(mem)->partial; slab; slab = slab.get(mem)->next) {
+        item = slab.address() + data_offset;
+        end = item + sch.get(mem)->itemcount * sch.get(mem)->itemsize;
         uint64_t mask = SLOTS_FIRST;
 
         do {
-            if (!(slab->slots & mask))
-                fn(item);
+            if (!(slab.get(mem)->slots & mask))
+                fn(Ptr<const void>(item));
 
             mask <<= 1;
-        } while ((item += sch->itemsize) != end);
+        } while ((item += sch.get(mem)->itemsize) != end);
     }
 
-    for (slab = sch->full; slab; slab = slab->next) {
-        item = (const char *) slab + data_offset;
-        end = item + sch->itemcount * sch->itemsize;
+    for (slab = sch.get(mem)->full; slab; slab = slab.get(mem)->next) {
+        item = slab.address() + data_offset;
+        end = item + sch.get(mem)->itemcount * sch.get(mem)->itemsize;
 
-        do fn(item);
-        while ((item += sch->itemsize) != end);
+        do
+            fn(Ptr<const void>(item));
+        while ((item += sch.get(mem)->itemsize) != end);
     }
 }
 
-void slab_destroy(const struct slab_chain *const sch)
-{
-    assert(sch != NULL);
+void slab_destroy(MemState &mem, const Ptr<const slab_chain> sch) {
+    assert(sch != nullptr);
     assert(slab_is_valid(sch));
 
-    struct slab_header *const heads[] = {sch->partial, sch->empty, sch->full};
-    struct slab_header *pages_head = NULL, *pages_tail;
+    auto heads[] = { sch.get(mem)->partial, sch.get(mem)->empty, sch.get(mem)->full };
+    Ptr<slab_header> pages_head{};
+    Ptr<slab_header> pages_tail;
 
-    for (size_t i = 0; i < 3; ++i) {
-        struct slab_header *slab = heads[i];
+    for (SceSize i = 0; i < 3; ++i) {
+        auto slab = heads[i];
 
-        while (slab != NULL) {
-            if (slab->refcount != 0) {
-                struct slab_header *const page = slab;
-                slab = slab->next;
+        while (slab != nullptr) {
+            if (slab.get(mem)->refcount != 0) {
+                const Ptr<const slab_chain> page = slab;
+                slab = slab.get(mem)->next;
 
-                if (UNLIKELY(pages_head == NULL))
+                if (UNLIKELY(pages_head.address() == 0))
                     pages_head = page;
                 else
-                    pages_tail->next = page;
+                    pages_tail.get(mem)->next = page;
 
                 pages_tail = page;
             } else {
@@ -476,14 +479,14 @@ void slab_destroy(const struct slab_chain *const sch)
         }
     }
 
-    if (LIKELY(pages_head != NULL)) {
-        pages_tail->next = NULL;
-        struct slab_header *page = pages_head;
+    if (LIKELY(pages_head.address() != 0)) {
+        pages_tail.get(mem)->next = nullptr;
+        Ptr<slab_header> page = pages_head;
 
         do {
-            struct slab_header *target = page;
-            page = page->next;
-            sce_exe_free(target->write_res, target->exe_res);
-        } while (page != NULL);
+            auto target = page;
+            page = page.get(mem)->next;
+            sce_exe_free(mem, target.get(mem)->write_res, target.get(mem)->exe_res);
+        } while (page.address() != 0);
     }
 }

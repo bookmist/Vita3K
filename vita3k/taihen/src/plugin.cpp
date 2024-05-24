@@ -5,42 +5,34 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
-#include <psp2kern/io/fcntl.h>
-#include <psp2kern/kernel/sysmem.h>
-#include <psp2kern/kernel/modulemgr.h>
-#include <psp2kern/kernel/threadmgr.h>
-#include <taihen/parser.h>
-#include "error.h"
-#include "plugin.h"
-#include "taihen_internal.h"
+#include "taihen/plugin.h"
 
-/** Memory reference to config read buffer */
-static SceUID g_config_blk;
+#include "io/device.h"
+#include "io/functions.h"
+#include "kernel/cpu_protocol.h"
+#include "kernel/types.h"
+#include "taihen/error.h"
+#include "taihen/taihen.h"
 
-/** Buffer for the config data */
-static char *g_config = NULL;
-
-/** Mutex for accessing g_config */
-static SceUID g_config_lock;
-
-/** Set for delayed load of config */
-static int g_delayed_load_config;
-
-/** Set for delayed load of kernel plugins */
-static int g_delayed_load_kernel_plugins;
+#include <emuenv/state.h>
+#include <io/vfs.h>
+#include <module/module.h>
+#include <taihen/taihen-parser/parser.h>
+#include <util/log.h>
 
 int plugin_init(void) {
-  g_config_lock = ksceKernelCreateMutex("tai_config_lock", SCE_KERNEL_MUTEX_ATTR_RECURSIVE, 0, NULL);
-  LOG("ksceKernelCreateMutex(tai_config_lock): 0x%08X", g_config_lock);
-  if (g_config_lock < 0) {
-    return g_config_lock;
-  }
-  return TAI_SUCCESS;
+    /*
+    g_config_lock = ksceKernelCreateMutex("tai_config_lock", SCE_KERNEL_MUTEX_ATTR_RECURSIVE, 0, NULL);
+    LOG("ksceKernelCreateMutex(tai_config_lock): 0x%08X", g_config_lock);
+    if (g_config_lock < 0) {
+        return g_config_lock;
+    }*/
+    return TAI_SUCCESS;
 }
 
 void plugin_deinit(void) {
-  LOG("Cleaning up plugin subsystem.");
-  ksceKernelDeleteMutex(g_config_lock);
+    LOG("Cleaning up plugin subsystem.");
+    // ksceKernelDeleteMutex(g_config_lock);
 }
 
 /**
@@ -53,90 +45,44 @@ void plugin_deinit(void) {
  * @return     Zero on success, < 0 on error
  *             - TAI_ERROR_BLOCKING if attempted to call during plugin load
  */
-int plugin_load_config(void) {
-  SceUID fd;
-  SceOff len;
-  int ret;
-  char *config;
-  int rd, total;
+int plugin_load_config(EmuEnvState &emuenv) {
+    /** Path to the taiHEN configuration file */
+    auto constexpr TAIHEN_CONFIG_FILE = "tai/config.txt";
+    auto constexpr TAIHEN_CONFIG_DEVICE = VitaIoDevice::ux0;
+    /** Fallback if the configuration file is not found. */
+    auto constexpr TAIHEN_RECOVERY_CONFIG_DEVICE = VitaIoDevice::ur0;
 
-  if (ksceKernelTryLockMutex(g_config_lock, 1) < 0) {
-    return TAI_ERROR_BLOCKING;
-  }
+    int ret;
+    std::string config;
 
-  if (g_config) {
-    LOG("freeing previous config");
-    ksceKernelFreeMemBlock(g_config_blk);
-    g_config = NULL;
-  }
-
-  LOG("opening config %s", TAIHEN_CONFIG_FILE);
-  fd = ksceIoOpen(TAIHEN_CONFIG_FILE, SCE_O_RDONLY, 0);
-  if (fd < 0) {
-    LOG("failed to open config %s", TAIHEN_CONFIG_FILE);
-    LOG("opening recovery config %s", TAIHEN_RECOVERY_CONFIG_FILE);
-    fd = ksceIoOpen(TAIHEN_RECOVERY_CONFIG_FILE, SCE_O_RDONLY, 0);
-    if (fd < 0) {
-      ret = fd;
-      goto end;
+    auto module_data = get_module_data(emuenv);
+    if (!module_data->g_config_lock.try_lock()) {
+        return TAI_ERROR_BLOCKING;
     }
-  }
-
-  len = ksceIoLseek(fd, 0, SCE_SEEK_END);
-  if (len < 0) {
-    LOG("failed to seek config");
-    ksceIoClose(fd);
-    ret = TAI_ERROR_SYSTEM;
-    goto end;
-  }
-
-  ksceIoLseek(fd, 0, SCE_SEEK_SET);
-
-  LOG("allocating %d bytes for config", (len + 0xfff) & ~0xfff);
-  g_config_blk = ksceKernelAllocMemBlock("tai_config", SCE_KERNEL_MEMBLOCK_TYPE_KERNEL_RW, (len + 0xfff) & ~0xfff, NULL);
-  if (g_config_blk < 0) {
-    LOG("failed to allocate memory: %x", g_config_blk);
-    ksceIoClose(fd);
-    ret = g_config_blk;
-    goto end;
-  }
-
-  ret = ksceKernelGetMemBlockBase(g_config_blk, (void **)&config);
-  if (ret < 0) {
-    LOG("failed to get base for %x: %x", g_config_blk, ret);
-    ksceIoClose(fd);
-    goto end;
-  }
-
-  LOG("reading config to memory");
-  rd = total = 0;
-  while (total < len) {
-    rd = ksceIoRead(fd, config+total, len-total);
-    if (rd < 0) {
-      LOG("failed to read config: rd %x, total %x, len %x", rd, total, len);
-      ret = rd;
-      break;
+    std::lock_guard<std::mutex> lock(module_data->g_config_lock, std::adopt_lock);
+    vfs::FileBuffer config_buffer;
+    bool res = vfs::read_file(TAIHEN_CONFIG_DEVICE, config_buffer, emuenv.pref_path, TAIHEN_CONFIG_FILE);
+    if (!res) {
+        LOG_ERROR("failed to open config {}:{}", TAIHEN_CONFIG_DEVICE, TAIHEN_CONFIG_FILE);
+        LOG_INFO("opening recovery config {}:{}", TAIHEN_RECOVERY_CONFIG_DEVICE, TAIHEN_CONFIG_FILE);
+        res = vfs::read_file(TAIHEN_RECOVERY_CONFIG_DEVICE, config_buffer, emuenv.pref_path, TAIHEN_CONFIG_FILE);
+        if (!res) {
+            LOG_ERROR("Failed to open recovery config  ur0:tai/config.txt");
+            return TAI_ERROR_NOT_FOUND;
+        }
     }
-    total += rd;
-  }
+    if (!config_buffer.empty()) {
+        config = std::string(reinterpret_cast<char *>(config_buffer.data()), config_buffer.size());
+    }
 
-  ksceIoClose(fd);
-  if (ret < 0) {
-    ksceKernelFreeMemBlock(g_config_blk);
-    goto end;
-  }
+    if ((ret = taihen_config_validate(module_data->g_config.data())) != 0) {
+        LOG("config parsing failed: {:X}", ret);
+        module_data->g_config.clear();
+        return ret;
+    }
 
-  if ((ret = taihen_config_validate(config)) != 0) {
-    LOG("config parsing failed: %x", ret);
-    ksceKernelFreeMemBlock(g_config_blk);
-    goto end;
-  }
-
-  g_config = config;
-  ret = TAI_SUCCESS;
-end:
-  ksceKernelUnlockMutex(g_config_lock, 1);
-  return ret;
+    module_data->g_config = config;
+    return TAI_SUCCESS;
 }
 
 /**
@@ -145,15 +91,15 @@ end:
  * @return     Zero on success, < 0 on error
  *             - TAI_ERROR_BLOCKING if attempted to call during plugin load
  */
-int plugin_free_config(void) {
-  if (ksceKernelTryLockMutex(g_config_lock, 1) < 0) {
-    return TAI_ERROR_BLOCKING;
-  }
-  if (g_config) {
-    ksceKernelFreeMemBlock(g_config_blk);
-  }
-  ksceKernelUnlockMutex(g_config_lock, 1);
-  return TAI_SUCCESS;
+int plugin_free_config(EmuEnvState &emuenv) {
+    auto module_data = get_module_data(emuenv);
+
+    if (!module_data->g_config_lock.try_lock()) {
+        return TAI_ERROR_BLOCKING;
+    }
+    std::lock_guard<std::mutex> lock(module_data->g_config_lock, std::adopt_lock);
+    module_data->g_config.clear();
+    return TAI_SUCCESS;
 }
 
 /**
@@ -163,13 +109,17 @@ int plugin_free_config(void) {
  * @param[in]  param  Pointer to the PID to load plugin to.
  */
 static void plugin_load(const char *path, void *param) {
-  SceUID pid = *(SceUID *)param;
-  int ret;
-  int result;
+    EmuEnvState &emuenv = *(EmuEnvState *)param;
+    int ret;
+    int result;
 
-  LOG("pid:%x loading module %s", pid, path);
-  ret = ksceKernelLoadStartModuleForPid(pid, path, 0, NULL, 0, NULL, &result);
-  LOG("load result: %x", ret);
+    LOG("loading module {}", path);
+    int thread_id = 0;
+    // ret = ksceKernelLoadStartModuleForPid(pid, path, 0, NULL, 0, NULL, &result);
+    // ret = CALL_EXPORT(_sceKernelLoadStartModule, path, 0, nullptr, 0, nullptr, &result);
+    auto module_data = get_module_data(emuenv);
+    module_data->plugins_to_load.emplace_back(path);
+    LOG("load result: %x", ret);
 }
 
 /**
@@ -182,26 +132,29 @@ static void plugin_load(const char *path, void *param) {
  * @return     Zero on success, < 0 on error
  *             - TAI_ERROR_SYSTEM if the config file is invalid
  */
-int plugin_load_all(SceUID pid, const char *titleid) {
-  int ret;
-  g_delayed_load_config = 0;
-  g_delayed_load_kernel_plugins = 0;
-  ksceKernelLockMutex(g_config_lock, 1, NULL);
-  if (g_config) {
-    taihen_config_parse(g_config, titleid, plugin_load, &pid);
-    ret = TAI_SUCCESS;
-  } else {
-    LOG("config not loaded");
-    ret = TAI_ERROR_SYSTEM;
-  }
-  ksceKernelUnlockMutex(g_config_lock, 1);
-  if (g_delayed_load_config) {
-    plugin_load_config();
-  }
-  if (g_delayed_load_kernel_plugins) {
-    plugin_load_all(KERNEL_PID, "KERNEL");
-  }
-  return ret;
+int plugin_load_all(EmuEnvState &emuenv, SceUID pid, const char *titleid) {
+    int ret;
+    auto module_data = get_module_data(emuenv);
+    module_data->g_delayed_load_config = 0;
+    module_data->g_delayed_load_kernel_plugins = 0;
+    {
+        std::lock_guard<std::mutex> lock(module_data->g_config_lock);
+        if (!module_data->g_config.empty()) {
+            module_data->plugins_to_load.clear();
+            taihen_config_parse(module_data->g_config.c_str(), titleid, plugin_load, &emuenv);
+            ret = TAI_SUCCESS;
+        } else {
+            LOG("config not loaded");
+            ret = TAI_ERROR_SYSTEM;
+        }
+    }
+    if (module_data->g_delayed_load_config) {
+        plugin_load_config();
+    }
+    if (module_data->g_delayed_load_kernel_plugins) {
+        plugin_load_all(KERNEL_PID, "KERNEL");
+    }
+    return ret;
 }
 
 /**
@@ -211,17 +164,18 @@ int plugin_load_all(SceUID pid, const char *titleid) {
  *             needs taiHEN to reload it. This cannot be done normally because
  *             the config.txt is being parsed still, so this schedules it to be
  *             done afterwards.
- *             
+ *
  *             This function does nothing if called outside of a start handler.
  *
  * @param[in]  load_kernel  Load all kernel plugins as well.
  *
  * @return     Zero
  */
-int plugin_delayed_load_config(int load_kernel) {
-  g_delayed_load_config = 1;
-  if (load_kernel) {
-    g_delayed_load_kernel_plugins = 1;
-  }
-  return TAI_SUCCESS;
+int plugin_delayed_load_config(EmuEnvState &emuenv, int load_kernel) {
+    auto module_data = get_module_data(emuenv);
+    module_data->g_delayed_load_config = 1;
+    if (load_kernel) {
+        module_data->g_delayed_load_kernel_plugins = 1;
+    }
+    return TAI_SUCCESS;
 }

@@ -396,14 +396,6 @@ int module_stop(EmuEnvState &emuenv, SceSize argc, const void *args) {
     return SCE_KERNEL_STOP_SUCCESS;
 }
 
-/**
- * @brief      Module Exit handler (unused)
- *
- *             This function is currently unused on retail units.
- */
-void module_exit(void) {
-}
-
 // taihen-kernel
 
 DECL_EXPORT(int, sceKernelGetProcessId) {
