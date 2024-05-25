@@ -5,7 +5,7 @@
 
 #include "kernel/cpu_protocol.h"
 #include "kernel/types.h"
-#include "proc_map.h"
+// #include "proc_map.h"
 #include "slab.h"
 
 #include <stdint.h>
@@ -47,7 +47,7 @@ typedef struct _tai_hook_args {
     Ptr<const char> module;
     uint32_t library_nid;
     uint32_t func_nid;
-    Ptr<const void> hook_func;
+    Ptr<void> hook_func;
 } tai_hook_args_t;
 
 /**
@@ -59,7 +59,7 @@ typedef struct _tai_offset_args {
     int segidx;
     uint32_t offset;
     int thumb;
-    Ptr<const void> source;
+    Ptr<void> source;
     SceSize source_size;
 } tai_offset_args_t;
 
@@ -87,9 +87,9 @@ typedef Ptr<void> tai_hook_ref_t;
  * @brief      Internal structure
  */
 typedef struct _tai_hook_user {
-    Ptr<_tai_hook_user> next;
-    Ptr<void> func;
-    Ptr<void> old;
+    Ptr<_tai_hook_user> next; // next hook
+    Ptr<void> func; // hook function (self)
+    Ptr<void> old; // original function
 } tai_hook_user_t;
 
 /**
@@ -194,7 +194,7 @@ struct taihen_module_data {
     Address g_patch_pool;
 
     /** The map of processes to list of patches */
-    _tai_proc_map *g_map;
+    //_tai_proc_map *g_map;
 
     /** Lock for handling hooks */
     std::mutex g_hooks_lock{};
@@ -216,8 +216,8 @@ struct taihen_module_data {
     /** Set for delayed load of kernel plugins */
     int g_delayed_load_kernel_plugins;
 
-    std::map<int, Ptr<_tai_patch>> g_patches;
-    int g_uid = 1;
+    /** Resource pointer for the heap pool */
+    SceUID g_map_pool;
 };
 struct EmuEnvState;
 taihen_module_data *get_module_data(EmuEnvState &emuenv);

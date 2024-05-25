@@ -63,8 +63,8 @@ int plugin_load_config(EmuEnvState &emuenv) {
     vfs::FileBuffer config_buffer;
     bool res = vfs::read_file(TAIHEN_CONFIG_DEVICE, config_buffer, emuenv.pref_path, TAIHEN_CONFIG_FILE);
     if (!res) {
-        LOG_ERROR("failed to open config {}:{}", TAIHEN_CONFIG_DEVICE, TAIHEN_CONFIG_FILE);
-        LOG_INFO("opening recovery config {}:{}", TAIHEN_RECOVERY_CONFIG_DEVICE, TAIHEN_CONFIG_FILE);
+        LOG_ERROR("failed to open config {}:{}", "ux0", TAIHEN_CONFIG_FILE);
+        LOG_INFO("opening recovery config {}:{}", "ur0", TAIHEN_CONFIG_FILE);
         res = vfs::read_file(TAIHEN_RECOVERY_CONFIG_DEVICE, config_buffer, emuenv.pref_path, TAIHEN_CONFIG_FILE);
         if (!res) {
             LOG_ERROR("Failed to open recovery config  ur0:tai/config.txt");
@@ -149,10 +149,10 @@ int plugin_load_all(EmuEnvState &emuenv, SceUID pid, const char *titleid) {
         }
     }
     if (module_data->g_delayed_load_config) {
-        plugin_load_config();
+        plugin_load_config(emuenv);
     }
     if (module_data->g_delayed_load_kernel_plugins) {
-        plugin_load_all(KERNEL_PID, "KERNEL");
+        plugin_load_all(emuenv, KERNEL_PID, "KERNEL");
     }
     return ret;
 }

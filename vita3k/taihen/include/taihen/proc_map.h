@@ -4,8 +4,9 @@
 #ifndef TAI_PROC_MAP_HEADER
 #define TAI_PROC_MAP_HEADER
 
-#include <psp2kern/types.h>
-#include "taihen_internal.h"
+#include "taihen/taihen.h"
+
+#include <emuenv/state.h>
 
 /**
  * @defgroup   proc_map Process Map Interface
@@ -21,18 +22,18 @@
  * @brief      The actual map in memory.
  */
 typedef struct _tai_proc_map {
-  int nbuckets;				///< Number of buckets set by `proc_map_alloc`
-  SceUID lock;				///< Mutex for accessing buckets
-  tai_proc_t *buckets[];	///< Buckets
+    int nbuckets; ///< Number of buckets set by `proc_map_alloc`
+    SceUID lock; ///< Mutex for accessing buckets
+    tai_proc_t *buckets[]; ///< Buckets
 } tai_proc_map_t;
 
-int proc_map_init(void);
-void proc_map_deinit(void);
-tai_proc_map_t *proc_map_alloc(int nbuckets);
-void proc_map_free(tai_proc_map_t *map);
-int proc_map_try_insert(tai_proc_map_t *map, tai_patch_t *patch, tai_patch_t **existing);
-int proc_map_remove_all_pid(tai_proc_map_t *map, SceUID pid, tai_patch_t **head);
-int proc_map_remove(tai_proc_map_t *map, tai_patch_t *patch);
+int proc_map_init(EmuEnvState &emuenv);
+void proc_map_deinit(EmuEnvState &emuenv);
+tai_proc_map_t *proc_map_alloc(EmuEnvState &emuenv, int nbuckets);
+void proc_map_free(EmuEnvState &emuenv, tai_proc_map_t *map);
+int proc_map_try_insert(EmuEnvState &emuenv, tai_proc_map_t *map, tai_patch_t *patch, tai_patch_t **existing);
+int proc_map_remove_all_pid(EmuEnvState &emuenv, tai_proc_map_t *map, SceUID pid, tai_patch_t **head);
+int proc_map_remove(EmuEnvState &emuenv, tai_proc_map_t *map, tai_patch_t *patch);
 
 /** @} */
 

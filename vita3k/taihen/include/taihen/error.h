@@ -4,8 +4,6 @@
 #ifndef TAI_ERROR_HEADER
 #define TAI_ERROR_HEADER
 
-#include "taihen_internal.h"
-
 #define TAI_SUCCESS 0
 #define TAI_ERROR_SYSTEM 0x90010000
 #define TAI_ERROR_MEMORY 0x90010001

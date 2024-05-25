@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <util/log.h>
 
-#define assert(x) // turn off asserts
+// #define assert(x) // turn off asserts
 
 #define SLAB_DUMP_COLOURED
 
@@ -142,7 +142,7 @@ err1:
 err2:
     ksceKernelFreeMemBlock(*exe_res);*/
     if (align) {
-        res = alloc_aligned(mem, size, "taislab", align)
+        res = alloc_aligned(mem, size, "taislab", align);
     } else {
         res = alloc(mem, size, "taislab");
     }
@@ -217,7 +217,7 @@ void slab_init(MemState &mem, const Ptr<slab_chain> sch_p, const SceSize itemsiz
     assert(slab_is_valid(sch));
 }
 
-Ptr<void> slab_alloc(MemState &mem, const Ptr<slab_chain> sch_p, uintptr_t *exe_addr) {
+Ptr<void> slab_alloc(MemState &mem, const Ptr<slab_chain> sch_p, Address *exe_addr) {
     assert(sch != nullptr);
     assert(slab_is_valid(sch));
 
@@ -225,7 +225,7 @@ Ptr<void> slab_alloc(MemState &mem, const Ptr<slab_chain> sch_p, uintptr_t *exe_
 
     if (LIKELY(sch->partial.address() != 0)) {
         /* found a partial slab, locate the first free slot */
-        register const SceSize slot = FIRST_FREE_SLOT(sch->partial.get(mem)->slots);
+        const SceSize slot = FIRST_FREE_SLOT(sch->partial.get(mem)->slots);
         sch->partial.get(mem)->slots ^= SLOTS_FIRST << slot;
 
         if (UNLIKELY(sch->partial.get(mem)->slots == SLOTS_ALL_ZERO)) {
@@ -321,7 +321,7 @@ Ptr<void> slab_alloc(MemState &mem, const Ptr<slab_chain> sch_p, uintptr_t *exe_
     /* unreachable */
 }
 
-void slab_free(MemState &mem, const Ptr<slab_chain> sch, const Ptr<const void> addr) {
+void slab_free(MemState &mem, const Ptr<slab_chain> sch, const Ptr<void> addr) {
     assert(sch != nullptr);
     assert(slab_is_valid(sch));
     assert(addr != nullptr);
@@ -409,7 +409,7 @@ void slab_free(MemState &mem, const Ptr<slab_chain> sch, const Ptr<const void> a
     }
 }
 
-Address slab_getmirror(MemState &mem, const Ptr<slab_chain> sch, const Ptr<const void> addr) {
+Address slab_getmirror(MemState &mem, const Ptr<slab_chain> sch, const Ptr<void> addr) {
     assert(sch != nullptr);
     assert(slab_is_valid(sch));
     assert(addr != nullptr);
@@ -419,7 +419,7 @@ Address slab_getmirror(MemState &mem, const Ptr<slab_chain> sch, const Ptr<const
     return slab.get(mem)->exe_data - offsetof(struct slab_header, data) + addr.address() - slab.address();
 }
 
-void slab_traverse(MemState &mem, const Ptr<const slab_chain> sch, void (*fn)(Ptr<const void>)) {
+void slab_traverse(MemState &mem, const Ptr<const slab_chain> sch, void (*fn)(Ptr<void>)) {
     assert(sch != nullptr);
     assert(fn != nullptr);
     assert(slab_is_valid(sch));
@@ -435,7 +435,7 @@ void slab_traverse(MemState &mem, const Ptr<const slab_chain> sch, void (*fn)(Pt
 
         do {
             if (!(slab.get(mem)->slots & mask))
-                fn(Ptr<const void>(item));
+                fn(Ptr<void>(item));
 
             mask <<= 1;
         } while ((item += sch.get(mem)->itemsize) != end);
@@ -446,7 +446,7 @@ void slab_traverse(MemState &mem, const Ptr<const slab_chain> sch, void (*fn)(Pt
         end = item + sch.get(mem)->itemcount * sch.get(mem)->itemsize;
 
         do
-            fn(Ptr<const void>(item));
+            fn(Ptr<void>(item));
         while ((item += sch.get(mem)->itemsize) != end);
     }
 }
@@ -455,16 +455,16 @@ void slab_destroy(MemState &mem, const Ptr<const slab_chain> sch) {
     assert(sch != nullptr);
     assert(slab_is_valid(sch));
 
-    auto heads[] = { sch.get(mem)->partial, sch.get(mem)->empty, sch.get(mem)->full };
+    std::array heads = { sch.get(mem)->partial, sch.get(mem)->empty, sch.get(mem)->full };
     Ptr<slab_header> pages_head{};
     Ptr<slab_header> pages_tail;
 
     for (SceSize i = 0; i < 3; ++i) {
         auto slab = heads[i];
 
-        while (slab != nullptr) {
+        while (slab.address() != 0) {
             if (slab.get(mem)->refcount != 0) {
-                const Ptr<const slab_chain> page = slab;
+                const Ptr<slab_header> page = slab;
                 slab = slab.get(mem)->next;
 
                 if (UNLIKELY(pages_head.address() == 0))
@@ -474,7 +474,7 @@ void slab_destroy(MemState &mem, const Ptr<const slab_chain> sch) {
 
                 pages_tail = page;
             } else {
-                slab = slab->next;
+                slab = slab.get(mem)->next;
             }
         }
     }

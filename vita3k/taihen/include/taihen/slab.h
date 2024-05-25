@@ -31,7 +31,7 @@ struct slab_chain {
 
 void slab_init(MemState &, Ptr<slab_chain>, SceSize, SceUID);
 Ptr<void> slab_alloc(MemState &, Ptr<slab_chain>, Address *);
-void slab_free(MemState &, Ptr<slab_chain>, Ptr<const void>);
-Address slab_getmirror(MemState &, Ptr<slab_chain>, Ptr<const void>);
-void slab_traverse(MemState &, Ptr<slab_chain>, void (*)(Ptr<const void>));
+void slab_free(MemState &, Ptr<slab_chain>, Ptr<void>);
+Address slab_getmirror(MemState &, Ptr<slab_chain>, Ptr<void>);
+void slab_traverse(MemState &, Ptr<slab_chain>, void (*)(Ptr<void>));
 void slab_destroy(MemState &, Ptr<slab_chain>);

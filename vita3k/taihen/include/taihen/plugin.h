@@ -16,13 +16,15 @@
 
 #include "kernel/cpu_protocol.h"
 
+#include <emuenv/state.h>
+
 int plugin_init(void);
 void plugin_deinit(void);
 
-int plugin_load_config(void);
-int plugin_free_config(void);
-int plugin_load_all(SceUID pid, const char *titleid);
-int plugin_delayed_load_config(int load_kernel);
+int plugin_load_config(EmuEnvState &emuenv);
+int plugin_free_config(EmuEnvState &emuenv);
+int plugin_load_all(EmuEnvState &emuenv, SceUID pid, const char *titleid);
+int plugin_delayed_load_config(EmuEnvState &emuenv, int load_kernel);
 
 /** @} */
 

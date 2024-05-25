@@ -28,9 +28,9 @@ void patches_deinit(EmuEnvState &emuenv);
 
 void cache_flush(EmuEnvState &emuenv, SceUID pid, Address vma, SceSize len);
 int tai_memcpy_to_kernel(SceUID src_pid, void *dst, const char *src, SceSize size);
-SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid, Ptr<void> dest_func, Ptr<const void> hook_func);
+SceUID tai_hook_func_abs(EmuEnvState &emuenv, tai_hook_ref_t *p_hook, SceUID pid, Ptr<void> dest_func, Ptr<void> hook_func);
 int tai_hook_release(EmuEnvState &emuenv, SceUID uid, tai_hook_ref_t hook_ref);
-SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, Ptr<void> dest, Ptr<const void> src, SceSize size);
+SceUID tai_inject_abs(EmuEnvState &emuenv, SceUID pid, Ptr<void> dest, Ptr<void> src, SceSize size);
 int tai_inject_release(EmuEnvState &emuenv, SceUID uid);
 int tai_try_cleanup_process(EmuEnvState &emuenv, SceUID pid);
 

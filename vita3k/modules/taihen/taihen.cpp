@@ -15,18 +15,20 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#include <kernel/state.h>
 #include <module/module.h>
 #include <modules/SceKernelModulemgr/SceModulemgr.h>
+#include <modules/module_parent.h>
 #include <util/tracy.h>
 
 TRACY_MODULE_NAME(taihen);
 
 #include "taihen/error.h"
-#include "taihen/hen.h"
+// #include "taihen/hen.h"
 #include "taihen/module.h"
 #include "taihen/patches.h"
 #include "taihen/plugin.h"
-#include "taihen/proc_map.h"
+// #include "taihen/proc_map.h"
 #include "taihen/taihen.h"
 
 /**
@@ -46,7 +48,7 @@ TRACY_MODULE_NAME(taihen);
  *             - TAI_ERROR_HOOK_ERROR if an internal error occurred trying to hook
  *             - TAI_ERROR_INVALID_KERNEL_ADDR if `pid` is kernel and address is in shared memory region
  */
-EXPORT(SceUID, taiHookFunctionAbs, SceUID pid, tai_hook_ref_t *p_hook, Ptr<void> dest_func, Ptr<const void> hook_func) {
+EXPORT(SceUID, taiHookFunctionAbs, SceUID pid, tai_hook_ref_t *p_hook, Ptr<void> dest_func, Ptr<void> hook_func) {
     return tai_hook_func_abs(emuenv, p_hook, pid, dest_func, hook_func);
 }
 
@@ -77,11 +79,11 @@ EXPORT(SceUID, taiHookFunctionAbs, SceUID pid, tai_hook_ref_t *p_hook, Ptr<void>
  *             - TAI_ERROR_INVALID_MODULE if `module` is `TAI_MAIN_MODULE`
  *               and `pid` is kernel
  */
-EXPORT(SceUID, taiHookFunctionExportForKernel, SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t library_nid, uint32_t func_nid, Ptr<const void> hook_func) {
+EXPORT(SceUID, taiHookFunctionExportForKernel, SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t library_nid, uint32_t func_nid, Ptr<void> hook_func) {
     int ret;
     Address func;
 
-    ret = module_get_export_func(pid, module, library_nid, func_nid, &func);
+    ret = module_get_export_func(emuenv, pid, module, library_nid, func_nid, &func);
     if (ret < 0) {
         LOG("Failed to find export for %s, NID:0x%08X: 0x%08X", module, func_nid, ret);
         return ret;
@@ -120,18 +122,18 @@ EXPORT(SceUID, taiHookFunctionExportForKernel, SceUID pid, tai_hook_ref_t *p_hoo
  *             - TAI_ERROR_INVALID_MODULE if `module` is `TAI_MAIN_MODULE`
  *               and `pid` is kernel
  */
-EXPORT(SceUID, taiHookFunctionImportForKernel, SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t import_library_nid, uint32_t import_func_nid, Ptr<const void> hook_func) {
+EXPORT(SceUID, taiHookFunctionImportForKernel, SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t import_library_nid, uint32_t import_func_nid, Ptr<void> hook_func) {
     int ret;
     Address stubptr;
     uint32_t stub[3];
 
-    ret = module_get_import_func(pid, module, import_library_nid, import_func_nid, &stubptr);
+    ret = module_get_import_func(emuenv, pid, module, import_library_nid, import_func_nid, &stubptr);
     if (ret < 0) {
         LOG("Failed to find stub for %s, NID:0x%08X: 0x%08X", module, import_func_nid, ret);
         return ret;
     }
     /*
-    ret = tai_memcpy_to_kernel(pid, stub, Ptr<const void>(stubptr & ~1), sizeof(stub));
+    ret = tai_memcpy_to_kernel(pid, stub, Ptr<void>(stubptr & ~1), sizeof(stub));
       if (ret < 0) {
         LOG("Failed to read stub %p, %x", stubptr, ret);
         return ret;
@@ -166,11 +168,11 @@ EXPORT(SceUID, taiHookFunctionImportForKernel, SceUID pid, tai_hook_ref_t *p_hoo
  *             - TAI_ERROR_HOOK_ERROR if an internal error occurred trying to hook
  *             - TAI_ERROR_INVALID_KERNEL_ADDR if `pid` is kernel and address is in shared memory region
  */
-EXPORT(SceUID, taiHookFunctionOffsetForKernel, SceUID pid, tai_hook_ref_t *p_hook, SceUID modid, int segidx, uint32_t offset, int thumb, Ptr<const void> hook_func) {
+EXPORT(SceUID, taiHookFunctionOffsetForKernel, SceUID pid, tai_hook_ref_t *p_hook, SceUID modid, int segidx, uint32_t offset, int thumb, Ptr<void> hook_func) {
     int ret;
     Address addr;
 
-    ret = module_get_offset(pid, modid, segidx, offset, &addr);
+    ret = module_get_offset(emuenv, pid, modid, segidx, offset, &addr);
     if (ret < 0) {
         LOG("Failed to find offset for mod:%x, segidx:%d, offset:0x%08X: 0x%08X", modid, segidx, offset, ret);
         return ret;
@@ -199,7 +201,7 @@ EXPORT(SceUID, taiHookFunctionOffsetForKernel, SceUID pid, tai_hook_ref_t *p_hoo
  *               and `pid` is kernel
  */
 EXPORT(int, taiGetModuleInfoForKernel, SceUID pid, const char *module, tai_module_info_t *info) {
-    return module_get_by_name_nid(pid, module, TAI_IGNORE_MODULE_NID, info);
+    return module_get_by_name_nid(emuenv, pid, module, TAI_IGNORE_MODULE_NID, info);
 }
 
 /**
@@ -226,7 +228,7 @@ EXPORT(int, taiHookReleaseForKernel, SceUID tai_uid, tai_hook_ref_t hook) {
  * @return     A tai patch reference on success, < 0 on error
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
-EXPORT(SceUID, taiInjectAbsForKernel, SceUID pid, Ptr<void> dest, Ptr<const void> src, SceSize size) {
+EXPORT(SceUID, taiInjectAbsForKernel, SceUID pid, Ptr<void> dest, Ptr<void> src, SceSize size) {
     return tai_inject_abs(emuenv, pid, dest, src, size);
 }
 
@@ -243,11 +245,11 @@ EXPORT(SceUID, taiInjectAbsForKernel, SceUID pid, Ptr<void> dest, Ptr<const void
  * @return     A tai patch reference on success, < 0 on error
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
-EXPORT(SceUID, taiInjectDataForKernel, SceUID pid, SceUID modid, int segidx, uint32_t offset, Ptr<const void> data, SceSize size) {
+EXPORT(SceUID, taiInjectDataForKernel, SceUID pid, SceUID modid, int segidx, uint32_t offset, Ptr<void> data, SceSize size) {
     int ret;
     Address addr;
 
-    ret = module_get_offset(pid, modid, segidx, offset, &addr);
+    ret = module_get_offset(emuenv, pid, modid, segidx, offset, &addr);
     if (ret < 0) {
         LOG("Failed to find offset for mod:%x, segidx:%d, offset:0x%08X: 0x%08X", modid, segidx, offset, ret);
         return ret;
@@ -280,7 +282,7 @@ EXPORT(int, taiInjectReleaseForKernel, SceUID tai_uid) {
  *             - TAI_ERROR_SYSTEM if the config file is invalid
  */
 EXPORT(int, taiLoadPluginsForTitleForKernel, SceUID pid, const char *titleid, int flags) {
-    return plugin_load_all(pid, titleid);
+    return plugin_load_all(emuenv, pid, titleid);
 }
 
 /**
@@ -305,9 +307,9 @@ EXPORT(int, taiLoadPluginsForTitleForKernel, SceUID pid, const char *titleid, in
 EXPORT(int, taiReloadConfigForKernel, int schedule, int load_kernel) {
     int ret;
 
-    ret = plugin_load_config();
+    ret = plugin_load_config(emuenv);
     if (ret == TAI_ERROR_BLOCKING && schedule) {
-        plugin_delayed_load_config(load_kernel);
+        plugin_delayed_load_config(emuenv, load_kernel);
         ret = TAI_SUCCESS;
     }
     return ret;
@@ -328,15 +330,16 @@ EXPORT(int, taiReloadConfigForKernel, int schedule, int load_kernel) {
  *
  * @return     Success always
  */
-int module_start(EmuEnvState &emuenv, SceSize argc, const void *args) {
+static int module_start(EmuEnvState &emuenv) {
     // SceCtrlData ctrl;
     int ret;
     LOG("starting taihen...");
-    ret = proc_map_init();
+    // ret = proc_map_init();
+    /*
     if (ret < 0) {
         LOG("proc map init failed: %x", ret);
         return SCE_KERNEL_START_FAILED;
-    }
+    }*/
     ret = patches_init(emuenv);
     if (ret < 0) {
         LOG("patches init failed: %x", ret);
@@ -347,7 +350,7 @@ int module_start(EmuEnvState &emuenv, SceSize argc, const void *args) {
         LOG("plugin init failed: %x", ret);
         return SCE_KERNEL_START_FAILED;
     }
-    ret = hen_add_patches();
+    // ret = hen_add_patches();
     if (ret < 0) {
         LOG("HEN patches failed: %x", ret);
         return SCE_KERNEL_START_FAILED;
@@ -355,12 +358,12 @@ int module_start(EmuEnvState &emuenv, SceSize argc, const void *args) {
     // ksceCtrlPeekBufferPositive(0, &ctrl, 1);
     // LOG("buttons held: 0x%08X", ctrl.buttons);
     // if (!(ctrl.buttons & (SCE_CTRL_LTRIGGER | SCE_CTRL_L1))) {
-    ret = plugin_load_config();
+    ret = plugin_load_config(emuenv);
     if (ret < 0) {
         LOG("HEN config load failed: %x", ret);
         return SCE_KERNEL_START_FAILED;
     }
-    plugin_load_all(KERNEL_PID, "KERNEL");
+    plugin_load_all(emuenv, KERNEL_PID, "KERNEL");
     //} else {
     //    LOG("skipping plugin loading");
     //}
@@ -386,20 +389,18 @@ int module_start(EmuEnvState &emuenv, SceSize argc, const void *args) {
  *
  * @return     Success always
  */
-int module_stop(EmuEnvState &emuenv, SceSize argc, const void *args) {
+static int module_stop(EmuEnvState &emuenv) {
     // TODO: release everything
-    hen_remove_patches();
+    // hen_remove_patches();
     plugin_deinit();
     patches_deinit(emuenv);
-    proc_map_deinit();
+    // proc_map_deinit();
     return SCE_KERNEL_STOP_SUCCESS;
 }
 
 // taihen-kernel
 
-DECL_EXPORT(int, sceKernelGetProcessId) {
-    return 1;
-}
+DECL_EXPORT(int, sceKernelGetProcessId);
 
 /**
  * @brief      Add a hook to a module function export for the calling process
@@ -527,7 +528,7 @@ EXPORT(int, taiHookRelease, SceUID tai_uid, tai_hook_ref_t hook) {
  * @return     A tai patch reference on success, < 0 on error
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
-EXPORT(SceUID, taiInjectAbs, Ptr<void> dest, Ptr<const void> src, SceSize size) {
+EXPORT(SceUID, taiInjectAbs, Ptr<void> dest, Ptr<void> src, SceSize size) {
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return CALL_EXPORT(taiInjectAbsForKernel, pid, dest, src, size);
 }
@@ -1079,7 +1080,7 @@ EXPORT(int, taiStopUnloadModuleForPidForUser, SceUID modid, tai_module_args_t *a
  */
 EXPORT(int, taiGetModuleExportFunc, const char *modname, uint32_t libnid, uint32_t funcnid, Address *func) {
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
-    return module_get_export_func(pid, modname, libnid, funcnid, func);
+    return module_get_export_func(emuenv, pid, modname, libnid, funcnid, func);
 }
 
 /**
@@ -1092,7 +1093,7 @@ EXPORT(int, taiGetModuleExportFunc, const char *modname, uint32_t libnid, uint32
  * @return     Zero on success, < 0 on error
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
-EXPORT(int, taiMemcpyUserToKernel, Ptr<void> kernel_dst, Ptr<const void> user_src, SceSize len) {
+EXPORT(int, taiMemcpyUserToKernel, Ptr<void> kernel_dst, Ptr<void> user_src, SceSize len) {
     return TAI_ERROR_NOT_ALLOWED;
     /*
     uint32_t state;
@@ -1126,7 +1127,7 @@ EXPORT(int, taiMemcpyUserToKernel, Ptr<void> kernel_dst, Ptr<const void> user_sr
  * @return     Zero on success, < 0 on error
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
-EXPORT(int, taiMemcpyKernelToUser, void *user_dst, const void *kernel_src, size_t len) {
+EXPORT(int, taiMemcpyKernelToUser, void *user_dst, void *kernel_src, size_t len) {
     return TAI_ERROR_NOT_ALLOWED;
     /*
     uint32_t state;
@@ -1169,4 +1170,22 @@ EXPORT(int, taiReloadConfig) {
     }
     EXIT_SYSCALL(state);
     return ret;*/
+}
+
+EXPORT(int, module_get_by_name_nid, SceUID pid, const char *name, uint32_t nid, tai_module_info_t *info) {
+    return module_get_by_name_nid(emuenv, pid, name, nid, info);
+}
+EXPORT(int, module_get_offset, SceUID pid, SceUID modid, int segidx, SceSize offset, Address *addr) {
+    return module_get_offset(emuenv, pid, modid, segidx, offset, addr);
+}
+EXPORT(int, module_get_export_func, SceUID pid, const char *modname, uint32_t libnid, uint32_t funcnid, Address *func) {
+    return module_get_export_func(emuenv, pid, modname, libnid, funcnid, func);
+}
+EXPORT(int, module_get_import_func, SceUID pid, const char *modname, uint32_t target_libnid, uint32_t funcnid, Address *stub) {
+    return module_get_import_func(emuenv, pid, modname, target_libnid, funcnid, stub);
+}
+
+LIBRARY_INIT(taihen) {
+    emuenv.kernel.obj_store.create<taihen_module_data>();
+    // module_start(emuenv);
 }

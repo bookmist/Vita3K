@@ -179,7 +179,7 @@ struct sce_module_info_raw { // size is 0x5C-bytes
     uint16_t version; /* Set to 0x0101 */
     char name[27]; /* Name of the library */
     uint8_t type; /* 0x0 for executable, 0x6 for PRX */
-    Ptr<const void>
+    Ptr<void>
         gp_value;
     Ptr<sce_module_exports_raw>
         export_top; /* Offset to start of export table */
@@ -193,17 +193,17 @@ struct sce_module_info_raw { // size is 0x5C-bytes
     uint32_t tls_start;
     uint32_t tls_filesz;
     uint32_t tls_memsz;
-    Ptr<const void>
+    Ptr<void>
         module_start; /* Offset to function to run when library is started, 0 to disable */
-    Ptr<const void>
+    Ptr<void>
         module_stop; /* Offset to function to run when library is exiting, 0 to disable */
-    Ptr<const void>
+    Ptr<void>
         exidx_top; /* Offset to start of ARM EXIDX (optional) */
-    Ptr<const void>
+    Ptr<void>
         exidx_end; /* Offset to end of ARM EXIDX (optional) */
-    Ptr<const void>
+    Ptr<void>
         extab_top; /* Offset to start of ARM EXTAB (optional) */
-    Ptr<const void>
+    Ptr<void>
         extab_end; /* Offset to end of ARM EXTAB (optional */
 };
 
@@ -375,10 +375,10 @@ int module_get_by_name_nid(EmuEnvState &emuenv, SceUID pid, const char *module_n
     const sce_module_info_raw *int_mod_info = reinterpret_cast<const sce_module_info_raw *>(module_info->info_segment_address.get(emuenv.mem) + module_info->info_offset);
     info->modid = module_id;
     info->module_nid = int_mod_info->module_nid;
-    info->exports_start = int_mod_info->export_top;
-    info->exports_end = int_mod_info->export_end;
-    info->imports_start = int_mod_info->import_top;
-    info->imports_end = int_mod_info->import_end;
+    info->exports_start = int_mod_info->export_top.cast<char>() + module_info->info_segment_address.address();
+    info->exports_end = int_mod_info->export_end.cast<char>() + module_info->info_segment_address.address();
+    info->imports_start = int_mod_info->import_top.cast<char>() + module_info->info_segment_address.address();
+    info->imports_end = int_mod_info->import_end.cast<char>() + module_info->info_segment_address.address();
     strncpy(info->name, int_mod_info->name, 27);
     info->name[26] = '\0';
     return TAI_SUCCESS;
@@ -395,7 +395,7 @@ int module_get_by_name_nid(EmuEnvState &emuenv, SceUID pid, const char *module_n
  *
  * @return     Zero on success, < 0 on error
  */
-int module_get_offset(EmuEnvState &emuenv, SceUID pid, SceUID modid, int segidx, size_t offset, uintptr_t *addr) {
+int module_get_offset(EmuEnvState &emuenv, SceUID pid, SceUID modid, int segidx, SceSize offset, Address *addr) {
     // SceKernelModuleInfo sceinfo;
     size_t count;
     int ret;
