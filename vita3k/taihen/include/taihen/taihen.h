@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <string>
 
+struct _tai_hook_user;
 /** PID for kernel process */
 constexpr uint32_t KERNEL_PID = 0x10005;
 
@@ -81,7 +82,7 @@ typedef struct _tai_module_args {
  *             keep track of. The client is responsible for cleanup by passing
  *             the reference back to taiHEN when needed.
  */
-typedef Ptr<void> tai_hook_ref_t;
+typedef Ptr<_tai_hook_user> tai_hook_ref_t;
 
 /**
  * @brief      Internal structure

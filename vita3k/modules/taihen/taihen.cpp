@@ -49,6 +49,7 @@ TRACY_MODULE_NAME(taihen);
  *             - TAI_ERROR_INVALID_KERNEL_ADDR if `pid` is kernel and address is in shared memory region
  */
 EXPORT(SceUID, taiHookFunctionAbs, SceUID pid, tai_hook_ref_t *p_hook, Ptr<void> dest_func, Ptr<void> hook_func) {
+    TRACY_FUNC(taiHookFunctionAbs, pid, p_hook, dest_func, hook_func);
     return tai_hook_func_abs(emuenv, p_hook, pid, dest_func, hook_func);
 }
 
@@ -80,12 +81,13 @@ EXPORT(SceUID, taiHookFunctionAbs, SceUID pid, tai_hook_ref_t *p_hook, Ptr<void>
  *               and `pid` is kernel
  */
 EXPORT(SceUID, taiHookFunctionExportForKernel, SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t library_nid, uint32_t func_nid, Ptr<void> hook_func) {
+    TRACY_FUNC(taiHookFunctionExportForKernel, pid, p_hook, module, library_nid, func_nid, hook_func);
     int ret;
     Address func;
 
     ret = module_get_export_func(emuenv, pid, module, library_nid, func_nid, &func);
     if (ret < 0) {
-        LOG("Failed to find export for %s, NID:0x%08X: 0x%08X", module, func_nid, ret);
+        LOG("Failed to find export for {}, NID:{:X}: {:X}", module, func_nid, ret);
         return ret;
     }
     return CALL_EXPORT(taiHookFunctionAbs, pid, p_hook, Ptr<void>(func), hook_func);
@@ -123,6 +125,7 @@ EXPORT(SceUID, taiHookFunctionExportForKernel, SceUID pid, tai_hook_ref_t *p_hoo
  *               and `pid` is kernel
  */
 EXPORT(SceUID, taiHookFunctionImportForKernel, SceUID pid, tai_hook_ref_t *p_hook, const char *module, uint32_t import_library_nid, uint32_t import_func_nid, Ptr<void> hook_func) {
+    TRACY_FUNC(taiHookFunctionImportForKernel, pid, p_hook, module, import_library_nid, import_func_nid, hook_func);
     int ret;
     Address stubptr;
     uint32_t stub[3];
@@ -169,6 +172,7 @@ EXPORT(SceUID, taiHookFunctionImportForKernel, SceUID pid, tai_hook_ref_t *p_hoo
  *             - TAI_ERROR_INVALID_KERNEL_ADDR if `pid` is kernel and address is in shared memory region
  */
 EXPORT(SceUID, taiHookFunctionOffsetForKernel, SceUID pid, tai_hook_ref_t *p_hook, SceUID modid, int segidx, uint32_t offset, int thumb, Ptr<void> hook_func) {
+    TRACY_FUNC(taiHookFunctionOffsetForKernel, pid, p_hook, modid, segidx, offset, thumb, hook_func);
     int ret;
     Address addr;
 
@@ -201,6 +205,7 @@ EXPORT(SceUID, taiHookFunctionOffsetForKernel, SceUID pid, tai_hook_ref_t *p_hoo
  *               and `pid` is kernel
  */
 EXPORT(int, taiGetModuleInfoForKernel, SceUID pid, const char *module, tai_module_info_t *info) {
+    TRACY_FUNC(taiGetModuleInfoForKernel, pid, module, info);
     return module_get_by_name_nid(emuenv, pid, module, TAI_IGNORE_MODULE_NID, info);
 }
 
@@ -214,6 +219,7 @@ EXPORT(int, taiGetModuleInfoForKernel, SceUID pid, const char *module, tai_modul
  *             - TAI_ERROR_HOOK_ERROR if an internal error occurred trying to restore the function
  */
 EXPORT(int, taiHookReleaseForKernel, SceUID tai_uid, tai_hook_ref_t hook) {
+    TRACY_FUNC(taiHookReleaseForKernel, tai_uid, hook);
     return tai_hook_release(emuenv, tai_uid, hook);
 }
 
@@ -229,6 +235,7 @@ EXPORT(int, taiHookReleaseForKernel, SceUID tai_uid, tai_hook_ref_t hook) {
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
 EXPORT(SceUID, taiInjectAbsForKernel, SceUID pid, Ptr<void> dest, Ptr<void> src, SceSize size) {
+    TRACY_FUNC(taiInjectAbsForKernel, pid, dest, src, size);
     return tai_inject_abs(emuenv, pid, dest, src, size);
 }
 
@@ -246,6 +253,7 @@ EXPORT(SceUID, taiInjectAbsForKernel, SceUID pid, Ptr<void> dest, Ptr<void> src,
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
 EXPORT(SceUID, taiInjectDataForKernel, SceUID pid, SceUID modid, int segidx, uint32_t offset, Ptr<void> data, SceSize size) {
+    TRACY_FUNC(taiInjectDataForKernel, pid, modid, segidx, offset, data, size);
     int ret;
     Address addr;
 
@@ -265,6 +273,7 @@ EXPORT(SceUID, taiInjectDataForKernel, SceUID pid, SceUID modid, int segidx, uin
  * @return     Zero on success, < 0 on error
  */
 EXPORT(int, taiInjectReleaseForKernel, SceUID tai_uid) {
+    TRACY_FUNC(taiInjectReleaseForKernel, tai_uid);
     return tai_inject_release(emuenv, tai_uid);
 }
 
@@ -282,6 +291,7 @@ EXPORT(int, taiInjectReleaseForKernel, SceUID tai_uid) {
  *             - TAI_ERROR_SYSTEM if the config file is invalid
  */
 EXPORT(int, taiLoadPluginsForTitleForKernel, SceUID pid, const char *titleid, int flags) {
+    TRACY_FUNC(taiLoadPluginsForTitleForKernel, pid, titleid, flags);
     return plugin_load_all(emuenv, pid, titleid);
 }
 
@@ -305,6 +315,7 @@ EXPORT(int, taiLoadPluginsForTitleForKernel, SceUID pid, const char *titleid, in
  *               `schedule` _is not set_.
  */
 EXPORT(int, taiReloadConfigForKernel, int schedule, int load_kernel) {
+    TRACY_FUNC(taiReloadConfigForKernel, schedule, load_kernel);
     int ret;
 
     ret = plugin_load_config(emuenv);
@@ -420,6 +431,7 @@ DECL_EXPORT(int, sceKernelGetProcessId);
  *               there are multiple main modules
  */
 EXPORT(SceUID, taiHookFunctionExportForUser, tai_hook_ref_t *p_hook, tai_hook_args_t *args) {
+    TRACY_FUNC(taiHookFunctionExportForUser, p_hook, args);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return CALL_EXPORT(taiHookFunctionExportForKernel, pid, p_hook, args->module.get(emuenv.mem), args->library_nid, args->func_nid, args->hook_func);
 }
@@ -449,6 +461,7 @@ EXPORT(SceUID, taiHookFunctionExportForUser, tai_hook_ref_t *p_hook, tai_hook_ar
  *               there are multiple main modules
  */
 EXPORT(SceUID, taiHookFunctionImportForUser, tai_hook_ref_t *p_hook, tai_hook_args_t *args) {
+    TRACY_FUNC(taiHookFunctionImportForUser, p_hook, args);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
 
     return CALL_EXPORT(taiHookFunctionImportForKernel, pid, p_hook, args->module.get(emuenv.mem), args->library_nid, args->func_nid, args->hook_func);
@@ -471,6 +484,7 @@ EXPORT(SceUID, taiHookFunctionImportForUser, tai_hook_ref_t *p_hook, tai_hook_ar
  *             - TAI_ERROR_USER_MEMORY if pointers are incorrect
  */
 EXPORT(SceUID, taiHookFunctionOffsetForUser, tai_hook_ref_t *p_hook, tai_offset_args_t *args) {
+    TRACY_FUNC(taiHookFunctionOffsetForUser, p_hook, args);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return CALL_EXPORT(taiHookFunctionOffsetForKernel, pid, p_hook, args->modid, args->segidx, args->offset, args->thumb, args->source);
 }
@@ -497,6 +511,7 @@ EXPORT(SceUID, taiHookFunctionOffsetForUser, tai_hook_ref_t *p_hook, tai_offset_
  *               there are multiple main modules
  */
 EXPORT(int, taiGetModuleInfo, const char *module, tai_module_info_t *info) {
+    TRACY_FUNC(taiGetModuleInfo, module, info);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return CALL_EXPORT(taiGetModuleInfoForKernel, pid, module, info);
 }
@@ -513,6 +528,7 @@ EXPORT(int, taiGetModuleInfo, const char *module, tai_module_info_t *info) {
  *             - TAI_ERROR_HOOK_ERROR if an internal error occurred trying to restore the function
  */
 EXPORT(int, taiHookRelease, SceUID tai_uid, tai_hook_ref_t hook) {
+    TRACY_FUNC(taiHookRelease, tai_uid, hook);
     return CALL_EXPORT(taiHookReleaseForKernel, tai_uid, hook);
 }
 
@@ -529,6 +545,7 @@ EXPORT(int, taiHookRelease, SceUID tai_uid, tai_hook_ref_t hook) {
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
 EXPORT(SceUID, taiInjectAbs, Ptr<void> dest, Ptr<void> src, SceSize size) {
+    TRACY_FUNC(taiInjectAbs, dest, src, size);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return CALL_EXPORT(taiInjectAbsForKernel, pid, dest, src, size);
 }
@@ -545,6 +562,7 @@ EXPORT(SceUID, taiInjectAbs, Ptr<void> dest, Ptr<void> src, SceSize size) {
  *             - TAI_ERROR_PATCH_EXISTS if the address is already patched
  */
 EXPORT(SceUID, taiInjectDataForUser, tai_offset_args_t *args) {
+    TRACY_FUNC(taiInjectDataForUser, args);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return CALL_EXPORT(taiInjectDataForKernel, pid, args->modid, args->segidx, args->offset, args->source, args->source_size);
 }
@@ -559,6 +577,7 @@ EXPORT(SceUID, taiInjectDataForUser, tai_offset_args_t *args) {
  * @return     Zero on success, < 0 on error
  */
 EXPORT(int, taiInjectRelease, SceUID tai_uid) {
+    TRACY_FUNC(taiInjectRelease, tai_uid);
     return CALL_EXPORT(taiInjectReleaseForKernel, tai_uid);
 }
 
@@ -574,6 +593,7 @@ EXPORT(int, taiInjectRelease, SceUID tai_uid) {
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(SceUID, taiLoadKernelModule, char *path, int flags, void *opt) {
+    TRACY_FUNC(taiLoadKernelModule, path, flags, opt);
     if (/*ksceSblACMgrIsShell(0)*/ false) {
         return CALL_EXPORT(_sceKernelLoadModule, path, flags, nullptr);
     } else {
@@ -595,6 +615,7 @@ EXPORT(SceUID, taiLoadKernelModule, char *path, int flags, void *opt) {
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiStartKernelModuleForUser, SceUID modid, tai_module_args_t *args, void *opt, int *res) {
+    TRACY_FUNC(taiStartKernelModuleForUser, modid, args, opt, res);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         tai_module_args_t kargs;
@@ -650,6 +671,7 @@ EXPORT(int, taiStartKernelModuleForUser, SceUID modid, tai_module_args_t *args, 
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(SceUID, taiLoadStartKernelModuleForUser, const char *path, tai_module_args_t *args) {
+    TRACY_FUNC(taiLoadStartKernelModuleForUser, path, args);
     return TAI_ERROR_NOT_ALLOWED;
     /*
     tai_module_args_t kargs;
@@ -705,6 +727,7 @@ EXPORT(SceUID, taiLoadStartKernelModuleForUser, const char *path, tai_module_arg
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(SceUID, taiLoadStartModuleForPidForUser, const char *path, tai_module_args_t *args) {
+    TRACY_FUNC(taiLoadStartModuleForPidForUser, path, args);
     return TAI_ERROR_NOT_ALLOWED;
     /*    tai_module_args_t kargs;
         char buf[MAX_ARGS_SIZE];
@@ -759,6 +782,7 @@ EXPORT(SceUID, taiLoadStartModuleForPidForUser, const char *path, tai_module_arg
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiStopKernelModuleForUser, SceUID modid, tai_module_args_t *args, void *opt, int *res) {
+    TRACY_FUNC(taiStopKernelModuleForUser, modid, args, opt, res);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         tai_module_args_t kargs;
@@ -818,6 +842,7 @@ EXPORT(int, taiStopKernelModuleForUser, SceUID modid, tai_module_args_t *args, v
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiUnloadKernelModule, SceUID modid, int flags, void *opt) {
+    TRACY_FUNC(taiUnloadKernelModule, modid, flags, opt);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         uint32_t state;
@@ -862,6 +887,7 @@ EXPORT(int, taiUnloadKernelModule, SceUID modid, int flags, void *opt) {
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiStopUnloadKernelModuleForUser, SceUID modid, tai_module_args_t *args, void *opt, int *res) {
+    TRACY_FUNC(taiStopUnloadKernelModuleForUser, modid, args, opt, res);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         tai_module_args_t kargs;
@@ -923,6 +949,7 @@ EXPORT(int, taiStopUnloadKernelModuleForUser, SceUID modid, tai_module_args_t *a
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiStopModuleForPidForUser, SceUID modid, tai_module_args_t *args, void *opt, int *res) {
+    TRACY_FUNC(taiStopModuleForPidForUser, modid, args, opt, res);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         tai_module_args_t kargs;
@@ -980,6 +1007,7 @@ EXPORT(int, taiStopModuleForPidForUser, SceUID modid, tai_module_args_t *args, v
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiUnloadModuleForPid, SceUID pid, SceUID modid, int flags, void *opt) {
+    TRACY_FUNC(taiUnloadModuleForPid, pid, modid, flags, opt);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         uint32_t state;
@@ -1022,6 +1050,7 @@ EXPORT(int, taiUnloadModuleForPid, SceUID pid, SceUID modid, int flags, void *op
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiStopUnloadModuleForPidForUser, SceUID modid, tai_module_args_t *args, void *opt, int *res) {
+    TRACY_FUNC(taiStopUnloadModuleForPidForUser, modid, args, opt, res);
     return TAI_ERROR_NOT_ALLOWED;
     /*
         tai_module_args_t kargs;
@@ -1079,6 +1108,7 @@ EXPORT(int, taiStopUnloadModuleForPidForUser, SceUID modid, tai_module_args_t *a
  * @return     Zero on success, < 0 on error
  */
 EXPORT(int, taiGetModuleExportFunc, const char *modname, uint32_t libnid, uint32_t funcnid, Address *func) {
+    TRACY_FUNC(taiGetModuleExportFunc, modname, libnid, funcnid, func);
     auto pid = CALL_EXPORT(sceKernelGetProcessId);
     return module_get_export_func(emuenv, pid, modname, libnid, funcnid, func);
 }
@@ -1094,6 +1124,7 @@ EXPORT(int, taiGetModuleExportFunc, const char *modname, uint32_t libnid, uint32
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiMemcpyUserToKernel, Ptr<void> kernel_dst, Ptr<void> user_src, SceSize len) {
+    TRACY_FUNC(taiMemcpyUserToKernel, kernel_dst, user_src, len);
     return TAI_ERROR_NOT_ALLOWED;
     /*
     uint32_t state;
@@ -1128,6 +1159,7 @@ EXPORT(int, taiMemcpyUserToKernel, Ptr<void> kernel_dst, Ptr<void> user_src, Sce
  *             - TAI_ERROR_NOT_ALLOWED if caller does not have permission
  */
 EXPORT(int, taiMemcpyKernelToUser, void *user_dst, void *kernel_src, size_t len) {
+    TRACY_FUNC(taiMemcpyKernelToUser, user_dst, kernel_src, len);
     return TAI_ERROR_NOT_ALLOWED;
     /*
     uint32_t state;
@@ -1157,6 +1189,7 @@ EXPORT(int, taiMemcpyKernelToUser, void *user_dst, void *kernel_src, size_t len)
  *             - TAI_ERROR_BLOCKING if attempted to call recursively
  */
 EXPORT(int, taiReloadConfig) {
+    TRACY_FUNC(taiReloadConfig);
     return TAI_ERROR_NOT_ALLOWED;
     /*
     uint32_t state;
@@ -1173,15 +1206,19 @@ EXPORT(int, taiReloadConfig) {
 }
 
 EXPORT(int, module_get_by_name_nid, SceUID pid, const char *name, uint32_t nid, tai_module_info_t *info) {
+    TRACY_FUNC(module_get_by_name_nid, pid, name, nid, info);
     return module_get_by_name_nid(emuenv, pid, name, nid, info);
 }
 EXPORT(int, module_get_offset, SceUID pid, SceUID modid, int segidx, SceSize offset, Address *addr) {
+    TRACY_FUNC(module_get_offset, pid, modid, segidx, offset, addr);
     return module_get_offset(emuenv, pid, modid, segidx, offset, addr);
 }
 EXPORT(int, module_get_export_func, SceUID pid, const char *modname, uint32_t libnid, uint32_t funcnid, Address *func) {
+    TRACY_FUNC(module_get_export_func, pid, modname, libnid, funcnid, func);
     return module_get_export_func(emuenv, pid, modname, libnid, funcnid, func);
 }
 EXPORT(int, module_get_import_func, SceUID pid, const char *modname, uint32_t target_libnid, uint32_t funcnid, Address *stub) {
+    TRACY_FUNC(module_get_import_func, pid, modname, target_libnid, funcnid, stub);
     return module_get_import_func(emuenv, pid, modname, target_libnid, funcnid, stub);
 }
 

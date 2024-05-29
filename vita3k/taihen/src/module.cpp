@@ -230,13 +230,13 @@ static int sce_to_tai_module_info(SceUID pid, void *sceinfo, tai_module_info_t *
     } else {
       fw_version = fwinfo.version;
     }
-    LOG("ksceKernelGetSystemSwVersion: 0x%08X", fw_version);
+    LOG("ksceKernelGetSystemSwVersion: {:X}", fw_version);
   }
   */
     char *info;
 
     if (taiinfo->size < sizeof(tai_module_info_t)) {
-        LOG("Structure size too small: %d", taiinfo->size);
+        LOG("Structure size too small: {}", taiinfo->size);
         return TAI_ERROR_SYSTEM;
     }
 
@@ -268,7 +268,7 @@ static int sce_to_tai_module_info(SceUID pid, void *sceinfo, tai_module_info_t *
         taiinfo->imports_start = *(uintptr_t *)(info + 0x34);
         taiinfo->imports_end = *(uintptr_t *)(info + 0x38);
     } else {
-        LOG("Unsupported FW 0x%08X", fw_version);
+        LOG("Unsupported FW {:X}", fw_version);
         return TAI_ERROR_SYSTEM;
     }
     return TAI_SUCCESS;
@@ -342,7 +342,7 @@ if (count >= size) {
  */
 int module_get_by_name_nid(EmuEnvState &emuenv, SceUID pid, const char *module_name, uint32_t module_nid, tai_module_info_t *info) {
     if (info->size != sizeof(tai_module_info_t)) {
-        LOG_ERROR("Structure size too small: %d", info->size);
+        LOG_ERROR("Structure size too small: {}", info->size);
         return TAI_ERROR_SYSTEM;
     }
 
@@ -401,26 +401,26 @@ int module_get_offset(EmuEnvState &emuenv, SceUID pid, SceUID modid, int segidx,
     int ret;
 
     if (segidx > 3) {
-        LOG("Invalid segment index: %d", segidx);
+        LOG("Invalid segment index: {}", segidx);
         return TAI_ERROR_INVALID_ARGS;
     }
-    LOG("Getting offset for pid:%x, modid:%x, segidx:%d, offset:%x", pid, modid, segidx, offset);
+    LOG("Getting offset for pid:{:x}, modid:{:x}, segidx:{}, offset:{:x}", pid, modid, segidx, offset);
     // sceinfo.size = sizeof(sceinfo);
     const std::lock_guard<std::mutex> lock(emuenv.kernel.mutex);
 
     auto module = emuenv.kernel.loaded_modules.find(modid);
     if (module == emuenv.kernel.loaded_modules.end()) {
-        LOG("Error getting module info for %d", modid);
+        LOG("Error getting module info for {}", modid);
         return SCE_KERNEL_ERROR_LIBRARYDB_NO_MOD;
     }
     auto &sceinfo = module->second->info;
 
     if (offset > sceinfo.segments[segidx].memsz) {
-        LOG("Offset %x overflows segment size %x", offset, sceinfo.segments[segidx].memsz);
+        LOG("Offset {:x} overflows segment size {:x}", offset, sceinfo.segments[segidx].memsz);
         return TAI_ERROR_INVALID_ARGS;
     }
     *addr = sceinfo.segments[segidx].vaddr.address() + offset;
-    LOG("found address: 0x%08X", *addr);
+    LOG("found address: {:X}", *addr);
 
     return TAI_SUCCESS;
 }
@@ -445,13 +445,17 @@ int module_get_export_func(EmuEnvState &emuenv, SceUID pid, const char *modname,
     int i;
     int ret;
 
-    LOG("Getting export for pid:%x, modname:%s, libnid:%x, funcnid:%x", pid, modname, libnid, funcnid);
+    LOG("Getting export for pid:{}, modname:{}, libnid:{:X}, funcnid:{:X}", pid, modname, libnid, funcnid);
     info.size = sizeof(info);
     if (module_get_by_name_nid(emuenv, pid, modname, TAI_IGNORE_MODULE_NID, &info) < 0) {
-        LOG("Failed to find module: %s", modname);
+        LOG("Failed to find module: {}", modname);
         return TAI_ERROR_NOT_FOUND;
     }
-
+    /*
+    auto &module_info = emuenv.kernel.loaded_modules[info.modid];
+    const sce_module_info_raw *int_mod_info = reinterpret_cast<const sce_module_info_raw *>(module_info->info_segment_address.get(emuenv.mem) + module_info->info_offset);
+    info->exports_start = int_mod_info->export_top.cast<char>() + module_info->info_segment_address.address();
+    */
     for (cur = info.exports_start.address(); cur < info.exports_end.address();) {
         sce_module_exports_t *export_ = Ptr<sce_module_exports_t>(cur).get(emuenv.mem);
 
@@ -459,7 +463,7 @@ int module_get_export_func(EmuEnvState &emuenv, SceUID pid, const char *modname,
             for (i = 0; i < export_->num_functions; i++) {
                 if (export_->nid_table.get(emuenv.mem)[i] == funcnid) {
                     *func = export_->entry_table.get(emuenv.mem)[i].address();
-                    LOG("found kernel address: 0x%08X", *func);
+                    LOG("found kernel address: {:X}", *func);
                     return TAI_SUCCESS;
                 }
             }
@@ -489,12 +493,13 @@ int module_get_import_func(EmuEnvState &emuenv, SceUID pid, const char *modname,
     // int found;
     int i;
     // int ret;
+    constexpr auto export_name = __FUNCTION__;
 
-    LOG("Getting import for pid:%x, modname:%s, target_libnid:%x, funcnid:%x", pid, modname, target_libnid, funcnid);
+    LOG("Getting import for pid:{:x}, modname:{}, target_libnid:{:x}, funcnid:{:x}", pid, modname, target_libnid, funcnid);
     info.size = sizeof(info);
     if (module_get_by_name_nid(emuenv, pid, modname, TAI_IGNORE_MODULE_NID, &info) < 0) {
-        LOG("Failed to find module: %s", modname);
-        return TAI_ERROR_NOT_FOUND;
+        LOG("Failed to find module: {}", modname);
+        return RET_ERROR(TAI_ERROR_NOT_FOUND);
     }
 
     for (Address cur = info.imports_start.address(); cur < info.imports_end.address();) {
@@ -506,7 +511,7 @@ int module_get_import_func(EmuEnvState &emuenv, SceUID pid, const char *modname,
                 for (i = 0; i < import->type1.num_functions; i++) {
                     if (import->type1.func_nid_table.get(emuenv.mem)[i] == funcnid) {
                         *stub = import->type1.func_entry_table.get(emuenv.mem)[i].address();
-                        LOG("found kernel address: 0x%08X", *stub);
+                        LOG("found kernel address: {:X}", *stub);
                         return TAI_SUCCESS;
                     }
                 }
@@ -516,16 +521,16 @@ int module_get_import_func(EmuEnvState &emuenv, SceUID pid, const char *modname,
                 for (i = 0; i < import->type2.num_functions; i++) {
                     if (import->type2.func_nid_table.get(emuenv.mem)[i] == funcnid) {
                         *stub = import->type2.func_entry_table.get(emuenv.mem)[i].address();
-                        LOG("found kernel address: 0x%08X", *stub);
+                        LOG("found kernel address: {:X}", *stub);
                         return TAI_SUCCESS;
                     }
                 }
             }
         } else {
-            LOG("Invalid import size: %d", import->size);
+            LOG("Invalid import size: {}", import->size);
         }
         cur += import->size;
     }
 
-    return TAI_ERROR_NOT_FOUND;
+    return RET_ERROR(TAI_ERROR_NOT_FOUND);
 }
