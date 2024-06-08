@@ -130,9 +130,7 @@ void draw_controls_dialog(GuiState &gui, EmuEnvState &emuenv) {
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::Begin("##controls", &gui.controls_menu.controls_dialog, ImGuiWindowFlags_NoTitleBar);
     ImGui::SetWindowFontScale(RES_SCALE.x);
-    auto title_str = lang["title"].c_str();
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.f) - (ImGui::CalcTextSize(title_str).x / 2.f));
-    ImGui::TextColored(GUI_COLOR_TEXT_TITLE, "%s", title_str);
+    TextColoredCentered(GUI_COLOR_TEXT_TITLE, lang["title"].c_str());
     ImGui::Spacing();
     ImGui::Separator();
 

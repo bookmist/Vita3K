@@ -65,8 +65,8 @@ void draw_pre_compiling_shaders_progress(GuiState &gui, EmuEnvState &emuenv, con
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();
     const auto progress_programs_str = fmt::format("{}/{}", emuenv.renderer->programs_count_pre_compiled, total);
-    ImGui::SetCursorPos(ImVec2((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(progress_programs_str.c_str()).x / 2.f), ImGui::GetCursorPosY() + (6.f * emuenv.dpi_scale)));
-    ImGui::TextColored(GUI_COLOR_TEXT, "%s", progress_programs_str.c_str());
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (6.f * emuenv.dpi_scale));
+    TextColoredCentered(GUI_COLOR_TEXT, progress_programs_str.c_str());
     ImGui::End();
     ImGui::PopStyleVar();
     ImGui::PopFont();

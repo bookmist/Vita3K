@@ -342,8 +342,7 @@ void draw_app_context_menu(GuiState &gui, EmuEnvState &emuenv, const std::string
                     }
                 } else {
                     ImGui::Spacing();
-                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(compat_state_str.c_str()).x / 2));
-                    ImGui::TextColored(compat_state_color, "%s", compat_state_str.c_str());
+                    TextColoredCentered(compat_state_color, compat_state_str.c_str());
                     ImGui::Spacing();
                     if (has_state_report) {
                         tm updated_at_tm = {};
@@ -351,8 +350,7 @@ void draw_app_context_menu(GuiState &gui, EmuEnvState &emuenv, const std::string
                         auto UPDATED_AT = get_date_time(gui, emuenv, updated_at_tm);
                         ImGui::Spacing();
                         const auto updated_at_str = fmt::format("{} {} {} {}", lang.info["updated"].c_str(), UPDATED_AT[DateTime::DATE_MINI], UPDATED_AT[DateTime::CLOCK], is_12_hour_format ? UPDATED_AT[DateTime::DAY_MOMENT] : "");
-                        ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(updated_at_str.c_str()).x / 2));
-                        ImGui::TextColored(GUI_COLOR_TEXT, "%s", updated_at_str.c_str());
+                        TextColoredCentered(GUI_COLOR_TEXT, updated_at_str.c_str());
                     }
                     ImGui::Spacing();
                     ImGui::Separator();
@@ -575,8 +573,8 @@ void draw_app_context_menu(GuiState &gui, EmuEnvState &emuenv, const std::string
                 ImGui::GetWindowDrawList()->AddImageRounded(gui.app_selector.user_apps_icon[title_id], POS_MIN, POS_MAX, ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, PUPOP_ICON_SIZE.x * SCALE.x, ImDrawFlags_RoundCornersAll);
             }
             ImGui::SetWindowFontScale(1.6f * RES_SCALE.x);
-            ImGui::SetCursorPos(ImVec2((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(APP_INDEX->stitle.c_str()).x / 2.f), ICON_MARGIN + PUPOP_ICON_SIZE.y + (4.f * SCALE.y)));
-            ImGui::TextColored(GUI_COLOR_TEXT, "%s", APP_INDEX->stitle.c_str());
+            ImGui::SetCursorPosY(ICON_MARGIN + PUPOP_ICON_SIZE.y + (4.f * SCALE.y));
+            TextColoredCentered(GUI_COLOR_TEXT, APP_INDEX->stitle.c_str());
             ImGui::SetWindowFontScale(1.4f * RES_SCALE.x);
             ImGui::SetCursorPos(ImVec2(WINDOW_SIZE.x / 2 - ImGui::CalcTextSize(context_dialog.c_str(), 0, false, WINDOW_SIZE.x - (108.f * SCALE.x)).x / 2, (WINDOW_SIZE.y / 2) + 10));
             ImGui::PushTextWrapPos(WINDOW_SIZE.x - (54.f * SCALE.x));

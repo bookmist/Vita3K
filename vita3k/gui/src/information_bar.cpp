@@ -478,10 +478,9 @@ static void draw_notice_info(GuiState &gui, EmuEnvState &emuenv) {
                 ImGui::SetNextWindowPos(ImVec2(VIEWPORT_POS.x + (VIEWPORT_SIZE.x / 2.f) - (DELETE_POPUP_SIZE.x / 2.f), VIEWPORT_POS.y + (VIEWPORT_SIZE.y / 2.f) - (DELETE_POPUP_SIZE.y / 2.f)));
                 if (ImGui::BeginPopupModal("Delete All", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings)) {
                     ImGui::SetWindowFontScale(1.4f * RES_SCALE.x);
-                    const auto notif_deleted = lang["notif_deleted"].c_str();
                     auto &common = emuenv.common_dialog.lang.common;
-                    ImGui::SetCursorPos(ImVec2((DELETE_POPUP_SIZE.x / 2.f) - (ImGui::CalcTextSize(notif_deleted).x / 2.f), (DELETE_POPUP_SIZE.y / 2.f) - (46.f * SCALE.y)));
-                    ImGui::TextColored(GUI_COLOR_TEXT, "%s", notif_deleted);
+                    ImGui::SetCursorPosY((DELETE_POPUP_SIZE.y / 2.f) - (46.f * SCALE.y));
+                    TextColoredCentered(GUI_COLOR_TEXT, lang["notif_deleted"].c_str());
                     ImGui::SetCursorPos(ImVec2((DELETE_POPUP_SIZE.x / 2) - (BUTTON_SIZE.x + (20.f * SCALE.x)), DELETE_POPUP_SIZE.y - BUTTON_SIZE.y - (24.0f * SCALE.y)));
                     if (ImGui::Button(common["cancel"].c_str(), BUTTON_SIZE) || ImGui::IsKeyPressed(static_cast<ImGuiKey>(emuenv.cfg.keyboard_button_circle))) {
                         ImGui::CloseCurrentPopup();
