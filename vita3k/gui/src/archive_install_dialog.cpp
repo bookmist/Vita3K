@@ -84,8 +84,7 @@ void draw_archive_install_dialog(GuiState &gui, EmuEnvState &emuenv) {
     ImGui::BeginChild("##archive_Install_child", WINDOW_SIZE, ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
     const auto POS_BUTTON = (ImGui::GetWindowWidth() / 2.f) - (BUTTON_SIZE.x / 2.f) + (10.f * SCALE.x);
     ImGui::SetWindowFontScale(RES_SCALE.x);
-    ImGui::SetCursorPosX((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(title.c_str()).x / 2.f));
-    ImGui::TextColored(GUI_COLOR_TEXT_MENUBAR, "%s", title.c_str());
+    TextColoredCentered(GUI_COLOR_TEXT_MENUBAR, title.c_str());
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
@@ -174,20 +173,20 @@ void draw_archive_install_dialog(GuiState &gui, EmuEnvState &emuenv) {
             ImGui::SetCursorPos(ImVec2(PROGRESS_BAR_POS, ImGui::GetCursorPosY() + (14.f * SCALE.y)));
             ImGui::ProgressBar(global_progress / archives_count, ImVec2(PROGRESS_BAR_WIDTH, 15.f * SCALE.y), "");
             const auto global_progress_str = fmt::format("{}/{}", global_progress, archives_count);
-            ImGui::SetCursorPos(ImVec2((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(global_progress_str.c_str()).x / 2.f), ImGui::GetCursorPosY() + (6.f * SCALE.y)));
-            ImGui::TextColored(GUI_COLOR_TEXT, "%s", global_progress_str.c_str());
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (6.f * SCALE.y));
+            TextColoredCentered(GUI_COLOR_TEXT, global_progress_str.c_str());
             // Draw Progress bar of count contents
             ImGui::SetCursorPos(ImVec2(PROGRESS_BAR_POS, ImGui::GetCursorPosY() + (14.f * SCALE.y)));
             ImGui::ProgressBar(current / count, ImVec2(PROGRESS_BAR_WIDTH, 15.f * SCALE.y), "");
             const auto count_progress_str = fmt::format("{}/{}", current.load(), count.load());
-            ImGui::SetCursorPos(ImVec2((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(count_progress_str.c_str()).x / 2.f), ImGui::GetCursorPosY() + (6.f * SCALE.y)));
-            ImGui::TextColored(GUI_COLOR_TEXT, "%s", count_progress_str.c_str());
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (6.f * SCALE.y));
+            TextColoredCentered(GUI_COLOR_TEXT, count_progress_str.c_str());
             // Draw Progress bar
             ImGui::SetCursorPos(ImVec2(PROGRESS_BAR_POS, ImGui::GetCursorPosY() + (14.f * SCALE.y)));
             ImGui::ProgressBar(progress / 100.f, ImVec2(PROGRESS_BAR_WIDTH, 15.f * SCALE.y), "");
             const auto progress_str = std::to_string(progress).append("%");
-            ImGui::SetCursorPos(ImVec2((ImGui::GetWindowWidth() / 2.f) - (ImGui::CalcTextSize(progress_str.c_str()).x / 2.f), ImGui::GetCursorPosY() + (6.f * SCALE.y)));
-            ImGui::TextColored(GUI_COLOR_TEXT, "%s", progress_str.c_str());
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (6.f * SCALE.y));
+            TextColoredCentered(GUI_COLOR_TEXT, progress_str.c_str());
             ImGui::PopStyleColor();
         } else if (state == "finished") {
             title = indicator["install_complete"];

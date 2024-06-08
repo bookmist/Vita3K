@@ -447,10 +447,8 @@ void draw_settings(GuiState &gui, EmuEnvState &emuenv) {
                         const auto CALC_TITLE = ImGui::CalcTextSize(themes_info[selected].title.c_str(), nullptr, false, POPUP_SIZE.x - SIZE_MINI_PACKAGE.x - (70.f * SCALE.x)).y / 2.f;
                         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (SIZE_MINI_PACKAGE.y / 2.f) - CALC_TITLE);
                         ImGui::TextWrapped("%s", themes_info[selected].title.c_str());
-                        const auto delete_str = theme.main["delete"].c_str();
-                        const auto CALC_TEXT = ImGui::CalcTextSize(delete_str);
-                        ImGui::SetCursorPos(ImVec2(POPUP_SIZE.x / 2 - (CALC_TEXT.x / 2.f), POPUP_SIZE.y / 2.f));
-                        ImGui::TextColored(GUI_COLOR_TEXT, "%s", delete_str);
+                        ImGui::SetCursorPosY(POPUP_SIZE.y / 2.f);
+                        TextColoredCentered(GUI_COLOR_TEXT, theme.main["delete"].c_str());
                         ImGui::SetCursorPos(ImVec2((POPUP_SIZE.x / 2.f) - BUTTON_SIZE.x - (20.f * SCALE.x), POPUP_SIZE.y - BUTTON_SIZE.y - (22.f * SCALE.y)));
                         if (ImGui::Button(common["cancel"].c_str(), BUTTON_SIZE) || ImGui::IsKeyPressed(static_cast<ImGuiKey>(emuenv.cfg.keyboard_button_circle)))
                             popup.clear();

@@ -47,8 +47,7 @@ void draw_license_install_dialog(GuiState &gui, EmuEnvState &emuenv) {
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.f * SCALE.x);
     ImGui::BeginChild("##license_install_child", ImVec2(616.f * SCALE.x, 264.f * SCALE.y), ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
     const auto POS_BUTTON = (ImGui::GetWindowWidth() / 2.f) - (BUTTON_SIZE.x / 2.f) + (10.f * SCALE.x);
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.f) - (ImGui::CalcTextSize(title.c_str()).x / 2.f));
-    ImGui::TextColored(GUI_COLOR_TEXT_TITLE, "%s", title.c_str());
+    TextColoredCentered(GUI_COLOR_TEXT_TITLE, title.c_str());
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
@@ -122,9 +121,8 @@ void draw_license_install_dialog(GuiState &gui, EmuEnvState &emuenv) {
         }
     } else if (state == "fail") {
         title = indicator["install_failed"];
-        auto FAILED_INSTALL_STR = lang["failed_install_license"].c_str();
-        ImGui::SetCursorPos(ImVec2((ImGui::GetWindowSize().x / 2.f) - (ImGui ::CalcTextSize(FAILED_INSTALL_STR).x / 2.f), ImGui::GetWindowSize().y / 2.f - 20.f));
-        ImGui::TextColored(GUI_COLOR_TEXT, "%s", FAILED_INSTALL_STR);
+        ImGui::SetCursorPosY(ImGui::GetWindowSize().y / 2.f - 20.f);
+        TextColoredCentered(GUI_COLOR_TEXT, lang["failed_install_license"].c_str());
         ImGui::SetCursorPos(ImVec2(POS_BUTTON, ImGui::GetWindowSize().y - BUTTON_SIZE.y - (20.f * SCALE.y)));
         if (ImGui::Button(common["ok"].c_str(), BUTTON_SIZE)) {
             gui.file_menu.license_install_dialog = false;

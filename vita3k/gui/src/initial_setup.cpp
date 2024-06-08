@@ -75,7 +75,6 @@ void draw_initial_setup(GuiState &gui, EmuEnvState &emuenv) {
 
     auto &lang = gui.lang.initial_setup;
     auto &common = emuenv.common_dialog.lang.common;
-    const auto completed_setup = lang["completed_setup"].c_str();
 
     const auto is_default_path = emuenv.cfg.pref_path == emuenv.default_path;
     const auto FW_PATH{ emuenv.pref_path / "vs0" };
@@ -101,8 +100,8 @@ void draw_initial_setup(GuiState &gui, EmuEnvState &emuenv) {
     const auto SELECT_COLOR_HOVERED = ImVec4(0.23f, 0.68f, 0.99f, 0.80f);
     const auto SELECT_COLOR_ACTIVE = ImVec4(0.23f, 0.68f, 1.f, 1.f);
 
-    ImGui::SetCursorPos(ImVec2((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(title_str.c_str()).x / 2.f), (47 * SCALE.y) - (ImGui::GetFontSize() / 2.f)));
-    ImGui::Text("%s", title_str.c_str());
+    ImGui::SetCursorPosY((47 * SCALE.y) - (ImGui::GetFontSize() / 2.f));
+    TextCentered(title_str.c_str());
     ImGui::SetCursorPosY(94.f * SCALE.y);
     ImGui::Separator();
     switch (setup) {
@@ -141,8 +140,8 @@ void draw_initial_setup(GuiState &gui, EmuEnvState &emuenv) {
         break;
     case SELECT_PREF_PATH:
         title_str = lang["select_pref_path"];
-        ImGui::SetCursorPos(ImVec2((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(lang["current_emu_path"].c_str()).x / 2.f), (WINDOW_SIZE.y / 2.f) - ImGui::GetFontSize()));
-        ImGui::TextColored(GUI_COLOR_TEXT_TITLE, "%s", lang["current_emu_path"].c_str());
+        ImGui::SetCursorPosY((WINDOW_SIZE.y / 2.f) - ImGui::GetFontSize());
+        TextColoredCentered(GUI_COLOR_TEXT_TITLE, lang["current_emu_path"].c_str());
         ImGui::Spacing();
         ImGui::SetCursorPosX((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(emuenv.cfg.pref_path.c_str()).x / 2.f));
         ImGui::TextWrapped("%s", emuenv.cfg.pref_path.c_str());
@@ -170,8 +169,8 @@ void draw_initial_setup(GuiState &gui, EmuEnvState &emuenv) {
         break;
     case INSTALL_FIRMWARE:
         title_str = lang["install_firmware"];
-        ImGui::SetCursorPos(ImVec2((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(lang["install_highly_recommended"].c_str()).x / 2.f), (WINDOW_SIZE.y / 2.f) - (ImGui::GetFontSize() * 2.f)));
-        ImGui::TextColored(GUI_COLOR_TEXT_TITLE, "%s", lang["install_highly_recommended"].c_str());
+        ImGui::SetCursorPosY((WINDOW_SIZE.y / 2.f) - (ImGui::GetFontSize() * 2.f));
+        TextColoredCentered(GUI_COLOR_TEXT_TITLE, lang["install_highly_recommended"].c_str());
         ImGui::Spacing();
         if (ImGui::Button(lang["download_firmware"].c_str(), BIG_BUTTON_SIZE))
             get_firmware_file(emuenv);
@@ -211,8 +210,8 @@ void draw_initial_setup(GuiState &gui, EmuEnvState &emuenv) {
         break;
     case FINISHED:
         title_str = lang["completed"];
-        ImGui::SetCursorPos(ImVec2((WINDOW_SIZE.x / 2.f) - (ImGui::CalcTextSize(completed_setup).x / 2.f), (WINDOW_SIZE.y / 2.f) - ImGui::GetFontSize()));
-        ImGui::Text("%s", completed_setup);
+        ImGui::SetCursorPosY((WINDOW_SIZE.y / 2.f) - ImGui::GetFontSize());
+        TextCentered(lang["completed_setup"].c_str());
         ImGui::SetCursorPos(BIG_BUTTON_POS);
         if (ImGui::Button(common["ok"].c_str(), BIG_BUTTON_SIZE) || ImGui::IsKeyPressed(static_cast<ImGuiKey>(emuenv.cfg.keyboard_button_cross)))
             emuenv.cfg.initial_setup = true;
