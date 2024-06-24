@@ -112,6 +112,7 @@ struct LangState {
             { "last_apps_used", "Last Apps used" }
         };
         std::map<std::string, std::string> debug = {
+            { "title", "Debug" },
             { "threads", "Threads" },
             { "semaphores", "Semaphores" },
             { "mutexes", "Mutexes" },
@@ -525,7 +526,13 @@ struct LangState {
             { "search_modules", "Search Modules" },
             { "clear_list", "Clear List" },
             { "no_modules", "No modules present.\nPlease download and install the last PS Vita firmware." },
-            { "refresh_list", "Refresh List" }
+            { "refresh_list", "Refresh List" },
+            { "automatic", "Automatic" },
+            { "automatic_description", "Select Automatic mode to use a preset list of modules." },
+            { "auto_manual", "Auto & Manual" },
+            { "auto_manual_description", "Select this mode to load Automatic module and selected modules from the list below." },
+            { "manual", "Manual" },
+            { "manual_description", "Select Manual mode to load selected modules from the list below." }
         };
         std::map<std::string, std::string> cpu = {
             { "unicorn", "Unicorn (deprecated)" },

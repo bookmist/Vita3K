@@ -503,12 +503,14 @@ void draw_settings_dialog(GuiState &gui, EmuEnvState &emuenv) {
         if (!gui.modules.empty()) {
             ImGui::TextColored(GUI_COLOR_TEXT_TITLE, "%s", lang.core["modules_mode"].c_str());
             ImGui::Spacing();
-            for (auto m = 0; m < MODULES_MODE_COUNT; m++) {
-                if (m)
-                    ImGui::SameLine();
-                ImGui::RadioButton(config_modules_mode[m][ModulesModeType::MODE], &config.modules_mode, m);
-                SetTooltipEx(config_modules_mode[m][ModulesModeType::DESCRIPTION]);
-            }
+            ImGui::RadioButton(lang.core["automatic"].c_str(), &config.modules_mode, 0);
+            SetTooltipEx(lang.core["automatic_description"].c_str());
+            ImGui::SameLine();
+            ImGui::RadioButton(lang.core["auto_manual"].c_str(), &config.modules_mode, 1);
+            SetTooltipEx(lang.core["auto_manual_description"].c_str());
+            ImGui::SameLine();
+            ImGui::RadioButton(lang.core["manual"].c_str(), &config.modules_mode, 2);
+            SetTooltipEx(lang.core["manual_description"].c_str());
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
@@ -849,7 +851,7 @@ void draw_settings_dialog(GuiState &gui, EmuEnvState &emuenv) {
         ImGui::Checkbox(lang.emulator["boot_apps_full_screen"].c_str(), &emuenv.cfg.boot_apps_full_screen);
         ImGui::Spacing();
 
-        const char *LIST_LOG_LEVEL[] = { lang.emulator["trace"].c_str(), "Debug", lang.emulator["info"].c_str(), lang.emulator["warning"].c_str(), lang.emulator["error"].c_str(), lang.emulator["critical"].c_str(), lang.emulator["off"].c_str() };
+        const char *LIST_LOG_LEVEL[] = { lang.emulator["trace"].c_str(), gui.lang.main_menubar.debug["title"].c_str(), lang.emulator["info"].c_str(), lang.emulator["warning"].c_str(), lang.emulator["error"].c_str(), lang.emulator["critical"].c_str(), lang.emulator["off"].c_str() };
         if (ImGui::Combo(lang.emulator["log_level"].c_str(), &emuenv.cfg.log_level, LIST_LOG_LEVEL, IM_ARRAYSIZE(LIST_LOG_LEVEL)))
             logging::set_level(static_cast<spdlog::level::level_enum>(emuenv.cfg.log_level));
         SetTooltipEx(lang.emulator["select_log_level"].c_str());
@@ -1113,7 +1115,7 @@ void draw_settings_dialog(GuiState &gui, EmuEnvState &emuenv) {
 
     // Debug
     ImGui::PushStyleColor(ImGuiCol_Text, GUI_COLOR_TEXT_MENUBAR);
-    if (ImGui::BeginTabItem("Debug")) {
+    if (ImGui::BeginTabItem(gui.lang.main_menubar.debug["title"].c_str())) {
         ImGui::PopStyleColor();
         ImGui::Spacing();
         ImGui::Checkbox(lang.debug["log_imports"].c_str(), &emuenv.kernel.debugger.log_imports);
