@@ -17,7 +17,6 @@
 
 #include "SceAppMgr.h"
 
-#include <io/device.h>
 #include <io/state.h>
 #include <kernel/state.h>
 #include <packages/sfo.h>
@@ -75,20 +74,13 @@ EXPORT(int, _sceAppMgrAppParamGetInt) {
 
 EXPORT(SceInt32, _sceAppMgrAppParamGetString, int pid, int param, char *string, int length) {
     TRACY_FUNC(_sceAppMgrAppParamGetString, pid, param, string, length);
-    LOG_CONSOLE(_sceAppMgrAppParamGetString, pid, param, string, length);
-    if (emuenv.sfo_handle.entries.size() == 0) {
-        vfs::FileBuffer params;
-        if (vfs::read_file(VitaIoDevice::ux0, params, emuenv.pref_path, "app/" + emuenv.io.title_id + "/sce_sys/param.sfo")) {
-            // SfoFile sfo_handle;
-            sfo::load(emuenv.sfo_handle, params);
-        }
-    }
     std::string res;
-    if (param == 12 && sfo::get_data_by_key(res, emuenv.sfo_handle, "TITLE_ID")) {
-    } else if (!sfo::get_data_by_id(res, emuenv.sfo_handle, param))
+    if (!sfo::get_data_by_id(res, emuenv.sfo_handle, param))
         return RET_ERROR(SCE_APPMGR_ERROR_INVALID);
-    res.copy(string, length);
-    return 0;
+    else {
+        res.copy(string, length);
+        return 0;
+    }
 }
 
 EXPORT(int, _sceAppMgrAppParamSetString) {
