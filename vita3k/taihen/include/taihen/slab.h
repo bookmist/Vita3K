@@ -4,6 +4,7 @@
 
 #include <kernel/cpu_protocol.h>
 #include <mem/functions.h>
+#include <mem/ptr.h>
 
 #include <util/types.h>
 

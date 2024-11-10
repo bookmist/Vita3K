@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <assert.h>
 #include <atomic>
 #include <map>
 #include <mutex>

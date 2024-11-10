@@ -13,7 +13,7 @@
 #include "taihen/error.h"
 // #include "taihen/proc_map.h"
 #include "taihen/plugin.h"
-#include "taihen/slab.h"
+// #include "taihen/slab.h"
 #include "taihen/taihen.h"
 
 #include <emuenv/state.h>

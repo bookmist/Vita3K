@@ -212,7 +212,9 @@ void slab_init(MemState &mem, const Ptr<slab_chain> sch_p, const SceSize itemsiz
     sch->empty_slotmask = ~SLOTS_ALL_ZERO >> (64 - sch->itemcount);
     sch->initial_slotmask = sch->empty_slotmask ^ SLOTS_FIRST;
     sch->alignment_mask = ~(sch->slabsize - 1);
-    sch->partial = sch->empty = sch->full = nullptr;
+    sch->partial.reset();
+    sch->empty.reset();
+    sch->full.reset();
 
     assert(slab_is_valid(sch));
 }
