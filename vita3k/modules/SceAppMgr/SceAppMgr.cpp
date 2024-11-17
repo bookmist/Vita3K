@@ -17,6 +17,7 @@
 
 #include "SceAppMgr.h"
 
+#include <io/VitaIoDevice.h>
 #include <io/state.h>
 #include <kernel/state.h>
 #include <packages/sfo.h>
@@ -24,6 +25,16 @@
 #include <util/tracy.h>
 
 TRACY_MODULE_NAME(SceAppMgr);
+
+void init_sfo(EmuEnvState &emuenv) {
+    if (emuenv.sfo_handle.entries.empty()) {
+        vfs::FileBuffer params;
+        if (vfs::read_file(VitaIoDevice::ux0, params, emuenv.pref_path, "app/" + emuenv.io.title_id + "/sce_sys/param.sfo")) {
+            // SfoFile sfo_handle;
+            sfo::load(emuenv.sfo_handle, params);
+        }
+    }
+}
 
 EXPORT(SceInt32, __sceAppMgrGetAppState, SceAppMgrAppState *appState, SceUInt32 sizeofSceAppMgrAppState, SceUInt32 buildVersion) {
     TRACY_FUNC(__sceAppMgrGetAppState, appState, sizeofSceAppMgrAppState, buildVersion);
@@ -72,15 +83,38 @@ EXPORT(int, _sceAppMgrAppParamGetInt) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(SceInt32, _sceAppMgrAppParamGetString, int pid, int param, char *string, int length) {
-    TRACY_FUNC(_sceAppMgrAppParamGetString, pid, param, string, length);
+EXPORT(SceInt32, _sceAppMgrAppParamGetString, int pid, int param, char *string, int length_) {
+    TRACY_FUNC(_sceAppMgrAppParamGetString, pid, param, string, length_);
+    LOG_CONSOLE(_sceAppMgrAppParamGetString, pid, param, string, length_);
+    init_sfo(emuenv);
     std::string res;
+    const char *param_name{};
+    switch (param) {
+    case 6:
+        param_name = "CONTENT_ID";
+        break;
+    case 8:
+        param_name = "CATEGORY";
+        break;
+    case 9:
+        param_name = "STITLE";
+        break;
+    case 10:
+        param_name = "TITLE";
+        break;
+    case 12:
+        param_name = "TITLE_ID";
+        break;
+    }
+    if (param_name) {
+        if (!sfo::get_data_by_key(res, emuenv.sfo_handle, param_name))
+            return RET_ERROR(SCE_APPMGR_ERROR_INVALID);
+    }
     if (!sfo::get_data_by_id(res, emuenv.sfo_handle, param))
         return RET_ERROR(SCE_APPMGR_ERROR_INVALID);
-    else {
-        res.copy(string, length);
-        return 0;
-    }
+    LOG_TRACE("sceAppMgrAppParamGetString: {} = {}", param, res);
+    res.copy(string, length_);
+    return 0;
 }
 
 EXPORT(int, _sceAppMgrAppParamSetString) {
