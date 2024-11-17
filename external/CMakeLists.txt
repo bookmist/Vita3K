@@ -1,5 +1,3 @@
-add_compile_options(-w)
-
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # Make option() in all external projects do nothing when a normal variable of the
