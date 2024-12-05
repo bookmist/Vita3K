@@ -23,8 +23,8 @@ TRACY_MODULE_NAME(SceFios2Kernel);
 struct sceFiosKernelOverlayResolveWithRangeSync_opt {
     Ptr<char> pOutPath;
     SceSize maxPath;
-    char loOrderFilter;
-    char hiOrderFilter;
+    SceUInt8 loOrderFilter;
+    SceUInt8 hiOrderFilter;
     char reserved1;
     char reserved2;
     int reserved3;

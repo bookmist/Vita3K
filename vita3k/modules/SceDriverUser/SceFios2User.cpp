@@ -15,111 +15,60 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#include <module/module.h>
+#include "../SceFios2Kernel/SceFios2Kernel02.h"
 
-#include "io/functions.h"
+#include "io/types.h"
 
-#include <util/tracy.h>
 TRACY_MODULE_NAME(SceFios2User);
-
-enum SceFiosErrorCode {
-    SCE_FIOS_OK = 0
-};
-
-typedef SceUID SceFiosOverlayID;
-
-enum SceFiosOverlayResolveMode {
-    SCE_FIOS_OVERLAY_RESOLVE_FOR_READ = 0,
-    SCE_FIOS_OVERLAY_RESOLVE_FOR_WRITE = 1
-};
-
-template <>
-std::string to_debug_str<SceFiosOverlayResolveMode>(const MemState &mem, SceFiosOverlayResolveMode type) {
-    switch (type) {
-    case SCE_FIOS_OVERLAY_RESOLVE_FOR_READ:
-        return "SCE_FIOS_OVERLAY_RESOLVE_FOR_READ";
-    case SCE_FIOS_OVERLAY_RESOLVE_FOR_WRITE:
-        return "SCE_FIOS_OVERLAY_RESOLVE_FOR_WRITE";
-    }
-    return std::to_string(type);
-}
 
 EXPORT(int, sceFiosOverlayAddForProcess02, SceUID processId, SceFiosProcessOverlay *pOverlay, SceFiosOverlayID *pOutID) {
     TRACY_FUNC(sceFiosOverlayAddForProcess02, processId, pOverlay, pOutID);
-    if (pOverlay->type != SCE_FIOS_OVERLAY_TYPE_OPAQUE)
-        LOG_WARN("Using unimplemented overlay type {}.", fmt::underlying(pOverlay->type));
-
-    *pOutID = create_overlay(emuenv.io, pOverlay);
-
-    return SCE_FIOS_OK;
+    return CALL_EXPORT(sceFiosKernelOverlayAddForProcess02, processId, pOverlay, pOutID);
 }
 
 EXPORT(int, sceFiosOverlayGetInfoForProcess02) {
     TRACY_FUNC(sceFiosOverlayGetInfoForProcess02);
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(sceFiosKernelOverlayGetInfoForProcess02);
 }
 
-EXPORT(int, sceFiosOverlayGetList02, SceUID processId, uint32_t minOrder, uint32_t maxOrder, SceFiosOverlayID *pOutIDs, SceUInt32 maxIDs, SceUInt32 *pActualIDs) {
+EXPORT(int, sceFiosOverlayGetList02, SceUID processId, uint32_t minOrder, uint32_t maxOrder, Ptr<SceFiosOverlayID> pOutIDs, SceUInt32 maxIDs, Ptr<SceUInt32> pActualIDs) {
     TRACY_FUNC(sceFiosOverlayGetList02, processId, minOrder, maxOrder, pOutIDs, maxIDs, pActualIDs);
-    const std::lock_guard<std::mutex> guard(emuenv.io.overlay_mutex);
-
-    std::vector<SceFiosOverlayID> overlay_ids;
-    for (const auto &overlay : emuenv.io.overlays) {
-        if (overlay.order >= minOrder && overlay.order <= maxOrder)
-            overlay_ids.push_back(overlay.id);
-    }
-
-    if (pActualIDs)
-        *pActualIDs = overlay_ids.size();
-
-    if (pOutIDs)
-        memcpy(pOutIDs, overlay_ids.data(), std::min<uint32_t>(overlay_ids.size(), maxIDs) * sizeof(SceFiosOverlayID));
-
-    return SCE_FIOS_OK;
+    sceFiosKernelOverlayGetList02_opt opt{ pOutIDs, maxIDs, pActualIDs };
+    return CALL_EXPORT(sceFiosKernelOverlayGetList02, processId, minOrder, maxOrder, &opt);
 }
 
 EXPORT(int, sceFiosOverlayGetRecommendedScheduler02, int param1, const char *path) {
     TRACY_FUNC(sceFiosOverlayGetRecommendedScheduler02, param1, path);
-    // reversed engineered
-    if (param1 <= 1)
-        return 0;
-
-    // returns if path starts with hostk: with k an integer
-    if (strlen(path) < strlen("host0:"))
-        return 0;
-
-    return memcmp(path, "host", 4) == 0 && path[4] <= '9' && path[5] == ':';
+    return CALL_EXPORT(sceFiosKernelOverlayGetRecommendedScheduler02, param1, path);
 }
 
 EXPORT(int, sceFiosOverlayModifyForProcess02) {
     TRACY_FUNC(sceFiosOverlayModifyForProcess02);
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(sceFiosKernelOverlayModifyForProcess02);
 }
 
 EXPORT(int, sceFiosOverlayRemoveForProcess02) {
     TRACY_FUNC(sceFiosOverlayRemoveForProcess02);
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(sceFiosKernelOverlayRemoveForProcess02);
 }
 
 EXPORT(int, sceFiosOverlayResolveSync02) {
     TRACY_FUNC(sceFiosOverlayResolveSync02);
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(sceFiosKernelOverlayResolveSync02);
 }
 
-EXPORT(int, sceFiosOverlayResolveWithRangeSync02, SceUID processId, SceFiosOverlayResolveMode resolveFlag, const char *pInPath, char *pOutPath, SceUInt32 maxPath, SceUInt32 min_order, SceUInt32 max_order) {
+EXPORT(int, sceFiosOverlayResolveWithRangeSync02, SceUID processId, SceFiosOverlayResolveMode resolveFlag, const char *pInPath, Ptr<char> pOutPath, SceUInt32 maxPath, SceUInt32 min_order, SceUInt32 max_order) {
     TRACY_FUNC(sceFiosOverlayResolveWithRangeSync02, processId, resolveFlag, pInPath, pOutPath, maxPath, min_order, max_order);
-    const std::string resolved = resolve_path(emuenv.io, pInPath, min_order, max_order);
-    strncpy(pOutPath, resolved.c_str(), maxPath);
-
-    return SCE_FIOS_OK;
+    sceFiosKernelOverlayResolveWithRangeSync02_opt opt{ pOutPath, maxPath, (SceUInt8)min_order, (SceUInt8)max_order };
+    return CALL_EXPORT(sceFiosKernelOverlayResolveWithRangeSync02, processId, resolveFlag, pInPath, &opt);
 }
 
 EXPORT(int, sceFiosOverlayThreadIsDisabled02) {
     TRACY_FUNC(sceFiosOverlayThreadIsDisabled02);
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(sceFiosKernelOverlayThreadIsDisabled02);
 }
 
 EXPORT(int, sceFiosOverlayThreadSetDisabled02) {
     TRACY_FUNC(sceFiosOverlayThreadSetDisabled02);
-    return UNIMPLEMENTED();
+    return CALL_EXPORT(sceFiosKernelOverlayThreadSetDisabled02);
 }
