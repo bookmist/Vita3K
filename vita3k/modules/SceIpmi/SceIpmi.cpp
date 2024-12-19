@@ -23,58 +23,93 @@
 
 TRACY_MODULE_NAME(SceIpmi);
 
-EXPORT(int, _ZN4IPMI6Client10disconnectEv) {
-    return UNIMPLEMENTED();
-}
-
-EXPORT(int, _ZN4IPMI6Client11getUserDataEv) {
-    return UNIMPLEMENTED();
-}
-
+namespace IPMI {
+struct DataInfo {
+    Ptr<void> pBuffer;
+    SceSize bufferSize;
+};
 struct BufferInfo {
     Ptr<void> pBuffer;
     SceSize bufferSize;
     SceSize bufferWrittenSize; // size written by method
 };
+struct Client {
+    struct EventNotifee {
+        unsigned int data;
+    };
+};
+} // namespace IPMI
 
-EXPORT(int, _ZN4IPMI6Client12tryGetResultEjPiPvPmm, unsigned int a1, int *a2, void *a3, unsigned long *a4, unsigned long a5) {
+// IPMI::Client::disconnect()
+EXPORT(int, _ZN4IPMI6Client10disconnectEv) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client12tryGetResultEjjPiPNS_10BufferInfoEj) {
+// IPMI::Client::getUserData()
+EXPORT(int, _ZN4IPMI6Client11getUserDataEv) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client13pollEventFlagEjjjPj) {
+// IPMI::Client::tryGetResult(unsigned int, int*, void*, unsigned long*, unsigned long)
+EXPORT(int, _ZN4IPMI6Client12tryGetResultEjPiPvPmm, IPMI::Client *self, unsigned int a1, int *a2, void *a3, unsigned long *a4, unsigned long a5) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client13waitEventFlagEjjjPjS1_) {
+// IPMI::Client::tryGetResult(unsigned int, unsigned int, int*, IPMI::BufferInfo*, unsigned int)
+EXPORT(int, _ZN4IPMI6Client12tryGetResultEjjPiPNS_10BufferInfoEj, IPMI::Client *self,
+    unsigned int, unsigned int, int *, IPMI::BufferInfo *, unsigned int) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client16invokeSyncMethodEjPKNS_8DataInfoEjPiPNS_10BufferInfoEj) {
+// IPMI::Client::pollEventFlag(unsigned int, unsigned int, unsigned int, unsigned int*)
+EXPORT(int, _ZN4IPMI6Client13pollEventFlagEjjjPj, IPMI::Client *self, unsigned int, unsigned int, unsigned int, unsigned int *) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client16invokeSyncMethodEjPKvjPiPvPjj) {
+// IPMI::Client::waitEventFlag(unsigned int, unsigned int, unsigned int, unsigned int*, unsigned int*)
+EXPORT(int, _ZN4IPMI6Client13waitEventFlagEjjjPjS1_, IPMI::Client *self, unsigned int, unsigned int, unsigned int, unsigned int *, unsigned int *) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client17invokeAsyncMethodEjPKNS_8DataInfoEjPjPKNS0_12EventNotifeeE) {
+// IPMI::Client::invokeSyncMethod(unsigned int, IPMI::DataInfo const*, unsigned int, int*, IPMI::BufferInfo*, unsigned int)
+EXPORT(int, _ZN4IPMI6Client16invokeSyncMethodEjPKNS_8DataInfoEjPiPNS_10BufferInfoEj,
+    IPMI::Client *self, unsigned int method_code, IPMI::DataInfo const *data_info, unsigned int data_info_size, int *result, IPMI::BufferInfo *buffer_info, unsigned int buffer_info_size) {
+    TRACY_FUNC(_ZN4IPMI6Client16invokeSyncMethodEjPKNS_8DataInfoEjPiPNS_10BufferInfoEj, self, method_code, data_info, data_info_size, result, buffer_info, buffer_info_size);
+    LOG_TRACE("IPMI::Client::invokeSyncMethod({}, {}, {}, {}, {}, {})", log_hex(method_code), uint64_t(data_info), data_info_size, uint64_t(result), uint64_t(buffer_info), buffer_info_size);
+    auto params = data_info ? *data_info->pBuffer.cast<int>().get(emuenv.mem) : 0;
+    LOG_CONSOLE(_ZN4IPMI6Client16invokeSyncMethodEjPKNS_8DataInfoEjPiPNS_10BufferInfoEj, self, log_hex(method_code), params);
+    if (result)
+        *result = 0;
+    if (buffer_info && buffer_info->pBuffer && buffer_info_size > 0) {
+        memset(buffer_info->pBuffer.get(emuenv.mem), 0, buffer_info->bufferSize);
+        buffer_info->bufferWrittenSize = buffer_info->bufferSize;
+    }
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client17invokeAsyncMethodEjPKvjPiPKNS0_12EventNotifeeE) {
+// IPMI::Client::invokeSyncMethod(unsigned int, void const*, unsigned int, int*, void*, unsigned int*, unsigned int)
+EXPORT(int, _ZN4IPMI6Client16invokeSyncMethodEjPKvjPiPvPjj,
+    IPMI::Client *self, unsigned int method_code, void const *data_info, unsigned int data_info_size, int *result, void *buffer_info, unsigned int *buffer_info_size, unsigned int) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client19terminateConnectionEv) {
+// IPMI::Client::invokeAsyncMethod(unsigned int, IPMI::DataInfo const*, unsigned int, unsigned int*, IPMI::Client::EventNotifee const*)
+EXPORT(int, _ZN4IPMI6Client17invokeAsyncMethodEjPKNS_8DataInfoEjPjPKNS0_12EventNotifeeE, IPMI::Client *self, int, IPMI::DataInfo const *, unsigned int, unsigned int *, IPMI::Client::EventNotifee const *) {
+    return UNIMPLEMENTED();
+}
+
+// IPMI::Client::invokeAsyncMethod(unsigned int, void const*, unsigned int, int*, IPMI::Client::EventNotifee const*)
+EXPORT(int, _ZN4IPMI6Client17invokeAsyncMethodEjPKvjPiPKNS0_12EventNotifeeE, IPMI::Client *self, unsigned int, void const *, unsigned int, int *, IPMI::Client::EventNotifee const *) {
+    return UNIMPLEMENTED();
+}
+
+// IPMI::Client::terminateConnection()
+EXPORT(int, _ZN4IPMI6Client19terminateConnectionEv, IPMI::Client *self) {
     return UNIMPLEMENTED();
 }
 
 // IPMI::Client::Config::estimateClientMemorySize()
-EXPORT(int, _ZN4IPMI6Client6Config24estimateClientMemorySizeEv) {
+EXPORT(int, _ZN4IPMI6Client6Config24estimateClientMemorySizeEv, IPMI::Client *self) {
     TRACY_FUNC(_ZN4IPMI6Client6Config24estimateClientMemorySizeEv);
     STUBBED("stubbed");
     return 0x100;
@@ -89,25 +124,30 @@ EXPORT(int, _ZN4IPMI6Client6createEPPS0_PKNS0_6ConfigEPvS6_, Ptr<void> *client, 
     return 0;
 }
 
-EXPORT(int, _ZN4IPMI6Client6getMsgEjPvPjjS2_) {
+// IPMI::Client::getMsg(unsigned int, void*, unsigned int*, unsigned int, unsigned int*)
+EXPORT(int, _ZN4IPMI6Client6getMsgEjPvPjjS2_, IPMI::Client *self, unsigned int, void *, unsigned int *, unsigned int, unsigned int *) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client7connectEPKvjPi, void *client, void const *params, SceSize params_size, SceInt32 *error) {
-    TRACY_FUNC(_ZN4IPMI6Client7connectEPKvjPi, client, error);
+// IPMI::Client::connect(void const*, unsigned int, int*)
+EXPORT(int, _ZN4IPMI6Client7connectEPKvjPi, IPMI::Client *self, void const *params, SceSize params_size, SceInt32 *error) {
+    TRACY_FUNC(_ZN4IPMI6Client7connectEPKvjPi, self, params, params_size, error);
     *error = 0;
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client7destroyEv) {
+// IPMI::Client::destroy()
+EXPORT(int, _ZN4IPMI6Client7destroyEv, IPMI::Client *self) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6Client9tryGetMsgEjPvPmm) {
+// IPMI::Client::tryGetMsg(unsigned int, void*, unsigned long*, unsigned long)
+EXPORT(int, _ZN4IPMI6Client9tryGetMsgEjPvPmm, IPMI::Client *self, unsigned int, void *, unsigned long *, unsigned long) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, _ZN4IPMI6ClientD1Ev) {
+// IPMI::Client::~Client()
+EXPORT(int, _ZN4IPMI6ClientD1Ev, IPMI::Client *self) {
     return UNIMPLEMENTED();
 }
 

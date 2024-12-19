@@ -328,6 +328,9 @@ bool load_sys_module(EmuEnvState &emuenv, SceSysmoduleModuleId module_id) {
             module_path = fmt::format("vs0:sys/external/{}.suprx", module_filename);
         }
 
+        if (!is_lle_module(module_filename, emuenv))
+            continue;
+
         auto loaded_module_uid = load_module(emuenv, module_path);
 
         if (loaded_module_uid < 0) {

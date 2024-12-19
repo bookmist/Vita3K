@@ -67,6 +67,7 @@ struct Socket {
     virtual int listen(int backlog) = 0;
     virtual int get_peer_address(SceNetSockaddr *addr, unsigned int *addrlen) = 0;
     virtual int get_socket_address(SceNetSockaddr *addr, unsigned int *addrlen) = 0;
+    virtual int shutdown(int how) = 0;
 };
 
 // udp, tcp
@@ -108,6 +109,7 @@ struct PosixSocket : public Socket {
     int listen(int backlog) override;
     int get_peer_address(SceNetSockaddr *addr, unsigned int *addrlen) override;
     int get_socket_address(SceNetSockaddr *addr, unsigned int *addrlen) override;
+    int shutdown(int how) override;
 };
 
 struct P2PSocket : public PosixSocket {

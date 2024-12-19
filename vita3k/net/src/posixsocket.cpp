@@ -237,6 +237,14 @@ int PosixSocket::abort(int flags) {
 #endif
 }
 
+int PosixSocket::shutdown(int how) {
+    int res = ::shutdown(sock, how);
+    if (res < 0) {
+        return translate_return_value(res);
+    }
+    return 0;
+}
+
 int PosixSocket::close() {
 #ifdef _WIN32
     auto out = closesocket(sock);
