@@ -19,6 +19,9 @@
 
 #include <mem/ptr.h>
 #include <util/align.h>
+#include <util/log.h>
+
+static bool constexpr log_mem_alloc = false;
 
 #include <algorithm>
 
@@ -105,9 +108,9 @@ struct MempoolObject {
 
     Ptr<void> alloc_raw(const std::uint32_t size) {
         const std::uint32_t offset = allocator.alloc(size);
-
+        LOG_TRACE_IF(log_mem_alloc, "alloc_raw memspace:{}, offset:{}, size:{}", log_hex(memspace.address()), log_hex(offset), log_hex(size));
         if (offset == 0xFFFFFFFF) {
-            return Ptr<void>();
+            return Ptr<void>(0);
         }
 
         return Ptr<void>(memspace.address() + offset);
@@ -115,9 +118,10 @@ struct MempoolObject {
 
     bool free_raw(const Ptr<void> ptr) {
         if (ptr < memspace) {
+            LOG_TRACE_IF(log_mem_alloc, "free_raw error memspace:{}, ptr:{}, memspace_start:{}", log_hex(memspace.address()), log_hex(ptr.address()), log_hex(memspace.address()));
             return false;
         }
-
+        LOG_TRACE_IF(log_mem_alloc, "free_raw memspace:{}, offset:{}", log_hex(memspace.address()), log_hex(ptr.address() - memspace.address()));
         return allocator.free(ptr.address() - memspace.address());
     }
 

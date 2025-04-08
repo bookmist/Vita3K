@@ -61,15 +61,11 @@ static int SDLCALL thread_function(void *data) {
     SDL_SignalSemaphore(params.host_may_destroy_params);
     const ThreadStatePtr thread = params.kernel->get_thread(params.thid);
 #ifdef TRACY_ENABLE
-    std::string th_name;
-    if (!thread->name.empty()) {
-        th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
-    } else {
-        th_name = "TID:" + std::to_string(thread->id) + (!thread->name.empty() ? " " + thread->name : "");
-    }
+    std::string th_name = thread->name + "(TID:" + std::to_string(thread->id) + ")";
     tracy::SetThreadName(th_name.c_str());
 #endif
-    if (thread->affinity_mask != 0x70000) {
+    /*
+if (thread->affinity_mask != 0x70000) {
         uint32_t affinity_mask = 0;
         if (thread->affinity_mask & 0x10000) {
             affinity_mask = affinity_mask | 1;
@@ -80,8 +76,9 @@ static int SDLCALL thread_function(void *data) {
         if (thread->affinity_mask & 0x40000) {
             affinity_mask = affinity_mask | 16;
         }
-        // SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
-    };
+    SetThreadAffinityMask(GetCurrentThread(), affinity_mask);
+};
+*/
     thread->run_loop();
     const uint32_t r0 = read_reg(*thread->cpu, 0);
 
