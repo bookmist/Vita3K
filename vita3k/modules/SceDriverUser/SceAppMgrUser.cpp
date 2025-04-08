@@ -118,9 +118,9 @@ EXPORT(int, sceAppMgrAppMount) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrAppParamGetInt) {
-    TRACY_FUNC(sceAppMgrAppParamGetInt);
-    return UNIMPLEMENTED();
+EXPORT(int, sceAppMgrAppParamGetInt, int pid, int param, int *p_int) {
+    TRACY_FUNC(sceAppMgrAppParamGetInt, pid, param, p_int);
+    return CALL_EXPORT(_sceAppMgrAppParamGetInt, pid, param, p_int);
 }
 
 EXPORT(SceInt32, sceAppMgrAppParamGetString, int pid, int param, char *string, SceSize length) {
