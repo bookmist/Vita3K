@@ -37,37 +37,282 @@ TRACY_MODULE_NAME(taihen);
 /** Fake module name indicating the current process's main module. */
 #define TAI_MAIN_MODULE ((void *)0)
 
+#define LOG LOG_DEBUG
+
+/* This file gets included multiple times to generate the host-visible and target-visible versions of each struct */
+
+#define SCE_TYPE(type) type##_raw
+#define SCE_PTR(type) Ptr<type>
+
+#include <stdint.h>
+
+struct SCE_TYPE(sce_module_exports);
+struct SCE_TYPE(sce_module_imports);
+
+typedef struct SCE_TYPE(sce_module_exports) {
+    uint16_t size; /* Size of this struct, set to 0x20 */
+    uint16_t version; /* 0x1 for normal export, 0x0 for main module export */
+    uint16_t flags; /* 0x1 for normal export, 0x8000 for main module export */
+    uint16_t num_syms_funcs; /* Number of function exports */
+    uint32_t num_syms_vars; /* Number of variable exports */
+    uint32_t num_syms_tls_vars; /* Number of TLS variable exports */
+    uint32_t library_nid; /* NID of this library */
+    SCE_PTR(const char *)
+    library_name; /* Pointer to name of this library */
+    SCE_PTR(uint32_t *)
+    nid_table; /* Pointer to array of 32-bit NIDs to export */
+    SCE_PTR(const void **)
+    entry_table; /* Pointer to array of data pointers for each NID */
+} SCE_TYPE(sce_module_exports);
+
+typedef struct SCE_TYPE(sce_module_imports) {
+    uint16_t size; /* Size of this struct, set to 0x34 */
+    uint16_t version; /* Set to 0x1 */
+    uint16_t flags; /* Set to 0x0 */
+    uint16_t num_syms_funcs; /* Number of function imports */
+    uint16_t num_syms_vars; /* Number of variable imports */
+    uint16_t num_syms_tls_vars; /* Number of TLS variable imports */
+
+    uint32_t reserved1;
+    uint32_t library_nid; /* NID of library to import */
+    SCE_PTR(const char *)
+    library_name; /* Pointer to name of imported library, for debugging */
+    uint32_t reserved2;
+    SCE_PTR(uint32_t *)
+    func_nid_table; /* Pointer to array of function NIDs to import */
+    SCE_PTR(const void **)
+    func_entry_table; /* Pointer to array of stub functions to fill */
+    SCE_PTR(uint32_t *)
+    var_nid_table; /* Pointer to array of variable NIDs to import */
+    SCE_PTR(const void **)
+    var_entry_table; /* Pointer to array of data pointers to write to */
+    SCE_PTR(uint32_t *)
+    tls_var_nid_table; /* Pointer to array of TLS variable NIDs to import */
+    SCE_PTR(const void **)
+    tls_var_entry_table; /* Pointer to array of data pointers to write to */
+} SCE_TYPE(sce_module_imports);
+
+/* alternative module imports struct with a size of 0x24 */
+typedef struct SCE_TYPE(sce_module_imports_short) {
+    uint16_t size; /* Size of this struct, set to 0x24 */
+    uint16_t version; /* Set to 0x1 */
+    uint16_t flags; /* Set to 0x0 */
+    uint16_t num_syms_funcs; /* Number of function imports */
+    uint16_t num_syms_vars; /* Number of variable imports */
+    uint16_t num_syms_tls_vars; /* Number of TLS variable imports */
+
+    uint32_t library_nid; /* NID of library to import */
+    SCE_PTR(const char *)
+    library_name; /* Pointer to name of imported library, for debugging */
+    SCE_PTR(uint32_t *)
+    func_nid_table; /* Pointer to array of function NIDs to import */
+    SCE_PTR(const void **)
+    func_entry_table; /* Pointer to array of stub functions to fill */
+    SCE_PTR(uint32_t *)
+    var_nid_table; /* Pointer to array of variable NIDs to import */
+    SCE_PTR(const void **)
+    var_entry_table; /* Pointer to array of data pointers to write to */
+} SCE_TYPE(sce_module_imports_short);
+
+struct sce_module_info_raw { // size is 0x5C-bytes
+    uint16_t attributes;
+    uint16_t version; /* Set to 0x0101 */
+    char name[27]; /* Name of the library */
+    uint8_t type; /* 0x0 for executable, 0x6 for PRX */
+    Ptr<const void>
+        gp_value;
+    Ptr<sce_module_exports_raw>
+        export_top; /* Offset to start of export table */
+    Ptr<sce_module_exports_raw>
+        export_end; /* Offset to end of export table */
+    Ptr<sce_module_imports_raw>
+        import_top; /* Offset to start of import table */
+    Ptr<sce_module_imports_raw>
+        import_end; /* Offset to end of import table */
+    uint32_t module_nid; /* NID of this module */
+    uint32_t tls_start;
+    uint32_t tls_filesz;
+    uint32_t tls_memsz;
+    Ptr<const void>
+        module_start; /* Offset to function to run when library is started, 0 to disable */
+    Ptr<const void>
+        module_stop; /* Offset to function to run when library is exiting, 0 to disable */
+    Ptr<const void>
+        exidx_top; /* Offset to start of ARM EXIDX (optional) */
+    Ptr<const void>
+        exidx_end; /* Offset to end of ARM EXIDX (optional) */
+    Ptr<const void>
+        extab_top; /* Offset to start of ARM EXTAB (optional) */
+    Ptr<const void>
+        extab_end; /* Offset to end of ARM EXTAB (optional */
+};
+
+/*
+ * Note - fw lower than 1.692 should use v5's process_param struct
+ */
+#define VITA_TOOLCHAIN_PROCESS_PARAM_NEW_FORMAT_VERSION (0x1692000)
+
+typedef struct SCE_TYPE(sce_process_param_v5) {
+    uint32_t size; /* 0x30                       */
+    uint32_t magic; /* PSP2                       */
+    uint32_t version; /* Unknown, but it could be 5 */
+    uint32_t fw_version; /* SDK Version                */
+    SCE_PTR(const char *)
+    main_thread_name; /* Thread name pointer        */
+    int32_t main_thread_priority; /* Thread initPriority        */
+    uint32_t main_thread_stacksize; /* Thread stacksize           */
+    uint32_t main_thread_attribute; /* Thread attribute           */
+    SCE_PTR(const char *)
+    process_name; /* Process name pointer       */
+    uint32_t process_preload_disabled; /* Module load inhibit        */
+    uint32_t main_thread_cpu_affinity_mask; /* Unknown                    */
+    SCE_PTR(const void *)
+    sce_libc_param; /* SceLibc param pointer      */
+} SCE_TYPE(sce_process_param_v5);
+
+typedef struct SCE_TYPE(sce_process_param_v6) {
+    uint32_t size; /* 0x34                       */
+    uint32_t magic; /* PSP2                       */
+    uint32_t version; /* Unknown, but it could be 6 */
+    uint32_t fw_version; /* SDK Version                */
+    SCE_PTR(const char *)
+    main_thread_name; /* Thread name pointer        */
+    int32_t main_thread_priority; /* Thread initPriority        */
+    uint32_t main_thread_stacksize; /* Thread stacksize           */
+    uint32_t main_thread_attribute; /* Thread stacksize           */
+    SCE_PTR(const char *)
+    process_name; /* Process name pointer       */
+    uint32_t process_preload_disabled; /* Module load inhibit        */
+    uint32_t main_thread_cpu_affinity_mask; /* Unknown                    */
+    SCE_PTR(const void *)
+    sce_libc_param; /* SceLibc param pointer      */
+    uint32_t unk; /* Unknown                    */
+} SCE_TYPE(sce_process_param_v6);
+
+typedef struct SCE_TYPE(sce_libc_param) {
+    struct {
+        uint32_t size; /* 0x34 */
+        uint32_t unk_0x4; /* Unknown, set to 1 */
+        SCE_PTR(void *)
+        malloc_init; /* Initialize malloc heap */
+        SCE_PTR(void *)
+        malloc_term; /* Terminate malloc heap */
+        SCE_PTR(void *)
+        malloc; /* malloc replacement */
+        SCE_PTR(void *)
+        free; /* free replacement */
+        SCE_PTR(void *)
+        calloc; /* calloc replacement */
+        SCE_PTR(void *)
+        realloc; /* realloc replacement */
+        SCE_PTR(void *)
+        memalign; /* memalign replacement */
+        SCE_PTR(void *)
+        reallocalign; /* reallocalign replacement */
+        SCE_PTR(void *)
+        malloc_stats; /* malloc_stats replacement */
+        SCE_PTR(void *)
+        malloc_stats_fast; /* malloc_stats_fast replacement */
+        SCE_PTR(void *)
+        malloc_usable_size; /* malloc_usable_size replacement */
+    } _malloc_replace;
+
+    struct {
+        uint32_t size; /* 0x28 */
+        uint32_t unk_0x4; /* Unknown, set to 1 */
+        SCE_PTR(void *)
+        operator_new; /* new operator replacement */
+        SCE_PTR(void *)
+        operator_new_nothrow; /* new (nothrow) operator replacement */
+        SCE_PTR(void *)
+        operator_new_arr; /* new[] operator replacement */
+        SCE_PTR(void *)
+        operator_new_arr_nothrow; /* new[] (nothrow) operator replacement */
+        SCE_PTR(void *)
+        operator_delete; /* delete operator replacement */
+        SCE_PTR(void *)
+        operator_delete_nothrow; /* delete (nothrow) operator replacement */
+        SCE_PTR(void *)
+        operator_delete_arr; /* delete[] operator replacement */
+        SCE_PTR(void *)
+        operator_delete_arr_nothrow; /* delete[] (nothrow) operator replacement */
+    } _new_replace;
+
+    struct {
+        uint32_t size; /* 0x18 */
+        uint32_t unk_0x4; /* Unknown, set to 1 */
+        SCE_PTR(void *)
+        malloc_init_for_tls; /* Initialise tls malloc heap */
+        SCE_PTR(void *)
+        malloc_term_for_tls; /* Terminate tls malloc heap */
+        SCE_PTR(void *)
+        malloc_for_tls; /* malloc_for_tls replacement */
+        SCE_PTR(void *)
+        free_for_tls; /* free_for_tls replacement */
+    } _malloc_for_tls_replace;
+
+    uint32_t size; /* 0x38 */
+    uint32_t unk_0x04; /* Unknown */
+    SCE_PTR(uint32_t *)
+    heap_size; /* Heap size variable */
+    SCE_PTR(uint32_t *)
+    default_heap_size; /* Default heap size variable */
+    SCE_PTR(uint32_t *)
+    heap_extended_alloc; /* Dynamically extend heap size */
+    SCE_PTR(uint32_t *)
+    heap_delayed_alloc; /* Allocate heap on first call to malloc */
+    uint32_t fw_version; /* SDK version */
+    uint32_t unk_0x1C; /* Unknown, set to 9 */
+    SCE_PTR(const void *)
+    malloc_replace; /* malloc replacement functions */
+    SCE_PTR(const void *)
+    new_replace; /* new replacement functions */
+    SCE_PTR(uint32_t *)
+    heap_initial_size; /* Dynamically allocated heap initial size */
+    SCE_PTR(uint32_t *)
+    heap_unit_1mb; /* Change alloc unit size from 64k to 1M */
+    SCE_PTR(uint32_t *)
+    heap_detect_overrun; /* Detect heap buffer overruns */
+    SCE_PTR(const void *)
+    malloc_for_tls_replace; /* malloc_for_tls replacement functions */
+
+    uint32_t _default_heap_size; /* Default SceLibc heap size - 0x40000 (256KiB) */
+} SCE_TYPE(sce_libc_param);
+
+#undef SCE_TYPE
+#undef SCE_PTR
+
 /**
  * @brief      Extended module information
  *
  *             This supplements the output of `sceKernelGetModuleInfo`
  */
-typedef struct _tai_module_info {
+struct tai_module_info_t {
     uint32_t size; ///< Structure size, set to sizeof(tai_module_info_t)
     SceUID modid; ///< Module UID
     uint32_t module_nid; ///< Module NID
     char name[27]; ///< Module name
-    Ptr<int> exports_start; ///< Pointer to export table in process address space
-    Ptr<int> exports_end; ///< Pointer to end of export table
-    Ptr<int> imports_start; ///< Pointer to import table in process address space
-    Ptr<int> imports_end; ///< Pointer to end of import table
-} tai_module_info_t;
+    Ptr<sce_module_exports_raw> exports_start; ///< Pointer to export table in process address space
+    Ptr<sce_module_exports_raw> exports_end; ///< Pointer to end of export table
+    Ptr<sce_module_imports_raw> imports_start; ///< Pointer to import table in process address space
+    Ptr<sce_module_imports_raw> imports_end; ///< Pointer to end of import table
+};
 
 /**
  * @brief      Pass hook arguments to kernel
  */
-typedef struct _tai_hook_args {
+struct tai_hook_args_t {
     uint32_t size;
     Ptr<const char> module;
     uint32_t library_nid;
     uint32_t func_nid;
     Ptr<const void> hook_func;
-} tai_hook_args_t;
+};
 
 /**
  * @brief      Pass offset arguments to kernel
  */
-typedef struct _tai_offset_args {
+struct tai_offset_args_t {
     uint32_t size;
     SceUID modid;
     int segidx;
@@ -75,18 +320,18 @@ typedef struct _tai_offset_args {
     int thumb;
     Ptr<const void> source;
     uint32_t source_size;
-} tai_offset_args_t;
+};
 
 /**
  * @brief      Pass module arguments to kernel
  */
-typedef struct _tai_module_args {
+struct tai_module_args_t {
     uint32_t size;
     SceUID pid;
     uint32_t args;
     Ptr<const void> argp;
     int flags;
-} tai_module_args_t;
+};
 
 /**
  * @brief      Hook information
@@ -100,27 +345,29 @@ typedef Ptr<uint32_t> tai_hook_ref_t;
 /**
  * @brief      Internal structure
  */
-struct _tai_hook_user {
+struct tai_hook_user {
     Ptr<uint32_t> next;
     Ptr<void> func;
     Ptr<void> old;
 };
 
-#define TAI_SUCCESS 0
-#define TAI_ERROR_SYSTEM 0x90010000
-#define TAI_ERROR_MEMORY 0x90010001
-#define TAI_ERROR_NOT_FOUND 0x90010002
-#define TAI_ERROR_INVALID_ARGS 0x90010003
-#define TAI_ERROR_INVALID_KERNEL_ADDR 0x90010004
-#define TAI_ERROR_PATCH_EXISTS 0x90010005
-#define TAI_ERROR_HOOK_ERROR 0x90010006
-#define TAI_ERROR_NOT_IMPLEMENTED 0x90010007
-#define TAI_ERROR_USER_MEMORY 0x90010008
-#define TAI_ERROR_NOT_ALLOWED 0x90010009
-#define TAI_ERROR_STUB_NOT_RESOLVED 0x9001000A
-#define TAI_ERROR_INVALID_MODULE 0x9001000B
-#define TAI_ERROR_MODULE_OVERFLOW 0x9001000C
-#define TAI_ERROR_BLOCKING 0x9001000D
+enum TaiErrorCode : uint32_t {
+    TAI_SUCCESS = 0,
+    TAI_ERROR_SYSTEM = 0x90010000,
+    TAI_ERROR_MEMORY = 0x90010001,
+    TAI_ERROR_NOT_FOUND = 0x90010002,
+    TAI_ERROR_INVALID_ARGS = 0x90010003,
+    TAI_ERROR_INVALID_KERNEL_ADDR = 0x90010004,
+    TAI_ERROR_PATCH_EXISTS = 0x90010005,
+    TAI_ERROR_HOOK_ERROR = 0x90010006,
+    TAI_ERROR_NOT_IMPLEMENTED = 0x90010007,
+    TAI_ERROR_USER_MEMORY = 0x90010008,
+    TAI_ERROR_NOT_ALLOWED = 0x90010009,
+    TAI_ERROR_STUB_NOT_RESOLVED = 0x9001000A,
+    TAI_ERROR_INVALID_MODULE = 0x9001000B,
+    TAI_ERROR_MODULE_OVERFLOW = 0x9001000C,
+    TAI_ERROR_BLOCKING = 0x9001000D
+};
 
 /** @name Kernel Hooks
  * Hooks exports to kernel
@@ -174,70 +421,66 @@ EXPORT(SceUID, taiHookFunctionOffsetForUser, tai_hook_ref_t *p_hook, tai_offset_
 }
 
 /**
- * @brief      Converts internal SCE structure to a usable form
+ * @brief      Gets a loaded module by name or NID or both
  *
- *             This is needed since the internal SceKernelModulemgr structures
- *             change in different firmware versions.
+ *             If `name` is NULL, then only the NID is used to locate the loaded
+ *             module. If `name` is not NULL then it will be used to lookup the
+ *             loaded module. If NID is not `TAI_IGNORE_MODULE_NID`, then it
+ *             will be used in the lookup too. If `name` is NULL and NID is
+ *             `TAI_IGNORE_MODULE_NID` then the first module loaded for the
+ *             process will be returned.
  *
- * @param[in]  pid      The pid
- * @param[in]  sceinfo  Return from `ksceKernelGetModuleInternal`
- * @param[out] taiinfo  Output data structure
+ * @param[in]  pid   The pid
+ * @param[in]  name  The name to lookup. Can be NULL.
+ * @param[in]  nid   The nid to lookup. Can be `TAI_IGNORE_MODULE_NID`.
+ * @param[out] info  The information
  *
  * @return     Zero on success, < 0 on error
+ *             - TAI_ERROR_INVALID_MODULE if both `name` and NID are undefined
+ *               and `pid` is KERNEL_PID.
+ *             - TAI_ERROR_MODULE_OVERFLOW if there are more than
+ *               `MOD_LIST_SIZE` modules loaded for the process. This is a
+ *               system error and should be reported.
  */
-/*
-static int sce_to_tai_module_info(SceUID pid, SceKernelModuleInfo *sceinfo, tai_module_info_t *taiinfo) {
-if (taiinfo->size < sizeof(tai_module_info_t)) {
- LOG_ERROR("Structure size too small: %d", taiinfo->size);
- return TAI_ERROR_SYSTEM;
-}
+constexpr int MOD_LIST_SIZE = 256;
 
-auto info = sceinfo;
+EXPORT(int, taiGetModuleInfo, const char *module_name, tai_module_info_t *info) {
+    TRACY_FUNC(taiGetModuleInfo, module_name, info);
+    LOG_CONSOLE(taiGetModuleInfo, module_name, info);
+    if (info->size != sizeof(tai_module_info_t)) {
+        LOG_ERROR("Structure size too small: %d", info->size);
+        return TAI_ERROR_SYSTEM;
+    }
 
- taiinfo->modid = info->modid;
-   strncpy(taiinfo->name,info->module_name,sizeof(taiinfo->name));
- //snprintf(taiinfo->name, 27, "%s", *(const char **)(info + 0x1C));
- taiinfo->name[26] = '\0';
- taiinfo->module_nid = info->modid;//*(uint32_t *)(info + 0x30);
- //taiinfo->exports_start = info->//*(uintptr_t *)(info + 0x20);
- taiinfo->exports_end = *(uintptr_t *)(info + 0x24);
- taiinfo->imports_start = *(uintptr_t *)(info + 0x28);
- taiinfo->imports_end = *(uintptr_t *)(info + 0x2C);
-//} else if (fw_version >= 0x1692000) {
- if (pid == KERNEL_PID) {
-   taiinfo->modid = *(SceUID *)(info + 0x0);
- } else {
-   taiinfo->modid = *(SceUID *)(info + 0x4);
- }
- taiinfo->module_nid = *(uint32_t *)(info + 0x3C);
- snprintf(taiinfo->name, 27, "%s", (const char *)(info + 0xC));
- taiinfo->name[26] = '\0';
- taiinfo->exports_start = *(uintptr_t *)(info + 0x2C);
- taiinfo->exports_end = *(uintptr_t *)(info + 0x30);
- taiinfo->imports_start = *(uintptr_t *)(info + 0x34);
- taiinfo->imports_end = *(uintptr_t *)(info + 0x38);
-return TAI_SUCCESS;
-}*/
-EXPORT(int, taiGetModuleInfo, const char *module, tai_module_info_t *info) {
-    TRACY_FUNC(taiGetModuleInfo, module, info);
-    LOG_CONSOLE(taiGetModuleInfo, module, info);
-    if (module == nullptr) {
-        SceUID main_module_id = 0;
-        for (auto &[module_id, module] : emuenv.kernel.loaded_modules) {
-            if (module->path == "app0:" + emuenv.self_path) {
-                info->modid = module_id;
-                strncpy(info->name, module->module_name, sizeof(info->name));
-                for (auto &[module_nid, module_uid] : emuenv.kernel.module_uid_by_nid) {
-                    if (module_uid == module_id) {
-                        info->module_nid = module_nid;
-                    }
-                }
-                break;
+    int module_id = 0;
+    if (module_name == nullptr) {
+        for (auto &[module_id_, module] : emuenv.kernel.loaded_modules) {
+            if (module->info.path == "app0:" + emuenv.self_path) {
+                module_id = module_id_;
+            }
+        }
+    } else {
+        for (auto &[module_id_, module] : emuenv.kernel.loaded_modules) {
+            if (strncmp(module->info.module_name, module_name, sizeof(module->info.module_name)) == 0) {
+                module_id = module_id_;
             }
         }
     }
+    if (module_id == 0) {
+        return TAI_ERROR_NOT_FOUND;
+    }
+    auto &module_info = emuenv.kernel.loaded_modules[module_id];
+    const sce_module_info_raw *int_mod_info = reinterpret_cast<const sce_module_info_raw *>(module_info->info_segment_address.get(emuenv.mem) + module_info->info_offset);
+    info->modid = module_id;
+    info->module_nid = int_mod_info->module_nid;
+    info->exports_start = int_mod_info->export_top;
+    info->exports_end = int_mod_info->export_end;
+    info->imports_start = int_mod_info->import_top;
+    info->imports_end = int_mod_info->import_end;
+    strncpy(info->name, int_mod_info->name, 27);
+    info->name[26] = '\0';
     // LOG_TRACE("taiGetModuleInfo,module:{}",module);
-    return UNIMPLEMENTED();
+    return 0; // UNIMPLEMENTED();
 }
 EXPORT(int, taiHookRelease, SceUID tai_uid, tai_hook_ref_t hook) {
     TRACY_FUNC(taiHookRelease, tai_uid, hook);
