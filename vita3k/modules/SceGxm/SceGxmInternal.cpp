@@ -18,6 +18,7 @@
 #include <module/module.h>
 
 #include "SceGxm.h"
+#include <gxm/state.h>
 
 #include <util/tracy.h>
 
@@ -33,7 +34,7 @@ EXPORT(int, sceGxmCreateRenderTargetInternal, const SceGxmRenderTargetParams *pa
 }
 
 EXPORT(int, sceGxmGetDisplayQueueThreadIdInternal) {
-    return UNIMPLEMENTED();
+    return emuenv.gxm.display_queue_thread;
 }
 
 EXPORT(int, sceGxmGetRenderTargetMemSizeInternal, const SceGxmRenderTargetParams *params, uint32_t *hostMemSize) {
