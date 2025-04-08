@@ -703,7 +703,7 @@ EXPORT(SceUID, taiHookFunctionOffsetForUser, tai_hook_ref_t *p_hook, tai_offset_
  *             `TAI_IGNORE_MODULE_NID` then the first module loaded for the
  *             process will be returned.
  *
- * @param[in]  pid      The pid
+ * @param[in]  pid   The pid
  * @param[in]  name  The name to lookup. Can be NULL.
  * @param[in]  nid   The nid to lookup. Can be `TAI_IGNORE_MODULE_NID`.
  * @param[out] info  The information
