@@ -15,6 +15,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#include "../SceLibKernel/SceLibKernel.h"
+#include "SceSysmem.h"
 #include <module/module.h>
 
 EXPORT(int, ksceGUIDClose) {
@@ -75,8 +77,36 @@ EXPORT(int, ksceKernelCreateClass) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelCreateHeap) {
-    return UNIMPLEMENTED();
+typedef struct SceKernelHeapCreateOpt {
+    SceSize size;
+    union { //<! Union for compatibility
+        SceUInt32 attr;
+        SceUInt32 uselock; //<! Do not use uselock as it will be deprecated.
+    };
+    SceUInt32 field_8;
+    SceUInt32 field_C;
+    SceUInt32 memtype;
+    SceUInt32 field_14;
+    SceUInt32 field_18;
+} SceKernelHeapCreateOpt;
+
+typedef struct SceAllocOpt {
+    SceSize size; // 0x14
+    SceSize data04; // maybe len align?
+    SceSize align;
+    int data0C;
+    int data10;
+} SceAllocOpt;
+
+EXPORT(int, ksceKernelCreateHeap, const char *name, SceSize size, SceKernelHeapCreateOpt *opt) {
+    STUBBED("");
+    int new_size = align(size, 0x8000);
+    auto heap = CALL_EXPORT(sceKernelAllocMemBlock, name, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, new_size, nullptr); // UNIMPLEMENTED();
+    Ptr<void> base;
+    CALL_EXPORT(sceKernelGetMemBlockBase, heap, &base);
+    auto mspace = CALL_EXPORT(sceClibMspaceCreate, base, new_size);
+    LOG_DEBUG("ksceKernelCreateHeap: {} {} {}", name, size, log_hex(mspace.address()));
+    return mspace.address(); // UNIMPLEMENTED();
 }
 
 EXPORT(int, ksceKernelCreateUidObj2) {

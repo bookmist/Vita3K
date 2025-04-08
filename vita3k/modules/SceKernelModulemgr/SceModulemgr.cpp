@@ -134,6 +134,7 @@ EXPORT(int, sceKernelGetModuleIdByAddr, Ptr<void> addr) {
 
 EXPORT(int, sceKernelGetModuleInfo, SceUID modid, SceKernelModuleInfo *info) {
     TRACY_FUNC(sceKernelGetModuleInfo, modid, info);
+    LOG_CONSOLE(sceKernelGetModuleInfo, modid, info);
     const std::lock_guard<std::mutex> lock(emuenv.kernel.mutex);
 
     auto module = emuenv.kernel.loaded_modules.find(modid);

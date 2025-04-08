@@ -40,7 +40,7 @@ std::string to_debug_str<SceKernelMemBlockType>(const MemState &mem, SceKernelMe
     }
     return std::to_string(type);
 }
-
+/*
 struct SceKernelAllocMemBlockOpt {
     SceSize size;
     SceUInt32 attr;
@@ -49,7 +49,7 @@ struct SceKernelAllocMemBlockOpt {
     const char *strBaseBlockName;
     int flags;
     int reserved[10];
-};
+};*/
 
 struct SceKernelFreeMemorySizeInfo {
     int size; //!< sizeof(SceKernelFreeMemorySizeInfo)
