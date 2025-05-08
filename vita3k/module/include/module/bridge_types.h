@@ -18,6 +18,7 @@
 #pragma once
 
 #include <mem/ptr.h>
+#include <util/log.h>
 
 struct MemState;
 
@@ -37,6 +38,7 @@ struct BridgeTypes<Pointee *> {
     typedef Ptr<Pointee> ArmType;
 
     static Pointee *arm_to_host(const ArmType &t, const MemState &mem) {
+        LOG_ERROR_IF(t.address() && !t.valid(mem), "Invalid pointer. value: {:X}", t.address());
         return t.get(mem);
     }
 };
