@@ -123,11 +123,12 @@ void update_live_area_current_open_apps_list(GuiState &gui, EmuEnvState &emuenv,
     }
 }
 
-static std::map<std::string, uint64_t> last_time;
+static uint64_t last_time_home{};
+static uint64_t last_time_start{};
 
 void open_live_area(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path) {
     update_live_area_current_open_apps_list(gui, emuenv, app_path);
-    last_time["home"] = 0;
+    last_time_home = 0;
     init_live_area(gui, emuenv, app_path);
     gui.vita_area.home_screen = false;
     gui.vita_area.information_bar = true;
@@ -552,14 +553,14 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
     const auto install_dialog = gui.file_menu.archive_install_dialog || gui.file_menu.firmware_install_dialog || gui.file_menu.pkg_install_dialog;
     if (!config_dialog && !install_dialog && !gui.vita_area.app_close && !gui.vita_area.app_information && !gui.help_menu.about_dialog && !gui.help_menu.welcome_dialog && !gui.is_nav_button) {
         if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemActive() || ImGui::IsAnyItemHovered())
-            last_time["start"] = 0;
+            last_time_start = 0;
         else {
-            if (last_time["start"] == 0)
-                last_time["start"] = current_time();
+            if (last_time_start == 0)
+                last_time_start = current_time();
 
-            while (last_time["start"] + emuenv.cfg.delay_start < current_time()) {
-                last_time["start"] += emuenv.cfg.delay_start;
-                last_time["home"] = 0;
+            while (last_time_start + emuenv.cfg.delay_start < current_time()) {
+                last_time_start += emuenv.cfg.delay_start;
+                last_time_home = 0;
                 gui.vita_area.home_screen = false;
                 gui.vita_area.information_bar = true;
                 gui.vita_area.start_screen = true;
@@ -569,11 +570,11 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
     }
 
     if (!gui.vita_area.start_screen && !gui.vita_area.live_area_screen && (!gui.theme_backgrounds.empty() || !gui.user_backgrounds.empty())) {
-        if (last_time["home"] == 0)
-            last_time["home"] = current_time();
+        if (last_time_home == 0)
+            last_time_home = current_time();
 
-        while (last_time["home"] + emuenv.cfg.delay_background < current_time()) {
-            last_time["home"] += emuenv.cfg.delay_background;
+        while (last_time_home + emuenv.cfg.delay_background < current_time()) {
+            last_time_home += emuenv.cfg.delay_background;
 
             if (gui.users[emuenv.io.user_id].use_theme_bg)
                 gui.current_theme_bg = (gui.current_theme_bg + 1) % gui.theme_backgrounds.size();
@@ -985,7 +986,7 @@ void draw_home_screen(GuiState &gui, EmuEnvState &emuenv) {
             ImVec2(ARROW_CENTER.x - (16.f * VIEWPORT_SCALE.x), ARROW_CENTER.y + (20.f * VIEWPORT_SCALE.y)), ARROW_COLOR);
         ImGui::SetCursorPos(ImVec2(ARROW_SELECT_WIDTH_POS, ARROW_CENTER_HEIGHT_POS - SELECTABLE_SIZE.y));
         if (!gui.vita_area.app_close && (ImGui::Selectable("##right", false, ImGuiSelectableFlags_None, SELECTABLE_SIZE) || (!ImGui::GetIO().WantTextInput && ImGui::IsKeyReleased(static_cast<ImGuiKey>(emuenv.cfg.keyboard_button_r1))))) {
-            last_time["start"] = 0;
+            last_time_start = 0;
             ++gui.live_area_app_current_open;
             gui.vita_area.home_screen = false;
             gui.vita_area.live_area_screen = true;
