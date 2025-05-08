@@ -92,6 +92,8 @@ EXPORT(int, __stack_chk_fail) {
     const ThreadStatePtr thread = emuenv.kernel.get_thread(thread_id);
     auto ctx = save_context(*thread->cpu);
     LOG_ERROR("{}", ctx.description());
+    LOG_ERROR("Stack trace:");
+    LOG_ERROR("{}", thread->log_stack_traceback());
 
     assert(false); // if this triggers then something is seriously wrong somewhere else
 
@@ -1101,6 +1103,14 @@ EXPORT(int, sceKernelBacktrace) {
 
 EXPORT(int, sceKernelBacktraceSelf) {
     TRACY_FUNC(sceKernelBacktraceSelf);
+    const ThreadStatePtr thread = emuenv.kernel.get_thread(thread_id);
+    auto ctx = save_context(*thread->cpu);
+    LOG_ERROR("{}", ctx.description());
+    LOG_ERROR("Stack trace:");
+    LOG_ERROR("{}", thread->log_stack_traceback());
+
+    assert(false); // if this triggers then something is seriously wrong somewhere else
+
     return UNIMPLEMENTED();
 }
 
