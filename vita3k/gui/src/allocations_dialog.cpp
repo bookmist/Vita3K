@@ -33,11 +33,11 @@ void draw_allocations_dialog(GuiState &gui, EmuEnvState &emuenv) {
 
     const std::lock_guard<std::mutex> lock(emuenv.mem.generation_mutex);
     for (const auto &[generation_num, generation_name] : emuenv.mem.page_name_map) {
-        if (vector_utils::contains(blacklist, generation_name))
-            continue;
+        // if (vector_utils::contains(blacklist, generation_name))
+        //     continue;
 
         const auto &page = emuenv.mem.alloc_table[generation_num];
-        if (ImGui::TreeNode(fmt::format("{}: {}", generation_num, generation_name).c_str())) {
+        if (ImGui::TreeNode(fmt::format("{}: {}\tRange 0x{:08x} - 0x{:08x}.", generation_num, generation_name, generation_num * KiB(4), (generation_num + page.size) * KiB(4)).c_str())) {
             ImGui::Text("Range 0x%08zx - 0x%08zx.", generation_num * KiB(4), (generation_num + page.size) * KiB(4));
             ImGui::Text("Size: %i KiB (%i page[s])", page.size * 4, page.size);
             if (ImGui::Selectable("View/Edit")) {
