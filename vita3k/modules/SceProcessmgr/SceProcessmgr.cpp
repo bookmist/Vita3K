@@ -101,6 +101,7 @@ EXPORT(int, sceKernelCDialogSetLeaseLimit) {
 
 EXPORT(int, sceKernelCallAbortHandler, uint32_t param1, uint32_t param2) {
     TRACY_FUNC(sceKernelCallAbortHandler, param1, param2);
+    LOG_CONSOLE(sceKernelCallAbortHandler, param1, param2, thread_id);
     return UNIMPLEMENTED();
 }
 
