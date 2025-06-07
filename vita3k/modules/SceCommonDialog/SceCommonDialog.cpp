@@ -15,6 +15,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+#include "net/types.h"
+
 #include <module/module.h>
 
 #include <dialog/state.h>
@@ -482,23 +484,35 @@ EXPORT(int, sceMsgDialogTerm) {
     return 0;
 }
 
+typedef struct SceNetCheckDialogPS3ConnectInfo {
+    SceNetInAddr inaddr;
+    SceUInt8 nickname[128];
+    SceUInt8 macAddress[6];
+    SceUInt8 reserved[6];
+} SceNetCheckDialogPS3ConnectInfo;
+
 EXPORT(int, sceNetCheckDialogAbort) {
     TRACY_FUNC(sceNetCheckDialogAbort);
+    if (emuenv.common_dialog.type != NETCHECK_DIALOG)
+        return RET_ERROR(SCE_COMMON_DIALOG_ERROR_NOT_IN_USE);
+    emuenv.common_dialog.status = SCE_COMMON_DIALOG_STATUS_FINISHED;
+    emuenv.common_dialog.result = SCE_COMMON_DIALOG_RESULT_ABORTED;
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceNetCheckDialogGetPS3ConnectInfo) {
-    TRACY_FUNC(sceNetCheckDialogGetPS3ConnectInfo);
+EXPORT(int, sceNetCheckDialogGetPS3ConnectInfo, SceNetCheckDialogPS3ConnectInfo *info) {
+    TRACY_FUNC(sceNetCheckDialogGetPS3ConnectInfo, info);
     return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceNetCheckDialogGetResult, SceNetCheckDialogResult *result) {
     TRACY_FUNC(sceNetCheckDialogGetResult, result);
+    if (emuenv.common_dialog.type != NETCHECK_DIALOG)
+        return RET_ERROR(SCE_COMMON_DIALOG_ERROR_NOT_IN_USE);
+    if (emuenv.common_dialog.status != SCE_COMMON_DIALOG_STATUS_FINISHED)
+        return RET_ERROR(SCE_COMMON_DIALOG_ERROR_NOT_FINISHED);
     result->result = emuenv.common_dialog.result;
-
-    if (emuenv.common_dialog.netcheck.mode != SCE_NETCHECK_DIALOG_MODE_ADHOC_CONN)
-        STUBBED("result->result = 0");
-
+    result->psnModeSucceeded = emuenv.cfg.psn_signed_in;
     return 0;
 }
 
@@ -507,14 +521,48 @@ EXPORT(SceCommonDialogStatus, sceNetCheckDialogGetStatus) {
     if (emuenv.common_dialog.type != NETCHECK_DIALOG)
         return SCE_COMMON_DIALOG_STATUS_NONE;
 
-    if (emuenv.common_dialog.netcheck.mode != SCE_NETCHECK_DIALOG_MODE_ADHOC_CONN)
-        STUBBED("SCE_COMMON_DIALOG_STATUS_FINISHED");
-
+    STUBBED("SCE_COMMON_DIALOG_STATUS_FINISHED");
     return emuenv.common_dialog.status;
+}
+
+template <>
+std::string to_debug_str<SceNetCheckDialogMode>(const MemState &mem, SceNetCheckDialogMode type) {
+    switch (type) {
+    case SCE_NETCHECK_DIALOG_MODE_INVALID:
+        return "SCE_NETCHECK_DIALOG_MODE_INVALID";
+
+    case SCE_NETCHECK_DIALOG_MODE_ADHOC_CONN:
+        return "SCE_NETCHECK_DIALOG_MODE_ADHOC_CONN";
+
+    case SCE_NETCHECK_DIALOG_MODE_PSN:
+        return "SCE_NETCHECK_DIALOG_MODE_PSN";
+
+    case SCE_NETCHECK_DIALOG_MODE_PSN_ONLINE:
+        return "SCE_NETCHECK_DIALOG_MODE_PSN_ONLINE";
+
+    case SCE_NETCHECK_DIALOG_MODE_PS3_CONNECT:
+        return "SCE_NETCHECK_DIALOG_MODE_PS3_CONNECT";
+
+    case SCE_NETCHECK_DIALOG_MODE_PSP_ADHOC_CONN:
+        return "SCE_NETCHECK_DIALOG_MODE_PSP_ADHOC_CONN";
+
+    case SCE_NETCHECK_DIALOG_MODE_PSP_ADHOC_CREATE:
+        return "SCE_NETCHECK_DIALOG_MODE_PSP_ADHOC_CREATE";
+
+    case SCE_NETCHECK_DIALOG_MODE_PSP_ADHOC_JOIN:
+        return "SCE_NETCHECK_DIALOG_MODE_PSP_ADHOC_JOIN";
+    }
+    return std::to_string(type);
 }
 
 EXPORT(int, sceNetCheckDialogInit, const SceNetCheckDialogParam *param) {
     TRACY_FUNC(sceNetCheckDialogInit);
+    // log all content of param
+    LOG_TRACE("SceNetCheckDialogParam: sdkVersion: {:X},\n commonParam: **,\n mode: {},\n npCommunicationId.data: {},\n npCommunicationId.num: {},\n ps3ConnectParam: {},\n groupName: {},\n timeoutUs: {},\n defaultAgeRestriction: {},\n ageRestrictionCount: {},\n ageRestriction: {}",
+        param->sdkVersion, to_debug_str(emuenv.mem, param->mode), *param->npCommunicationId.data, param->npCommunicationId.num,
+        param->ps3ConnectParam, param->groupName, param->timeoutUs,
+        param->defaultAgeRestriction, param->ageRestrictionCount, param->ageRestriction);
+
     if (emuenv.common_dialog.type != NO_DIALOG)
         return RET_ERROR(SCE_COMMON_DIALOG_ERROR_BUSY);
 
@@ -531,8 +579,14 @@ EXPORT(int, sceNetCheckDialogInit, const SceNetCheckDialogParam *param) {
         break;
     default:
         emuenv.common_dialog.status = SCE_COMMON_DIALOG_STATUS_FINISHED;
-        emuenv.common_dialog.result = SCE_COMMON_DIALOG_RESULT_OK;
-        break;
+        if (param->mode == SCE_NETCHECK_DIALOG_MODE_PSN_ONLINE) {
+            emuenv.common_dialog.result = SCE_COMMON_DIALOG_RESULT_USER_CANCELED;
+        } else if (param->mode == SCE_NETCHECK_DIALOG_MODE_PSN) {
+            emuenv.common_dialog.result = emuenv.cfg.psn_signed_in ? SCE_COMMON_DIALOG_RESULT_OK : SCE_COMMON_DIALOG_RESULT_USER_CANCELED;
+        } else {
+            emuenv.common_dialog.result = SCE_COMMON_DIALOG_RESULT_OK;
+            break;
+        }
     }
 
     return UNIMPLEMENTED();
@@ -686,12 +740,12 @@ EXPORT(int, sceNpTrophySetupDialogAbort) {
     return 0;
 }
 
-EXPORT(int, sceNpTrophySetupDialogGetResult, Ptr<SceNpTrophySetupDialogResult> result) {
+EXPORT(int, sceNpTrophySetupDialogGetResult, SceNpTrophySetupDialogResult *result) {
     TRACY_FUNC(sceNpTrophySetupDialogGetResult, result);
     if (emuenv.common_dialog.type != TROPHY_SETUP_DIALOG || emuenv.common_dialog.status != SCE_COMMON_DIALOG_STATUS_FINISHED)
         return RET_ERROR(SCE_COMMON_DIALOG_ERROR_NOT_FINISHED);
 
-    result.get(emuenv.mem)->result = emuenv.common_dialog.result;
+    result->result = emuenv.common_dialog.result;
     return 0;
 }
 
