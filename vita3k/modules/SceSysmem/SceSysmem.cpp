@@ -100,6 +100,7 @@ EXPORT(SceUID, sceKernelAllocMemBlock, const char *pName, SceKernelMemBlockType 
     case SCE_KERNEL_MEMBLOCK_TYPE_USER_RX:
     case SCE_KERNEL_MEMBLOCK_TYPE_USER_RW:
     case SCE_KERNEL_MEMBLOCK_TYPE_USER_RW_UNCACHE:
+    case SCE_KERNEL_MEMBLOCK_TYPE_KERNEL_ROOT_RW:
         min_alignment = 0x1000;
         break;
     case SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW:
@@ -328,8 +329,8 @@ EXPORT(int, sceKernelGetFreeMemorySize, SceKernelFreeMemorySizeInfo *info) {
     // Define other memory limits
     constexpr uint32_t max_cdram = MiB(112); // Max cdram memory (112 MiB)
     constexpr uint32_t max_phycont = MiB(26); // Max physically contiguous memory (26 MiB)
-    const auto state = emuenv.kernel.obj_store.get<SysmemState>();
-    const auto guard = std::lock_guard<std::mutex>(state->mutex);
+        const auto state = emuenv.kernel.obj_store.get<SysmemState>();
+        const auto guard = std::lock_guard<std::mutex>(state->mutex);
 
     // Set the free memory size info
     info->size_cdram = std::max<int>(max_cdram - state->allocated_cdram, 0);

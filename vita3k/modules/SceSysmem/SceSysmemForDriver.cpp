@@ -18,6 +18,9 @@
 #include "../SceLibKernel/SceLibKernel.h"
 #include "SceSysmem.h"
 #include <module/module.h>
+#include <util/tracy.h>
+
+TRACY_MODULE_NAME(SceSysmemForDriver)
 
 EXPORT(int, ksceGUIDClose) {
     return UNIMPLEMENTED();
@@ -65,8 +68,85 @@ EXPORT(int, ksceKernelAllocHeapMemoryWithOption) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelAllocMemBlock) {
-    return UNIMPLEMENTED();
+#define VITASDK_BUILD_ASSERT_EQ(a, b) static_assert(sizeof(b) == a, "Size mismatch")
+
+typedef struct SceKernelAddrPair { // do not use
+    uint32_t addr; //!< Address
+    uint32_t length; //!< Length
+} SceKernelAddrPair;
+VITASDK_BUILD_ASSERT_EQ(8, SceKernelAddrPair);
+
+typedef struct SceKernelVARange { // size is 0x8
+    uint32_t addr;
+    SceSize size;
+} SceKernelVARange;
+VITASDK_BUILD_ASSERT_EQ(8, SceKernelVARange);
+
+typedef struct SceKernelPARange { // size is 0x8
+    uint32_t addr;
+    SceSize size;
+} SceKernelPARange;
+VITASDK_BUILD_ASSERT_EQ(8, SceKernelPARange);
+
+typedef struct SceKernelPAVector { // size is 0x14
+    SceSize size; //!< Size of this structure
+    union {
+        struct {
+            uint32_t ranges_size; //!< Ex: 8
+            uint32_t data_in_vector; //!< Must be <= 8
+            uint32_t count;
+            Ptr<SceKernelPARange> ranges;
+        };
+        struct { // do not use.
+            uint32_t list_size; //!< Size in elements of the list array
+            uint32_t ret_length; //!< Total physical size of the memory pairs
+            uint32_t ret_count; //!< Number of elements of list filled by ksceKernelVARangeToPAVector
+            Ptr<SceKernelAddrPair> list; //!< Array of physical addresses and their lengths pairs
+        };
+    };
+} SceKernelPAVector;
+VITASDK_BUILD_ASSERT_EQ(0x14, SceKernelPAVector);
+
+typedef SceKernelPAVector SceKernelPaddrList; // do not use.
+
+typedef struct SceKernelAllocMemBlockKernelOpt {
+    SceSize size; //!< sizeof(SceKernelAllocMemBlockKernelOpt)
+    SceUInt32 field_4;
+    SceUInt32 attr; //!< OR of SceKernelAllocMemBlockAttr
+    SceUInt32 field_C;
+    SceUInt32 paddr;
+    SceSize alignment;
+    SceUInt32 extraLow;
+    SceUInt32 extraHigh;
+    SceUInt32 mirror_blockid;
+    SceUID pid;
+    Ptr<SceKernelPaddrList> paddr_list;
+    SceUInt32 field_2C;
+    SceUInt32 field_30;
+    SceUInt32 field_34;
+    SceUInt32 field_38;
+    SceUInt32 field_3C;
+    SceUInt32 field_40;
+    SceUInt32 field_44;
+    SceUInt32 field_48;
+    SceUInt32 field_4C;
+    SceUInt32 field_50;
+    SceUInt32 field_54;
+} SceKernelAllocMemBlockKernelOpt;
+VITASDK_BUILD_ASSERT_EQ(0x58, SceKernelAllocMemBlockKernelOpt);
+
+EXPORT(SceUID, ksceKernelAllocMemBlock, const char *pName, SceKernelMemBlockType type, SceSize size, SceKernelAllocMemBlockKernelOpt *optp) {
+    TRACY_FUNC(ksceKernelAllocMemBlock, pName, (int)type, size, optp);
+    LOG_CONSOLE(ksceKernelAllocMemBlock, pName, (int)type, size, optp);
+    SceKernelAllocMemBlockOpt opt;
+    SceKernelAllocMemBlockOpt *popt = nullptr;
+    if (optp) {
+        popt = &opt;
+        opt.size = sizeof(SceKernelAllocMemBlockOpt);
+        opt.attr = optp->attr;
+        opt.alignment = optp->alignment;
+    }
+    return CALL_EXPORT(sceKernelAllocMemBlock, pName, type, size, popt);
 }
 
 EXPORT(int, ksceKernelAllocMemBlockWithInfo) {
@@ -99,6 +179,7 @@ typedef struct SceAllocOpt {
 } SceAllocOpt;
 
 EXPORT(int, ksceKernelCreateHeap, const char *name, SceSize size, SceKernelHeapCreateOpt *opt) {
+    TRACY_FUNC(ksceKernelCreateHeap, name, size, opt);
     STUBBED("");
     int new_size = align(size, 0x8000);
     auto heap = CALL_EXPORT(sceKernelAllocMemBlock, name, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, new_size, nullptr); // UNIMPLEMENTED();
@@ -193,8 +274,9 @@ EXPORT(int, ksceKernelGetClassForUid) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelGetMemBlockBase) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelGetMemBlockBase, SceUID uid, Ptr<void> *basep) {
+    TRACY_FUNC(ksceKernelGetMemBlockBase, uid, basep);
+    return CALL_EXPORT(sceKernelGetMemBlockBase, uid, basep);
 }
 
 EXPORT(int, ksceKernelGetMemBlockMappedBase) {
@@ -345,7 +427,11 @@ EXPORT(int, ksceKernelMemRangeRetainWithPerm) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelMemcpyKernelToUser) {
+EXPORT(int, ksceKernelMemcpyKernelToUser, void *dst, const void *src, SceSize len) {
+    TRACY_FUNC(ksceKernelMemcpyKernelToUser, dst, src, len);
+    memcpy(dst, src, len);
+    return 0;
+    // int ksceKernelCopyToUser(void *dst, const void *src, SceSize len);
     return UNIMPLEMENTED();
 }
 
@@ -357,8 +443,10 @@ EXPORT(int, ksceKernelMemcpyKernelToUserForPidUnchecked) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelMemcpyUserToKernel) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelMemcpyUserToKernel, void *dst, const void *src, SceSize len) {
+    TRACY_FUNC(ksceKernelMemcpyUserToKernel, dst, src, len);
+    memcpy(dst, src, len);
+    return 0;
 }
 
 EXPORT(int, ksceKernelMemcpyUserToKernelForPid) {
@@ -409,8 +497,9 @@ EXPORT(int, ksceKernelStrncpyUserForPid) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelStrncpyUserToKernel) {
-    return UNIMPLEMENTED();
+EXPORT(SceSSize, ksceKernelStrncpyUserToKernel, Ptr<char> dst, const char *src, SceSize len) {
+    strncpy(dst.get(emuenv.mem), src, len);
+    return strnlen_s(src, len);
 }
 
 EXPORT(int, ksceKernelStrnlenUser) {

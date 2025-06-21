@@ -33,6 +33,8 @@
 
 class ArmDynarmicLog : public Dynarmic::A32::Coprocessor {
     int coproc_id;
+    std::array<std::uint32_t, 2> two_words;
+    std::uint32_t one_word;
 
 public:
     using CoprocReg = Dynarmic::A32::CoprocReg;
@@ -53,6 +55,7 @@ public:
     CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
         CoprocReg CRm, unsigned opc2) override {
         LOG_ERROR("coproc_id:{}, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", coproc_id, two, opc1, (int)CRn, (int)CRm, opc2);
+        return &one_word;
         return CallbackOrAccessOneWord{};
     }
 
@@ -64,6 +67,7 @@ public:
     CallbackOrAccessOneWord CompileGetOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm,
         unsigned opc2) override {
         LOG_ERROR("coproc_id:{}, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", coproc_id, two, opc1, (int)CRn, (int)CRm, opc2);
+        return &one_word;
         return CallbackOrAccessOneWord{};
     }
 
@@ -90,6 +94,9 @@ ArmDynarmicLog def_ArmDynarmicLogger();
 class ArmDynarmicCP15 : public Dynarmic::A32::Coprocessor {
     uint32_t tpidruro;
 
+    std::array<std::uint32_t, 2> two_words;
+    std::uint32_t one_word;
+
 public:
     using CoprocReg = Dynarmic::A32::CoprocReg;
 
@@ -109,6 +116,7 @@ public:
     CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
         CoprocReg CRm, unsigned opc2) override {
         LOG_ERROR("two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
+        return &one_word;
         return CallbackOrAccessOneWord{};
     }
 
@@ -122,7 +130,8 @@ public:
         if (CRn == CoprocReg::C13 && CRm == CoprocReg::C0 && opc1 == 0 && opc2 == 3) {
             return &tpidruro;
         }
-        LOG_ERROR("two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
+        LOG_ERROR("coproc_id:15, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, CRn, CRm, opc2);
+        return &one_word;
         return CallbackOrAccessOneWord{};
     }
 

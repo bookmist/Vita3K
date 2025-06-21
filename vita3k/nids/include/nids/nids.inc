@@ -2490,6 +2490,8 @@ NID(ksceKernelWaitEventFlagCB, 0x8A35F714)
 NID(ksceKernelWaitSema, 0x3C8B55A9)
 NID(ksceKernelWaitThreadEnd, 0x3E20216F)
 NID(ksceKernelWaitThreadEndCB, 0x9EF4F62C)
+NID(SceThreadmgrForDriver_FD6150D5, 0xFD6150D5) 
+NID(SceThreadmgrForDriver_20C228E4, 0x20C228E4) 
 // Library "SceThreadmgrForKernel"
 NID(ksceKernelGetFaultingProcess, 0xD8B9AC8D)
 // Module "SceLibc"
@@ -6479,6 +6481,8 @@ NID(sceSblQafMgrIsAllowScreenShotAlways, 0xD22A8731)
 NID(sceSblQafMgrSetQafToken2, 0xF4B5C8A5)
 // Library "SceSblRng"
 NID(_sceKernelGetRandomNumber, 0xC37E818C)
+// SceSblSsMgrForDriver
+//NID(sceSblRngPseudoRandomNumberForDriver, 0x4F9BFBE5)
 // Module "SceSblUpdateMgr"
 // Library "SceSblSsUpdateMgr"
 NID(sceSblUsAllocateBuffer, 0x4C06F41C)
@@ -6962,6 +6966,9 @@ NID(ksceKernelCheckDipsw, 0xA98FC2FD)
 NID(ksceKernelClearDipsw, 0xF1F3E9FE)
 NID(ksceKernelGetDipswInfo, 0xB2AD48BE)
 NID(ksceKernelSetDipsw, 0x82E45FBF)
+//SceKernelUtilsForDriver
+NID(sceMt19937InitForDriver, 0x4C9A5730)
+NID(sceMt19937UIntForDriver, 0x92AEDFBC)
 // Library "SceProcEventForDriver"
 NID(ksceKernelInvokeProcEventHandler, 0x414CC813)
 NID(ksceKernelRegisterProcEventHandler, 0x2A43912D)
@@ -6974,12 +6981,14 @@ NID(__aeabi_lmul, 0xFEE5E751)
 NID(__aeabi_uidiv, 0xA9FF1205)
 NID(__aeabi_uidivmod, 0xA46CB7DE)
 NID(__aeabi_ulcmp, 0xFE900DE8)
+NID(__aeabi_uldivmod, 0x9D148CDE)
 NID(__memcpy_chk, 0x8A0B0815)
 NID(__memmove_chk, 0x35DBB110)
 NID(__memset_chk, 0x1A30BB28)
 NID(__kstack_chk_fail, 0xB997493D)
 NID(__strncat_chk, 0x33EE298B)
 NID(__strncpy_chk, 0x96268C53)
+NID_I(timingsafe_memcmp, 0xB5A4D745)
 NID(look_ctype_table, 0xCDF7F155)
 NID(kmemchr, 0x60DAEA30)
 NID(kmemcmp, 0xF939E83D)
@@ -7129,6 +7138,8 @@ NID(ksceKernelVAtoPA, 0x8D160E65)
 NID(kscePUIDClose, 0x84A4AF5E)
 NID(kscePUIDOpenByGUID, 0xBF209859)
 NID(kscePUIDtoGUID, 0x45D22597)
+//SceKernelSuspendForDriver
+NID(sceKernelRegisterSysEventHandlerForDriver,0x04C05D10)
 // Module "SceSysmodule"
 // Library "SceSysmodule"
 NID(sceSysmoduleIsLoaded, 0x53099B7A)

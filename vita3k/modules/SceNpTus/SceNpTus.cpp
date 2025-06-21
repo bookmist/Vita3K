@@ -164,7 +164,8 @@ EXPORT(int, sceNpTusCreateRequest) {
 }
 
 EXPORT(int, sceNpTusCreateTitleCtx) {
-    return UNIMPLEMENTED();
+    UNIMPLEMENTED();
+    return 1;
 }
 
 EXPORT(int, sceNpTusDeleteMultiSlotData) {

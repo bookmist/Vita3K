@@ -16,7 +16,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "../SceLibKernel/SceLibKernel.h"
+#include <../SceKernelThreadMgr/SceThreadmgr.h>
+#include <kernel/sync_primitives.h>
 #include <module/module.h>
+#include <util/tracy.h>
+
+TRACY_MODULE_NAME(SceThreadmgrForDriver)
 
 EXPORT(int, ksceKernelCancelCallback) {
     return UNIMPLEMENTED();
@@ -62,8 +67,9 @@ EXPORT(int, ksceKernelCreateCond) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelCreateEventFlag) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelCreateEventFlag, const char *name, unsigned int attr, unsigned int flags, SceKernelEventFlagOptParam *opt) {
+    TRACY_FUNC(ksceKernelCreateEventFlag, name, attr, flags, opt);
+    return CALL_EXPORT(_sceKernelCreateEventFlag, name, attr, flags, opt);
 }
 
 EXPORT(int, ksceKernelCreateMsgPipe) {
@@ -81,9 +87,25 @@ EXPORT(int, ksceKernelCreateSema) {
 EXPORT(int, ksceKernelCreateSimpleEvent) {
     return UNIMPLEMENTED();
 }
+/*
+#define VITASDK_BUILD_ASSERT_EQ(a, b) static_assert(sizeof(b) == a, "Size mismatch")
 
-EXPORT(int, ksceKernelCreateThread) {
-    return UNIMPLEMENTED();
+/** Additional options used when creating threads. * /
+typedef struct SceKernelThreadOptParam {
+        /** Size of the ::SceKernelThreadOptParam structure. * /
+        SceSize     size;
+        /** Attributes * /
+        SceUInt32   attr;
+        SceUInt32 kStackMemType;
+        SceUInt32 uStackMemType;
+        SceUInt32 uTLSMemType;
+        SceUInt32 uStackMemid;
+        SceUInt32 data_0x18;
+} SceKernelThreadOptParam;
+VITASDK_BUILD_ASSERT_EQ(0x1C, SceKernelThreadOptParam);
+*/
+EXPORT(int, ksceKernelCreateThread, const char *name, SceKernelThreadEntry entry, int initPriority, SceSize stackSize, SceUInt attr, int cpuAffinityMask, Ptr<SceKernelThreadOptParam> option) {
+    return CALL_EXPORT(sceKernelCreateThread, name, entry, initPriority, stackSize, attr, cpuAffinityMask, option);
 }
 
 EXPORT(int, ksceKernelDeleteCallback) {
@@ -250,8 +272,9 @@ EXPORT(int, ksceKernelSetEvent) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelSetEventFlag) {
-    return UNIMPLEMENTED();
+EXPORT(SceInt32, ksceKernelSetEventFlag, SceUID evfId, SceUInt32 bitPattern) {
+    TRACY_FUNC(ksceKernelSetEventFlag, evfId, bitPattern);
+    return eventflag_set(emuenv.kernel, export_name, thread_id, evfId, bitPattern);
 }
 
 EXPORT(int, ksceKernelSetPermission) {
@@ -282,8 +305,9 @@ EXPORT(int, ksceKernelSignalSema) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelStartThread) {
-    return UNIMPLEMENTED();
+EXPORT(int, ksceKernelStartThread, SceUID thid, SceSize arglen, const Ptr<void> argp) {
+    TRACY_FUNC(ksceKernelStartThread, thid, arglen, argp);
+    return CALL_EXPORT(_sceKernelStartThread, thid, arglen, argp);
 }
 
 EXPORT(int, ksceKernelStartTimer) {
@@ -350,8 +374,9 @@ EXPORT(int, ksceKernelWaitEventCB) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, ksceKernelWaitEventFlag) {
-    return UNIMPLEMENTED();
+EXPORT(SceInt32, ksceKernelWaitEventFlag, SceUID evfId, SceUInt32 bitPattern, SceUInt32 waitMode, SceUInt32 *pResultPat, SceUInt32 *pTimeout) {
+    TRACY_FUNC(ksceKernelWaitEventFlag, evfId, bitPattern, waitMode, pResultPat, pTimeout);
+    return eventflag_wait(emuenv.kernel, export_name, thread_id, evfId, bitPattern, waitMode, pResultPat, pTimeout);
 }
 
 EXPORT(int, ksceKernelWaitEventFlagCB) {
@@ -367,5 +392,13 @@ EXPORT(int, ksceKernelWaitThreadEnd) {
 }
 
 EXPORT(int, ksceKernelWaitThreadEndCB) {
+    return UNIMPLEMENTED();
+}
+
+EXPORT(int, SceThreadmgrForDriver_FD6150D5) {
+    return UNIMPLEMENTED();
+}
+
+EXPORT(int, SceThreadmgrForDriver_20C228E4) {
     return UNIMPLEMENTED();
 }

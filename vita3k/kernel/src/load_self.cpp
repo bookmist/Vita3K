@@ -813,3 +813,243 @@ int unload_self(KernelState &kernel, MemState &mem, KernelModule &module) {
 
     return 0;
 }
+
+SceUID load_elf(KernelState &kernel, MemState &mem, const void *elf_content, const std::string &elf_path, const fs::path &log_path) {
+    // constexpr bool LOG_MODULE_LOADING = true;
+    const uint8_t *const elf_bytes = (const uint8_t *const)elf_content;
+    const Elf32_Ehdr &elf = *reinterpret_cast<const Elf32_Ehdr *>(elf_bytes);
+    const uint32_t module_info_offset = elf.e_entry & 0x3fffffff;
+    /*
+    // log elf header
+    LOG_TRACE("ELF Header for {}:", elf_path);
+    LOG_TRACE("  e_ident: {}", log_hex((uint64_t)(elf.e_ident)));
+    LOG_TRACE("  e_type: {}", log_hex(elf.e_type));
+    LOG_TRACE("  e_machine: {}", log_hex(elf.e_machine));
+    LOG_TRACE("  e_version: {}", log_hex(elf.e_version));
+    LOG_TRACE("  e_entry: {}", log_hex(elf.e_entry));
+    LOG_TRACE("  e_phoff: {}", log_hex(elf.e_phoff));
+    LOG_TRACE("  e_shoff: {}", log_hex(elf.e_shoff));
+    LOG_TRACE("  e_flags: {}", log_hex(elf.e_flags));
+    LOG_TRACE("  e_ehsize: {}", log_hex(elf.e_ehsize));
+    LOG_TRACE("  e_phentsize: {}", log_hex(elf.e_phentsize));
+    LOG_TRACE("  e_phnum: {}", log_hex(elf.e_phnum));
+    LOG_TRACE("  e_shentsize: {}", log_hex(elf.e_shentsize));
+    LOG_TRACE("  e_shnum: {}", log_hex(elf.e_shnum));
+    LOG_TRACE("  e_shstrndx: {}", log_hex(elf.e_shstrndx));
+    */
+    // Verify ELF header is correct
+    if (!EHDR_HAS_VALID_MAGIC(elf)) {
+        LOG_CRITICAL("Cannot load file {}: invalid ELF magic.", elf_path);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    }
+
+    if (elf.e_ident[EI_CLASS] != ELFCLASS32) {
+        LOG_CRITICAL("Cannot load ELF {}: unexpected EI_CLASS {}.", elf_path, elf.e_ident[EI_CLASS]);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    }
+
+    if (elf.e_ident[EI_DATA] != ELFDATA2LSB) {
+        LOG_CRITICAL("Cannot load ELF {}: unexpected EI_DATA {}.", elf_path, elf.e_ident[EI_DATA]);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    }
+
+    if (elf.e_ident[EI_VERSION] != EV_CURRENT) {
+        LOG_CRITICAL("Cannot load ELF {}: invalid EI_VERSION {}.", elf_path, elf.e_ident[EI_VERSION]);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    }
+
+    if (elf.e_machine != EM_ARM) {
+        LOG_CRITICAL("Cannot load ELF {}: unexpected e_machine {}.", elf_path, elf.e_machine);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    }
+
+    bool isRelocatable;
+    if (elf.e_type == ET_SCE_EXEC) {
+        isRelocatable = false;
+    } else if (elf.e_type == ET_SCE_RELEXEC) {
+        isRelocatable = true;
+    } else if (elf.e_type == ET_SCE_PSP2RELEXEC) {
+        LOG_CRITICAL("Cannot load ELF {}: ET_SCE_PSP2RELEXEC is not supported.", elf_path);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    } else {
+        LOG_CRITICAL("Cannot load ELF {}: unexpected e_type {}.", elf_path, elf.e_type);
+        return SCE_KERNEL_ERROR_ILLEGAL_ELF_HEADER;
+    }
+
+    // TODO: is OSABI always 0?
+    // TODO: is ABI_VERSION always 0?
+
+    LOG_DEBUG_IF(LOG_MODULE_LOADING, "Loading SELF at {}... (ELF type: {}, module_info_offset: {})", elf_path, log_hex(elf.e_type), log_hex(module_info_offset));
+
+    auto get_seg_header_string = [](uint32_t p_type) {
+        if (p_type == PT_NULL) {
+            return "NULL";
+        } else if (p_type == PT_LOAD) {
+            return "LOAD";
+        } else if (p_type == PT_SCE_COMMENT) {
+            return "SCE Comment";
+        } else if (p_type == PT_SCE_VERSION) {
+            return "SCE Version";
+        } else if ((PT_LOOS <= p_type) && (p_type <= PT_HIOS)) {
+            return "OS-specific";
+        } else if ((PT_LOPROC <= p_type) && (p_type <= PT_HIPROC)) {
+            return "Processor-specific";
+        } else {
+            return "Unknown";
+        }
+    };
+    // return 0;
+
+    SegmentInfosForReloc segment_reloc_info;
+
+    auto free_all_segments = [](MemState &mem, SegmentInfosForReloc &segs_info) {
+        for (auto &[_, segment] : segs_info) {
+            free(mem, segment.addr);
+        }
+    };
+
+    const Elf32_Phdr *const segments = reinterpret_cast<const Elf32_Phdr *>(elf_bytes + elf.e_phoff);
+
+    for (Elf_Half seg_index = 0; seg_index < elf.e_phnum; ++seg_index) {
+        const Elf32_Phdr &seg_header = segments[seg_index];
+        const uint8_t *const seg_bytes = elf_bytes + seg_header.p_offset;
+
+        LOG_DEBUG_IF(LOG_MODULE_LOADING, "    [{}] (p_type: {}): p_offset: {}, p_vaddr: {}, p_paddr: {}, p_filesz: {}, p_memsz: {}, p_flags: {}, p_align: {}", get_seg_header_string(seg_header.p_type), log_hex(seg_header.p_type), log_hex(seg_header.p_offset), log_hex(seg_header.p_vaddr), log_hex(seg_header.p_paddr), log_hex(seg_header.p_filesz), log_hex(seg_header.p_memsz), log_hex(seg_header.p_flags), log_hex(seg_header.p_align));
+        if (seg_header.p_type == PT_NULL) {
+            // Nothing to do.
+        } else if (seg_header.p_type == PT_LOAD) {
+            if (seg_header.p_memsz != 0) {
+                Address segment_address = 0;
+                auto alloc_name = fmt::format("{}:seg{}", elf_path, seg_index);
+
+                if (isRelocatable) {
+                    segment_address = alloc(mem, seg_header.p_memsz, alloc_name.c_str());
+                } else {
+                    segment_address = alloc_at(mem, seg_header.p_vaddr, seg_header.p_memsz, alloc_name.c_str());
+                }
+
+                if (!segment_address) {
+                    LOG_CRITICAL("Loading {} ELF {} failed: Could not allocate {} bytes @ {} for segment {}.", (isRelocatable) ? "relocatable" : "fixed", elf_path, log_hex(seg_header.p_memsz), log_hex(seg_header.p_vaddr), seg_index);
+                    free_all_segments(mem, segment_reloc_info);
+                    return SCE_KERNEL_ERROR_NO_MEMORY; // TODO is this correct?
+                }
+
+                const Ptr<uint8_t> seg_ptr(segment_address);
+                memcpy(seg_ptr.get(mem), seg_bytes, seg_header.p_filesz);
+
+                segment_reloc_info[seg_index] = { segment_address, seg_header.p_vaddr, seg_header.p_memsz };
+            }
+        } else if (seg_header.p_type == PT_SCE_RELA) {
+            if (!relocate(seg_bytes, seg_header.p_filesz, segment_reloc_info, mem)) {
+                return -1;
+            }
+        } else if ((seg_header.p_type == PT_SCE_COMMENT) || (seg_header.p_type == PT_SCE_VERSION)
+            || (seg_header.p_type == PT_ARM_EXIDX) /* TODO: this may be important and require being loaded */) {
+            LOG_INFO("{}: Skipping special segment {}...", elf_path, log_hex(seg_header.p_type));
+        } else {
+            LOG_CRITICAL("{}: Skipping segment with unknown p_type {}!", elf_path, log_hex(seg_header.p_type));
+        }
+    }
+    if (kernel.debugger.dump_elfs) {
+        // Dump elf
+        std::vector<uint8_t> dump_elf(elf_bytes, elf_bytes + elf.e_shoff + (elf.e_shnum * elf.e_shentsize));
+        // dump_elf.resize(self_header.elf_filesize);
+        Elf32_Phdr *dump_segments = reinterpret_cast<Elf32_Phdr *>(dump_elf.data() + elf.e_phoff);
+        uint16_t last_index = 0;
+        for (const auto &[seg_index, segment] : segment_reloc_info) {
+            uint8_t *seg_bytes = Ptr<uint8_t>(segment.addr).get(mem);
+            memcpy(dump_elf.data() + dump_segments[seg_index].p_offset, seg_bytes, dump_segments[seg_index].p_filesz);
+            dump_segments[seg_index].p_vaddr = segment.addr;
+            last_index = std::max(seg_index, last_index);
+        }
+        fs::path dump_dir = log_path / "elfdumps";
+        fs::create_directories(dump_dir);
+        const auto start = dump_segments[0].p_vaddr;
+        const auto end = dump_segments[last_index].p_vaddr + dump_segments[last_index].p_filesz;
+        const auto elf_name = fs::path(elf_path).filename().stem().string();
+        const auto filename = dump_dir / fmt::format("{}-{}_{}.elf", log_hex_full(start), log_hex_full(end), elf_name);
+        fs_utils::dump_data(filename, dump_elf.data(), dump_elf.size());
+    }
+    const unsigned int module_info_segment_index = elf.e_entry >> 30;
+    const Ptr<const uint8_t> module_info_segment_address = Ptr<const uint8_t>(segment_reloc_info[module_info_segment_index].addr);
+    const uint8_t *const module_info_segment_bytes = module_info_segment_address.get(mem);
+    const sce_module_info_raw *const module_info = reinterpret_cast<const sce_module_info_raw *>(module_info_segment_bytes + module_info_offset);
+
+    for (const auto &[seg, infos] : segment_reloc_info) {
+        LOG_INFO("Loaded module segment {} @ [0x{:08X} - 0x{:08X} / 0x{:08X}] (size: 0x{:08X}) of module {}", seg, infos.addr, infos.addr + infos.size, infos.p_vaddr, infos.size, elf_path);
+    }
+
+    const SceKernelModulePtr kernelModuleInfo = std::make_shared<KernelModule>();
+    memset(kernelModuleInfo.get(), 0, sizeof(KernelModule));
+
+    kernelModuleInfo->info_segment_address = module_info_segment_address;
+    kernelModuleInfo->info_offset = module_info_offset;
+
+    auto *sceKernelModuleInfo = &kernelModuleInfo->info;
+    sceKernelModuleInfo->size = sizeof(*sceKernelModuleInfo);
+    strncpy(sceKernelModuleInfo->module_name, module_info->name, 28);
+    // unk28
+    if (module_info->module_start != 0xffffffff && module_info->module_start != 0)
+        sceKernelModuleInfo->start_entry = module_info_segment_address + module_info->module_start;
+    // unk30
+    if (module_info->module_stop != 0xffffffff && module_info->module_stop != 0)
+        sceKernelModuleInfo->stop_entry = module_info_segment_address + module_info->module_stop;
+
+    sceKernelModuleInfo->exidx_top = Ptr<const void>(module_info->exidx_top);
+    sceKernelModuleInfo->exidx_btm = Ptr<const void>(module_info->exidx_end);
+    sceKernelModuleInfo->extab_top = Ptr<const void>(module_info->extab_top);
+    sceKernelModuleInfo->extab_btm = Ptr<const void>(module_info->extab_end);
+
+    sceKernelModuleInfo->tlsInit = Ptr<const void>(!module_info->tls_start ? 0 : (module_info_segment_address.address() + module_info->tls_start));
+    sceKernelModuleInfo->tlsInitSize = module_info->tls_filesz;
+    sceKernelModuleInfo->tlsAreaSize = module_info->tls_memsz;
+
+    if (sceKernelModuleInfo->tlsInit) {
+        kernel.tls_address = sceKernelModuleInfo->tlsInit;
+        kernel.tls_psize = sceKernelModuleInfo->tlsInitSize;
+        kernel.tls_msize = sceKernelModuleInfo->tlsAreaSize;
+    }
+
+    strncpy(sceKernelModuleInfo->path, elf_path.c_str(), 255);
+
+    for (Elf_Half segment_index = 0; segment_index < elf.e_phnum; ++segment_index) {
+        // Skip non-loadable segments
+        auto it = segment_reloc_info.find(segment_index);
+        if (it == segment_reloc_info.end())
+            continue;
+
+        if (segment_index >= MODULE_INFO_NUM_SEGMENTS) {
+            LOG_ERROR("Segment {} should not be loadable", segment_index);
+            continue;
+        }
+
+        SceKernelSegmentInfo &segment = sceKernelModuleInfo->segments[segment_index];
+        segment.size = sizeof(segment);
+        segment.vaddr = it->second.addr;
+        segment.memsz = segments[segment_index].p_memsz;
+        segment.filesz = segments[segment_index].p_filesz;
+    }
+
+    sceKernelModuleInfo->state = module_info->type;
+
+    LOG_INFO("Linking ELF {}...", elf_path);
+    if (!load_exports(sceKernelModuleInfo, *module_info, module_info_segment_address, kernel, mem)) {
+        return -1;
+    }
+
+    if (!load_imports(*module_info, module_info_segment_address, segment_reloc_info, kernel, mem)) {
+        return -1;
+    }
+    const SceUID uid = kernel.get_next_uid();
+    sceKernelModuleInfo->modid = uid;
+    {
+        const std::lock_guard<std::mutex> lock(kernel.mutex);
+        kernel.loaded_modules[uid] = kernelModuleInfo;
+    }
+    {
+        const std::lock_guard<std::mutex> guard(kernel.export_nids_mutex);
+        kernel.module_uid_by_nid[module_info->module_nid] = uid;
+    }
+
+    return uid;
+}

@@ -186,6 +186,8 @@ set(SOURCE_LIST
 	SceSysmem/SceSysclibForDriver.cpp
 	SceSysmem/SceSysmem.cpp
 	SceSysmem/SceSysmemForDriver.cpp
+	SceSysmem/SceKernelSuspendForDriver.cpp
+	SceSysmem/SceKernelUtilsForDriver.cpp
 	SceSysmodule/SceSysmodule.cpp
 	#SceSystemGesture/SceSystemGesture.cpp
 	SceTeleportClient/SceTeleportClient.cpp

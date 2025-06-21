@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <kernel/types.h>
 #include <module/module.h>
 
 DECL_EXPORT(SceInt32, sceKernelGetThreadCurrentPriority);
@@ -32,3 +33,5 @@ DECL_EXPORT(void, sceClibMspaceFree, Ptr<void> space, Ptr<void> address);
 DECL_EXPORT(int, sceClibMspaceIsHeapEmpty);
 
 DECL_EXPORT(Ptr<void>, sceClibMspaceMalloc, Ptr<void> space, uint32_t size);
+
+DECL_EXPORT(SceUID, sceKernelCreateThread, const char *name, SceKernelThreadEntry entry, int init_priority, int stack_size, SceUInt attr, int cpu_affinity_mask, Ptr<SceKernelThreadOptParam> option);

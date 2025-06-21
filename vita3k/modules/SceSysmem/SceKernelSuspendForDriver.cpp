@@ -1,5 +1,5 @@
-// Vita3K emulator project
-// Copyright (C) 2026 Vita3K team
+﻿// Vita3K emulator project
+// Copyright (C) 2025 Vita3K team
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,18 +15,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#pragma once
+#include <module/module.h>
+#include <util/tracy.h>
 
-#include <patch/patch.h>
-#include <util/fs.h>
-#include <util/types.h>
+TRACY_MODULE_NAME(SceKernelSuspendForDriver);
 
-#include <string>
+typedef Ptr<int(int resume, int event, Ptr<void> param, Ptr<void> argp)> SceKernelSysEventHandler;
 
-struct KernelState;
-struct MemState;
-struct KernelModule;
-
-SceUID load_self(KernelState &kernel, MemState &mem, const void *self, const std::string &self_path, const fs::path &log_path, const std::vector<Patch> &patches);
-int unload_self(KernelState &kernel, MemState &mem, KernelModule &module);
-SceUID load_elf(KernelState &kernel, MemState &mem, const void *elf_content, const std::string &elf_path, const fs::path &log_path);
+EXPORT(int, sceKernelRegisterSysEventHandlerForDriver, const char *name, SceKernelSysEventHandler handler, Ptr<void> argp) {
+    TRACY_FUNC(sceKernelRegisterSysEventHandlerForDriver, name, handler, argp);
+    return UNIMPLEMENTED();
+}

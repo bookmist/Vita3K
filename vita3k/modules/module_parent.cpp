@@ -314,6 +314,55 @@ uint32_t stop_module(EmuEnvState &emuenv, const SceKernelModuleInfo &module, Sce
     return 0;
 }
 
+typedef struct SceKernelBootimageModules {
+    Ptr<const char> path;
+    Ptr<const void> data;
+    SceSize size;
+} SceKernelBootimageModules;
+
+typedef struct SceKernelBootimageInfo {
+    SceSize number;
+    Ptr<const SceKernelBootimageModules> list;
+} SceKernelBootimageInfo;
+
+static void load_bootimage_module(EmuEnvState &emuenv, const std::string &module_name) {
+    // check if module is already loaded
+    {
+        const std::lock_guard<std::mutex> lock(emuenv.kernel.mutex);
+        const auto &loaded_modules = emuenv.kernel.loaded_modules;
+        auto module_iter = std::find_if(loaded_modules.begin(), loaded_modules.end(), [&](const auto &p) {
+            return module_name == p.second->info.path;
+        });
+        if (module_iter != loaded_modules.end()) {
+            LOG_TRACE("Boot image module {} is already loaded", module_name);
+            return;
+        }
+    }
+    Ptr<SceKernelBootimageInfo> sceKernelBootimageInfo = Ptr<SceKernelBootimageInfo>(emuenv.kernel.export_nids[0x9C08E88A]);
+    if (!sceKernelBootimageInfo) {
+        load_module(emuenv, "os0:kd/bootimage.skprx");
+        sceKernelBootimageInfo = Ptr<SceKernelBootimageInfo>(emuenv.kernel.export_nids[0x9C08E88A]);
+        // LOG_TRACE("Boot modules address: {}", sceKernelBootimageInfo.address());
+    }
+    if (sceKernelBootimageInfo) {
+        const SceKernelBootimageInfo *bootimage_info = sceKernelBootimageInfo.get(emuenv.mem);
+        for (SceSize i = 0; i < bootimage_info->number; i++) {
+            const SceKernelBootimageModules &module = bootimage_info->list.get(emuenv.mem)[i];
+            if (module.path && module.data && module.size > 0) {
+                // LOG_TRACE("Loading boot image module: {} at {}", module.path.get(emuenv.mem), log_hex(module.data.address()));
+                if (module.path.get(emuenv.mem) == module_name) {
+                    // Load the module from the boot image
+                    auto elf_uid = load_elf(emuenv.kernel, emuenv.mem, module.data.get(emuenv.mem), module.path.get(emuenv.mem), emuenv.log_path);
+                    const auto module_rec = lock_and_find(elf_uid, emuenv.kernel.loaded_modules, emuenv.kernel.mutex);
+                    if (module_rec) {
+                        start_module(emuenv, module_rec->info);
+                    }
+                }
+            }
+        }
+    }
+}
+
 /**
  * \return False on failure, true on success
  */
@@ -331,6 +380,14 @@ bool load_sys_module(EmuEnvState &emuenv, SceSysmoduleModuleId module_id) {
         if (!is_lle_module(module_filename, emuenv))
             continue;
 
+        if (module_filename == std::string_view("libnet")) {
+            // emuenv.kernel.debugger.watch_import_calls = true;
+            /*const auto module_uid = load_module(emuenv, "os0:kd/sysmem.skprx");
+            const auto module_rec = lock_and_find(module_uid, emuenv.kernel.loaded_modules, emuenv.kernel.mutex);
+            if (module_rec)
+                start_module(emuenv, module_rec->info);*/
+            load_bootimage_module(emuenv, "os0:kd/net_ps.skprx");
+        }
         auto loaded_module_uid = load_module(emuenv, module_path);
 
         if (loaded_module_uid < 0) {
