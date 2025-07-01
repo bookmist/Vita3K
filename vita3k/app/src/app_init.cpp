@@ -421,7 +421,6 @@ bool init(EmuEnvState &state, Config &cfg, const Root &root_paths) {
         LOG_ERROR("SDL failed to create window!");
         return false;
     }
-
 #ifdef _WIN32
     // Disable round corners for the game window
     SDL_SysWMinfo wm_info;

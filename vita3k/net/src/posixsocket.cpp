@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <net/socket.h>
+#include <util/log.h>
 
 // NOTE: This should be SCE_NET_##errname but it causes vitaQuake to softlock in online games
 #ifdef _WIN32
@@ -32,7 +33,16 @@
 int PosixSocket::translate_return_value(int retval) {
     if (retval < 0) {
 #ifdef _WIN32
-        switch (WSAGetLastError()) {
+        auto err = WSAGetLastError();
+        char *s = NULL;
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, err,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPSTR)&s, 0, NULL);
+        // fprintf(stderr, "%S\n", s);
+        LOG_TRACE("network error: {} msg:{}", err, std::string(s));
+        LocalFree(s);
+        switch (err) {
 #else
         switch (errno) {
 #endif
@@ -187,6 +197,20 @@ int PosixSocket::get_socket_address(SceNetSockaddr *name, unsigned int *namelen)
         *namelen = sizeof(sockaddr_in);
     }
     int res = getsockname(sock, &addr, (socklen_t *)namelen);
+    if (res >= 0) {
+        convertPosixSockaddrToSce(&addr, name);
+        *namelen = sizeof(SceNetSockaddrIn);
+    }
+    return res;
+}
+
+int PosixSocket::get_peer_address(SceNetSockaddr *name, unsigned int *namelen) {
+    sockaddr addr;
+    convertSceSockaddrToPosix(name, &addr);
+    if (name != nullptr) {
+        *namelen = sizeof(sockaddr_in);
+    }
+    int res = getpeername(sock, &addr, (socklen_t *)namelen);
     if (res >= 0) {
         convertPosixSockaddrToSce(&addr, name);
         *namelen = sizeof(SceNetSockaddrIn);
