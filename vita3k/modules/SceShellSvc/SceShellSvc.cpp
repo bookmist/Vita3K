@@ -33,3 +33,49 @@ EXPORT(int, sceShellSvcGetSvcObj) {
     STUBBED("STUBBED");
     return svc_client.address();
 }
+
+EXPORT(SceInt32, sceShellSvcInitialize) {
+    TRACY_FUNC(sceShellSvcInitialize);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcRegisterCallback, SceUInt32 callbackId, Ptr<SceInt32(SceUInt32, ScePVoid)> pCallback, ScePVoid userData) {
+    TRACY_FUNC(sceShellSvcRegisterCallback, callbackId, pCallback, userData);
+    LOG_DEBUG("sceShellSvcRegisterCallback: callbackId: {}, pCallback: {}, userData: {}", callbackId, pCallback, userData);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcPeekClearEventFlag, SceUInt32 flagId, bool *pWasCancelled) {
+    TRACY_FUNC(sceShellSvcPeekClearEventFlag, flagId, pWasCancelled);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcGetEventFlagSmth, SceUInt32 *info, SceInt32 flagId) {
+    TRACY_FUNC(sceShellSvcGetEventFlagSmth, info, flagId);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcWaitEventFlag, SceUInt32 flagId) {
+    TRACY_FUNC(sceShellSvcWaitEventFlag, flagId);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcUnregisterCallback, SceUInt32 callbackId) {
+    TRACY_FUNC(sceShellSvcUnregisterCallback, callbackId);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcCheckCallback, SceUInt32 callbackId) {
+    TRACY_FUNC(sceShellSvcCheckCallback, callbackId);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcClearEventFlag, SceInt32 flagId) {
+    TRACY_FUNC(sceShellSvcClearEventFlag, flagId);
+    return UNIMPLEMENTED();
+}
+
+EXPORT(SceInt32, sceShellSvcCancelCallback, SceInt32 callbackId) {
+    TRACY_FUNC(sceShellSvcCancelCallback, callbackId);
+    return UNIMPLEMENTED();
+}

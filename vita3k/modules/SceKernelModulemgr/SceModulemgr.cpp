@@ -168,8 +168,17 @@ EXPORT(int, sceKernelGetModuleList, int flags, SceUID *modids, int *num) {
     return SCE_KERNEL_OK;
 }
 
-EXPORT(int, sceKernelGetSystemSwVersion) {
-    TRACY_FUNC(sceKernelGetSystemSwVersion);
+typedef struct SceKernelSystemSwVersion { // size is 0x28 on FW 0.990.030
+    SceSize size; // Size of this structure
+    char versionString[28];
+    SceUInt version;
+    SceUInt unk_24;
+} SceKernelSystemSwVersion;
+
+EXPORT(int, sceKernelGetSystemSwVersion, SceKernelSystemSwVersion *data) {
+    TRACY_FUNC(sceKernelGetSystemSwVersion, data);
+    strcpy(data->versionString, "3.74");
+    data->version = 0x03740000;
     return UNIMPLEMENTED();
 }
 

@@ -520,7 +520,7 @@ EXPORT(int, sceNetCheckDialogInit, const SceNetCheckDialogParam *param) {
         emuenv.netctl.adhocCondVarReady = true;
         emuenv.netctl.adhocCondVar.notify_all();
         emuenv.netctl.adhocState = SCE_NETCTL_STATE_CONNECTING;
-        emuenv.common_dialog.status = SCE_COMMON_DIALOG_STATUS_RUNNING;
+        emuenv.common_dialog.status = SCE_COMMON_DIALOG_STATUS_FINISHED;
     } else
         emuenv.common_dialog.status = SCE_COMMON_DIALOG_STATUS_FINISHED;
     return UNIMPLEMENTED();

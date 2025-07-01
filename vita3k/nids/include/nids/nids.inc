@@ -6531,7 +6531,16 @@ NID(sceShaccCgIsParameterRegFormat, 0xA13A8A1E)
 NID(sceShaccCgSetDefaultAllocator, 0x6F01D573)
 // Module "SceShellSvc"
 // Library "SceShellSvc"
+NID(sceShellSvcCancelCallback, 0x1FAB9A1E)
+NID(sceShellSvcCheckCallback, 0xFB03FBC9)
+NID(sceShellSvcClearEventFlag, 0xB452A177)
+NID(sceShellSvcGetEventFlagSmth, 0xA0B067AC)
 NID(sceShellSvcGetSvcObj, 0xB31E7F1C)
+NID(sceShellSvcInitialize, 0xE91AEAD4)
+NID(sceShellSvcPeekClearEventFlag, 0xBD4161B0)
+NID(sceShellSvcRegisterCallback, 0xD943CE15)
+NID(sceShellSvcUnregisterCallback, 0x7CBF442B)
+NID(sceShellSvcWaitEventFlag, 0x8D4F9F2E)
 // Library "SceShellUtil"
 NID(sceShellUtilInitEvents, 0xE8AD11EC)
 NID(sceShellUtilLock, 0xA9537233)
