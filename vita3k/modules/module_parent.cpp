@@ -133,13 +133,6 @@ Ptr<void> get_client_vtable(MemState &mem) {
     return client_vtable;
 }
 
-static void log_import_call(char emulation_level, uint32_t nid, SceUID thread_id, const std::unordered_set<uint32_t> &nid_blacklist, Address lr) {
-    if (!nid_blacklist.contains(nid)) {
-        const char *const name = import_name(nid);
-        LOG_TRACE("[{}LE] TID: {:<3} FUNC: {} {} at {}", emulation_level, thread_id, log_hex(nid), name, log_hex(lr));
-    }
-}
-
 void call_import(EmuEnvState &emuenv, CPUState &cpu, uint32_t nid, SceUID thread_id) {
     // HLE - call our C++ function
     if (emuenv.kernel.debugger.watch_import_calls) {
@@ -148,8 +141,10 @@ void call_import(EmuEnvState &emuenv, CPUState &cpu, uint32_t nid, SceUID thread
             0x46E7BE7B, // sceKernelLockLwMutex
             0x91FA6614, // sceKernelUnlockLwMutex
         };
-        auto lr = read_lr(cpu);
-        log_import_call('H', nid, thread_id, hle_nid_blacklist, lr);
+        if (!hle_nid_blacklist.contains(nid)) {
+            const char *const name = import_name(nid);
+            LOG_TRACE("[HLE] TID: {:<3} FUNC: {} {} at {}", thread_id, log_hex(nid), name, log_hex(read_lr(cpu)));
+        }
     }
     const ImportFn *fn = resolve_import(nid);
     if (fn) {
