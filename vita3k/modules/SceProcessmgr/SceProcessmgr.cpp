@@ -123,8 +123,8 @@ EXPORT(int, sceKernelGetProcessName, char *process_name, uint32_t len) {
     return 0;
 }
 
-EXPORT(Ptr<SceProcessParam>, sceKernelGetProcessParam, void *args) {
-    TRACY_FUNC(sceKernelGetProcessParam, args);
+EXPORT(Ptr<SceProcessParam>, sceKernelGetProcessParam) {
+    TRACY_FUNC(sceKernelGetProcessParam);
     return emuenv.kernel.process_param;
 }
 
