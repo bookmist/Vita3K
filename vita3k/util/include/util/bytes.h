@@ -20,8 +20,15 @@
 #include <bit>
 #include <cstdint>
 
+#ifndef __cpp_lib_byteswap
 template <typename T>
 T byte_swap(T val);
+#else
+template <typename T>
+T byte_swap(T val) {
+    return std::byteswap(val);
+}
+#endif
 
 template <typename T>
 T network_to_host_order(T val) {

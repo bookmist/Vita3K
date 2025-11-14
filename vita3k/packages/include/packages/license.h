@@ -24,7 +24,7 @@
 
 #include <emuenv/state.h>
 
-#include <util/log.h>
+#include <util/fs.h>
 
 #include <map>
 #include <string>

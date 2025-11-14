@@ -588,7 +588,6 @@ EXPORT(int, sceNetCheckDialogInit, const SceNetCheckDialogParam *param) {
             break;
         }
     }
-
     return UNIMPLEMENTED();
 }
 

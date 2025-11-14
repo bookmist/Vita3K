@@ -329,8 +329,8 @@ EXPORT(int, sceKernelGetFreeMemorySize, SceKernelFreeMemorySizeInfo *info) {
     // Define other memory limits
     constexpr uint32_t max_cdram = MiB(112); // Max cdram memory (112 MiB)
     constexpr uint32_t max_phycont = MiB(26); // Max physically contiguous memory (26 MiB)
-        const auto state = emuenv.kernel.obj_store.get<SysmemState>();
-        const auto guard = std::lock_guard<std::mutex>(state->mutex);
+    const auto state = emuenv.kernel.obj_store.get<SysmemState>();
+    const auto guard = std::lock_guard<std::mutex>(state->mutex);
 
     // Set the free memory size info
     info->size_cdram = std::max<int>(max_cdram - state->allocated_cdram, 0);

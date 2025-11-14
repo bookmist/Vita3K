@@ -27,7 +27,7 @@ struct DiscordState {
 
 namespace discordrpc {
 
-DiscordState discord_state{};
+static DiscordState discord_state{};
 
 bool init() {
     discord::Core *core{};

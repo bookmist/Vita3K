@@ -9,9 +9,8 @@ class ByteRingBuffer {
 public:
     ByteRingBuffer(std::size_t size)
         : buffer(new char[size])
-        , capacity(size){
-
-        };
+        , capacity(size) {
+    }
 
     bool Empty() const { return (used == 0); }
     bool Full() const { return (used == capacity); }

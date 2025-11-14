@@ -255,7 +255,7 @@ int PosixSocket::close() {
 }
 
 int PosixSocket::shutdown_socket(int how) {
-    return translate_return_value(shutdown(sock, how));
+    return translate_return_value(shutdown(how));
 }
 
 SocketPtr PosixSocket::accept(SceNetSockaddr *addr, unsigned int *addrlen, int &err) {

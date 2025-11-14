@@ -24,7 +24,7 @@ struct ImGui_GLState : public ImGui_State {
     char glsl_version[64] = "";
     uint32_t font_texture = 0;
     uint32_t shader_handle = 0, vertex_handle = 0, fragment_handle = 0;
-    uint32_t attribute_location_tex = 0, attribute_projection_mat = 0;
+    GLint attribute_location_tex = 0, attribute_projection_mat = 0;
     uint32_t attribute_position_location = 0, attribute_uv_location = 0, attribute_color_location = 0;
     uint32_t vbo = 0, elements = 0;
 
