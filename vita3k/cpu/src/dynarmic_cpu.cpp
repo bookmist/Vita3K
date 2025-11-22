@@ -115,7 +115,10 @@ public:
 
     CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
         CoprocReg CRm, unsigned opc2) override {
-        LOG_ERROR("two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
+        if (CRn == CoprocReg::C13 && CRm == CoprocReg::C0 && opc1 == 0 && opc2 == 3) {
+            return &tpidruro;
+        }
+        LOG_ERROR("coproc_id:15, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
         return &one_word;
         return CallbackOrAccessOneWord{};
     }
