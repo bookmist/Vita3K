@@ -408,9 +408,9 @@ endif()
 # Tracy
 if(NOT (CMAKE_BUILD_TYPE STREQUAL "Release"))
 	option(TRACY_ENABLE_ON_CORE_COMPONENTS
-		"Enable and require Tracy to compile core components such as the renderer, shader recompiler and
-			HLE modules"
-		ON)
+	"Enable and require Tracy to compile core components such as the renderer, shader recompiler and
+		HLE modules"
+	ON)
 	option(TRACY_NO_FRAME_IMAGE, ON)
 
 	add_library(tracy STATIC tracy/public/TracyClient.cpp)
@@ -418,7 +418,7 @@ if(NOT (CMAKE_BUILD_TYPE STREQUAL "Release"))
 	target_link_libraries(tracy PUBLIC ${CMAKE_DL_LIBS})
 
 	if(UNIX AND NOT ANDROID)
-		target_link_libraries(tracy PUBLIC pthread)
+	target_link_libraries(tracy PUBLIC pthread)
 	endif()
 
 	# Enable Tracy on-demand profiling mode to avoid unnecessary memory usage when the developer
@@ -462,3 +462,27 @@ if(NOT ANDROID)
 	# Create alias to prevent the need of multiple changes in case the target name changes
 	add_library(NFDe::NFDe ALIAS nfd)
 endif()
+
+#backward-cpp
+include(FetchContent)
+FetchContent_Declare(
+  cpptrace
+  GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+  GIT_TAG        v1.0.4 # <HASH or TAG>
+)
+FetchContent_MakeAvailable(cpptrace)
+
+#StackWalker
+FetchContent_Declare(
+  StackWalker
+  GIT_REPOSITORY https://github.com/JochenKalmbach/StackWalker  
+)
+FetchContent_MakeAvailable(StackWalker)
+
+#CrashCatch
+FetchContent_Declare(
+  CrashCatch
+  GIT_REPOSITORY https://github.com/keithpotz/CrashCatch
+  GIT_TAG        main
+)
+FetchContent_MakeAvailable(CrashCatch)

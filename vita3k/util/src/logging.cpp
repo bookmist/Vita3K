@@ -20,6 +20,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <dbghelp.h>
 #endif
 
 #include <spdlog/sinks/basic_file_sink.h>
@@ -32,6 +33,10 @@
 
 #include <iostream>
 #include <vector>
+// #include <config/version.h>
+extern const char window_title[];
+
+#include <CrashCatch.hpp>
 
 namespace logging {
 
@@ -46,6 +51,11 @@ static void flush() {
 }
 
 ExitCode init(const Root &root_paths, bool use_stdout) {
+#ifdef CRASHCATCH_PLATFORM_LINUX
+    CrashCatch::enable();
+#endif
+    CrashCatch::globalConfig.appVersion = window_title; // all version info in one string
+
     sinks.clear();
     if (use_stdout)
 #ifdef __ANDROID__
@@ -167,6 +177,7 @@ static LONG WINAPI exception_handler(PEXCEPTION_POINTERS pExp) noexcept {
     default:
         return EXCEPTION_CONTINUE_SEARCH;
     }
+    LOG_CRITICAL("at address: {}", pExp->ExceptionRecord->ExceptionAddress);
     flush();
     return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -174,6 +185,9 @@ static LONG WINAPI exception_handler(PEXCEPTION_POINTERS pExp) noexcept {
 void register_log_exception_handler() {
     if (!AddVectoredExceptionHandler(0, exception_handler)) {
         LOG_CRITICAL("Failed to register an exception handler");
+    }
+    if (!AddVectoredExceptionHandler(0, CrashCatch::UnhandledExceptionHandler)) {
+        LOG_CRITICAL("Failed to register a CrashCatch exception handler");
     }
 }
 
