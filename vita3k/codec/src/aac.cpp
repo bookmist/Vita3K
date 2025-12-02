@@ -73,13 +73,18 @@ uint32_t AacDecoderState::get(DecoderQuery query) {
 }
 
 bool AacDecoderState::send(const uint8_t *data, uint32_t size) {
+    const FFCodec *ff_codec = ffcodec(codec);
+    if (!ff_codec->cb.decode) {
+        LOG_WARN_ONCE("AAC codec has no decode callback.");
+        return false;
+    }
+
     AVPacket *packet = av_packet_alloc();
     packet->data = const_cast<uint8_t *>(data);
     packet->size = size;
 
     av_frame_unref(frame);
 
-    const FFCodec *ff_codec = ffcodec(codec);
     int got_frame;
     int len = ff_codec->cb.decode(context, frame, &got_frame, packet);
     assert(got_frame);
