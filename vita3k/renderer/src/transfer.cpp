@@ -36,8 +36,58 @@ extern "C" {
 
 namespace renderer {
 
+template <typename in_t, typename out_t, SceGxmTransferColorKeyMode mode, SceGxmTransferType src_type, SceGxmTransferType dst_type>
+static void perform_transfer_copy_impl_diff_t(MemState &mem, const SceGxmTransferImage &src, const SceGxmTransferImage &dst, uint32_t key_value, uint32_t key_mask) {
+    in_t *__restrict__ src_ptr = src.address.cast<in_t>().get(mem);
+    out_t *__restrict__ dst_ptr = dst.address.cast<out_t>().get(mem);
+
+    auto compute_offset = [&](uint32_t dx, uint32_t dy, const SceGxmTransferImage &img, SceGxmTransferType type, int32_t type_size) -> int32_t {
+        const int32_t stride_pixel = img.stride / type_size;
+        if (type == SCE_GXM_TRANSFER_LINEAR) {
+            return dy * stride_pixel + dx;
+        } else if (type == SCE_GXM_TRANSFER_TILED) {
+            // tiles are 32x32, you have the offset within the tile then the offset of the tile
+            const uint32_t texel_offset_in_tile = ((dy % 32) * 32) + (dx % 32);
+            const int32_t tile_address = (stride_pixel / 32) * (dy / 32) + (dx / 32);
+
+            return tile_address * 1024 + texel_offset_in_tile;
+        } else {
+            return texture::encode_morton(dx, dy, img.width, img.height);
+        }
+    };
+
+    for (uint32_t dx = 0; dx < src.width; dx++) {
+        for (uint32_t dy = 0; dy < src.height; dy++) {
+            // compute offset depending on the texture type used
+            // the function compute_offset gets inlined
+            uint32_t src_offset = compute_offset(src.x + dx, src.y + dy, src, src_type, sizeof(in_t));
+            uint32_t dst_offset = compute_offset(dst.x + dx, dst.y + dy, dst, dst_type, sizeof(out_t));
+
+            in_t value_in = src_ptr[src_offset];
+            out_t value_out = value_in;
+            if constexpr (mode == SCE_GXM_TRANSFER_COLORKEY_PASS) {
+                if ((value_out & key_mask) != key_value)
+                    continue;
+            } else if constexpr (mode == SCE_GXM_TRANSFER_COLORKEY_REJECT) {
+                if ((value_out & key_mask) == key_value)
+                    continue;
+            }
+
+            dst_ptr[dst_offset] = value_out;
+        }
+    }
+}
+
 template <typename T, SceGxmTransferColorKeyMode mode, SceGxmTransferType src_type, SceGxmTransferType dst_type>
 static void perform_transfer_copy_impl(MemState &mem, const SceGxmTransferImage &src, const SceGxmTransferImage &dst, uint32_t key_value, uint32_t key_mask) {
+    if (src.format != dst.format) {
+        if constexpr (sizeof(T) == 4)
+            if ((src.format == SCE_GXM_TRANSFER_FORMAT_U8U8U8U8_ABGR) && (dst.format == SCE_GXM_TRANSFER_FORMAT_U8_R)) {
+                perform_transfer_copy_impl_diff_t<T, uint8_t, mode, src_type, dst_type>(mem, src, dst, key_value, key_mask);
+                return;
+            }
+        LOG_ERROR_ONCE("Unhandled format conversion from 0x{:0X} to 0x{:0X}", fmt::underlying(src.format), fmt::underlying(dst.format));
+    }
     T *__restrict__ src_ptr = src.address.cast<T>().get(mem);
     T *__restrict__ dst_ptr = dst.address.cast<T>().get(mem);
 
@@ -141,12 +191,12 @@ COMMAND(handle_transfer_copy) {
     const SceGxmTransferFormat dst_fmt = images[1].format;
     SceGxmTransferType src_type = helper.pop<SceGxmTransferType>();
     SceGxmTransferType dst_type = helper.pop<SceGxmTransferType>();
-
+    /*
     if (src_fmt != dst_fmt) {
         LOG_ERROR_ONCE("Unhandled format conversion from 0x{:0X} to 0x{:0X}", fmt::underlying(src_fmt), fmt::underlying(dst_fmt));
         delete[] images;
         return;
-    }
+    }*/
 
     if (colorKeyMode != SCE_GXM_TRANSFER_COLORKEY_NONE && src_fmt != SCE_GXM_TRANSFER_FORMAT_U8U8U8U8_ABGR) {
         LOG_ERROR_ONCE("Transfer copy with non-zero key mask not handled for format 0x{:0X}", fmt::underlying(src_fmt));
