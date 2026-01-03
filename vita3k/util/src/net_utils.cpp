@@ -278,4 +278,52 @@ void init_address(int32_t &outIndex, uint32_t &netAddr, uint32_t &broadcastAddr)
     broadcastAddr = netAddr | ~netMask;
 }
 
+// Add these includes near the top with the other includes
+#include <vector>
+
+// Helper: return system DNS servers as IPv4 addresses in network byte order
+static std::vector<uint32_t> get_system_dns_servers() {
+    std::vector<uint32_t> out;
+#ifdef _WIN32
+    ULONG size = 0;
+    if (GetNetworkParams(nullptr, &size) == ERROR_BUFFER_OVERFLOW) {
+        FIXED_INFO *info = static_cast<FIXED_INFO *>(std::malloc(size));
+        if (info) {
+            if (GetNetworkParams(info, &size) == NO_ERROR) {
+                IP_ADDR_STRING *p = &info->DnsServerList;
+                while (p) {
+                    if (p->IpAddress.String[0]) {
+                        uint32_t a = inet_addr(p->IpAddress.String); // returns network byte order
+                        out.push_back(a);
+                    }
+                    p = p->Next;
+                }
+            }
+            std::free(info);
+        }
+    }
+#else
+    std::ifstream f("/etc/resolv.conf");
+    if (!f)
+        return out;
+    std::string line;
+    while (std::getline(f, line)) {
+        std::istringstream iss(line);
+        std::string token;
+        if (!(iss >> token))
+            continue;
+        if (token == "nameserver") {
+            std::string ip;
+            if (!(iss >> ip))
+                continue;
+            struct in_addr addr;
+            if (inet_pton(AF_INET, ip.c_str(), &addr) == 1) {
+                out.push_back(addr.s_addr); // network byte order
+            }
+        }
+    }
+#endif
+    return out;
+}
+
 } // namespace net_utils

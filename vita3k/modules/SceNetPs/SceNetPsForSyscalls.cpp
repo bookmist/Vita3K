@@ -95,8 +95,30 @@ EXPORT(int, sceNetSyscallControl, int if_index, int code, int *ptr, int len) {
         if (code == 2) {
             // dns_addresses
             if (len >= 8) {
-                ptr[0] = 0x01020304;
-                ptr[1] = 0x02030405;
+                // here I need to get real dns addresses instead of dummy ones
+#ifdef _WIN32
+                ULONG size = 0;
+                if (GetNetworkParams(nullptr, &size) == ERROR_BUFFER_OVERFLOW) {
+                    FIXED_INFO *info = static_cast<FIXED_INFO *>(std::malloc(size));
+                    if (info) {
+                        int i = 0;
+                        if (GetNetworkParams(info, &size) == NO_ERROR) {
+                            IP_ADDR_STRING *p = &info->DnsServerList;
+                            while (p) {
+                                if (p->IpAddress.String[0]) {
+                                    uint32_t a = inet_addr(p->IpAddress.String); // returns network byte order
+                                    ptr[i++] = a;
+                                    if (i >= (len / 4)) {
+                                        break;
+                                    }
+                                }
+                                p = p->Next;
+                            }
+                        }
+                        std::free(info);
+                    }
+                }
+#endif
             } else {
                 memset(ptr, 0, len);
             }
