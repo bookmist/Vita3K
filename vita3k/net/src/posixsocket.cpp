@@ -233,7 +233,7 @@ int PosixSocket::abort(int flags) {
 
     return 0;
 #else
-    return translate_return_value(shutdown(sock, SHUT_RDWR));
+    return translate_return_value(::shutdown(sock, SHUT_RDWR));
 #endif
 }
 
