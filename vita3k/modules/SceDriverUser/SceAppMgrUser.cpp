@@ -36,7 +36,7 @@ struct SceAppMgrSaveDataDataDelete {
     uint8_t reserved[32];
     Ptr<SceAppUtilSaveDataDataSaveItem> files;
     int fileNum;
-    SceAppUtilMountPoint *mountPoint;
+    Ptr<SceAppUtilMountPoint> mountPoint;
 };
 
 struct SceAppMgrSaveDataData {
@@ -46,8 +46,8 @@ struct SceAppMgrSaveDataData {
     uint8_t reserved[32];
     Ptr<SceAppUtilSaveDataDataSaveItem> files;
     int fileNum;
-    SceAppUtilMountPoint *mountPoint;
-    unsigned int *requiredSizeKiB;
+    Ptr<SceAppUtilMountPoint> mountPoint;
+    Ptr<unsigned int> requiredSizeKiB;
 };
 
 EXPORT(SceInt32, _sceAppMgrGetAppState, SceAppMgrAppState *appState, SceUInt32 sizeofSceAppMgrAppState, SceUInt32 buildVersion) {
@@ -264,7 +264,7 @@ EXPORT(int, sceAppMgrGetDevInfo, const char *dev, uint64_t *max_size, uint64_t *
         return RET_ERROR(SCE_ERROR_ERRNO_ENOENT);
     }
 
-    fs::path dev_path = device._to_string();
+    fs::path dev_path = boost::describe::enum_to_string(device, "");
     fs::path path = emuenv.pref_path / dev_path;
     fs::space_info space = fs::space(path);
 
