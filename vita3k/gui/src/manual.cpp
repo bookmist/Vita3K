@@ -41,7 +41,7 @@ void open_manual(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path
         LOG_ERROR("Error opening Manual");
 }
 
-static int32_t scroll_page = 0;
+// static int32_t scroll_page = 0;
 static int32_t current_page = 0;
 static float scroll = 0.f;
 static std::map<uint32_t, uint32_t> max_scroll{};
@@ -169,8 +169,8 @@ void draw_manual(GuiState &gui, EmuEnvState &emuenv) {
     // Set button size
     const auto BUTTON_SIZE = ImVec2(65.f * SCALE.x, 30.f * SCALE.y);
 
-    static float scroll_y_speed = 0.08f; // Speed of the scroll animation
-    static float scroll_y = 0.f; // Current scroll position
+    // static float scroll_y_speed = 0.08f; // Speed of the scroll animation
+    // static float scroll_y = 0.f; // Current scroll position
     const uint32_t total_pages = static_cast<uint32_t>(gui.manuals.size());
     const uint32_t max_pages_index = total_pages - 1u;
 
@@ -225,7 +225,7 @@ void draw_manual(GuiState &gui, EmuEnvState &emuenv) {
         ImGui::SetCursorPos(ImVec2(display_size.x - (18.f * SCALE.x), 10.f * SCALE.y));
         ImGui::PushStyleVar(ImGuiStyleVar_GrabMinSize, 174.f * SCALE.y);
         ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 40.f * SCALE.y);
-        const auto old_scroll = scroll;
+        // const auto old_scroll = scroll;
         ImGui::VSliderFloat("##manual_scroll_bar", ImVec2(8.f * SCALE.x, 460.f * SCALE.y), &scroll, max_scroll.at(current_page), 0, "");
         ImGui::PopStyleVar(2);
     }

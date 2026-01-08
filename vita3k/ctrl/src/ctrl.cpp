@@ -80,7 +80,7 @@ Java_org_vita3k_emulator_overlay_InputOverlay_setButton(JNIEnv *env, jobject thi
 }
 #endif
 
-static uint64_t timestamp;
+// static uint64_t timestamp;
 
 static int reserve_port(CtrlState &state) {
     for (int i = 0; i < SCE_CTRL_MAX_WIRELESS_NUM; i++) {

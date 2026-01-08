@@ -579,7 +579,7 @@ static void init_app_custom_config(GuiState &gui, EmuEnvState &emuenv) {
     }
 }
 
-bool set_scroll_animation(float &scroll, float target_scroll, const std::string &target_id, std::function<void(float)> set_scroll) {
+bool set_scroll_animation(float &scroll, float target_scroll, const std::string &target_id, const std::function<void(float)> &set_scroll) {
     // Persistent state for animation tracking (keeps values between frames)
     static float start_time = 0.f;
     static float initial_target_scroll = 0.f;

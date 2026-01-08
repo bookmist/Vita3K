@@ -314,7 +314,7 @@ bool handle_access_violation(MemState &state, uint8_t *addr, bool write) noexcep
         return true;
     }
 
-    Address previous_beg = it->first;
+    // Address previous_beg = it->first;
     for (auto &[block_addr, block] : info.blocks) {
         block.callback(vaddr, write);
     }

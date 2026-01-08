@@ -104,7 +104,7 @@ bool init_vita3k_update(GuiState &gui) {
 
                 // Calculate Page and Last Per Page Get
                 const uint32_t page_count = static_cast<uint32_t>(std::ceil(static_cast<double>(dif_from_current) / max_per_page));
-                const uint32_t last_per_page = dif_from_current % max_per_page;
+                // const uint32_t last_per_page = dif_from_current % max_per_page;
 
                 // Browse all page
                 for (auto p = 0; p < page_count; p++) {

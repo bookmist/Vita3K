@@ -151,7 +151,7 @@ COMMAND(handle_sync_surface_data) {
 
     // We protect the data to track syncing. If this is called then the data is definitely protected somehow.
     // We just unprotect and reprotect again :D
-    const std::size_t total_size = height * gxm::get_stride_in_bytes(surface->colorFormat, stride_in_pixels);
+    // const std::size_t total_size = height * gxm::get_stride_in_bytes(surface->colorFormat, stride_in_pixels);
 
     switch (renderer.current_backend) {
     case Backend::OpenGL:

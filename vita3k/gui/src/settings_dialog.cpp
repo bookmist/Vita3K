@@ -157,7 +157,6 @@ static void change_emulator_path(GuiState &gui, EmuEnvState &emuenv) {
  * If a custom config is found, the configuration values found in the file will be assigned to
  * `config`.
  *
- * @param gui State of the Vita3K GUI
  * @param emuenv State of the emulated PlayStation Vita environment
  * @param app_path Path to the app or game to get the custom config for
  * @return true A custom config for the application has been found, and `config` has been set up with

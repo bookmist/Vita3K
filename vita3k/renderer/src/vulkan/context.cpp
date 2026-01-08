@@ -90,7 +90,7 @@ void VKContext::wait_thread_function(const MemState &mem) {
                                LOG_ERROR("Buffer Sync request for {}-{} is not fully mapped", log_hex(request.location), log_hex(request.location + request.size));
                                return;
                            }
-                           uint8_t *src = reinterpret_cast<uint8_t *>(std::get<vkutil::Buffer>(mem_it->second.buffer_impl).mapped_data);
+                           uint8_t *src = static_cast<uint8_t *>(std::get<vkutil::Buffer>(mem_it->second.buffer_impl).mapped_data);
                            src += request.location - mem_it->first;
                            memcpy(Ptr<void>(request.location).get(mem), src, request.size);
                        },
@@ -230,7 +230,7 @@ void VKContext::start_recording(bool first_in_scene) {
         // make sure the next fence used is the one we created (but only if this is the first recording of the scene)
         auto fence_insert_it = render_target->fences.begin() + render_target->fence_idx;
         if (!first_in_scene)
-            fence_insert_it++;
+            ++fence_insert_it;
         render_target->fences.insert(fence_insert_it, state.device.createFence(fence_info));
     }
 

@@ -65,8 +65,7 @@ static void reset_pinch() {
 }
 
 static SceTouchData recover_touch_events(const EmuEnvState &emuenv) {
-    SceTouchData touch_data;
-    memset(&touch_data, 0, sizeof(touch_data));
+    SceTouchData touch_data = {};
 
     for (uint8_t i = 0; i < finger_count; i++) {
         touch_data.report[i].id = static_cast<uint8_t>(finger_buffer[i].touchID);
@@ -89,8 +88,7 @@ static SceTouchData recover_touch_events(const EmuEnvState &emuenv) {
 }
 
 static SceTouchData recover_touchpad_events(const EmuEnvState &emuenv) {
-    SceTouchData touch_data;
-    memset(&touch_data, 0, sizeof(touch_data));
+    SceTouchData touch_data = {};
 
     for (uint8_t i = 0; i < touchpad_finger_count; i++) {
         touch_data.report[i].id = static_cast<uint8_t>(touchpad_buffer[i].which);

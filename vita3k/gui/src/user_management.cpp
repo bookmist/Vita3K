@@ -286,13 +286,10 @@ static void create_temp_user(GuiState &gui, EmuEnvState &emuenv) {
             ++id;
     }
     user_id_selected = fmt::format("{:0>2d}", id);
-    auto i = 1;
     const auto USER_STR = gui.lang.user_management["user"];
-    for (const auto &user : gui.users) {
+    for (size_t i = 1; i <= gui.users.size(); ++i) {
         if (get_users_index(gui, USER_STR + std::to_string(i)) == gui.users.end())
             break;
-        else
-            ++i;
     }
     temp.id = user_id_selected;
     temp.name = USER_STR + std::to_string(i);
@@ -725,7 +722,7 @@ void draw_user_management(GuiState &gui, EmuEnvState &emuenv) {
             if (menu_selected == DELETE_USER)
                 draw_frame(DELETE_USER_POS, SELECTABLE_USER_SIZE);
             trigger_scroll_to_item(menu_selected == DELETE_USER);
-            const auto delete_user_item_rect_half = ImGui::GetItemRectMax().x - (MED_AVATAR_SIZE.x / 2.f);
+            // const auto delete_user_item_rect_half = ImGui::GetItemRectMax().x - (MED_AVATAR_SIZE.x / 2.f);
             ImGui::SetWindowFontScale(0.7f);
             ImGui::PushTextWrapPos(DELETE_USER_POS.x + TEXT_USER_PADDING);
             const auto DEL_USER_POS_STR = DELETE_USER_POS.x + (MED_AVATAR_SIZE.x / 2.f) - (ImGui::CalcTextSize(lang["delete_user"].c_str(), 0, false, TEXT_USER_PADDING).x / 2.f);

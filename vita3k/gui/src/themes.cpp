@@ -267,7 +267,7 @@ bool init_theme(GuiState &gui, EmuEnvState &emuenv, const std::string &content_i
                     // Font Color
                     if (!param.child("m_fontColor").text().empty()) {
                         uint32_t color = std::strtoul(param.child("m_fontColor").text().as_string(), nullptr, 16);
-                        gui.theme_backgrounds_font_color.emplace_back((float((color >> 16) & 0xFF)) / 255.f, (float((color >> 8) & 0xFF)) / 255.f, (float((color >> 0) & 0xFF)) / 255.f, 1.f);
+                        gui.theme_backgrounds_font_color.emplace_back(static_cast<float>((color >> 16) & 0xFF) / 255.f, static_cast<float>((color >> 8) & 0xFF) / 255.f, static_cast<float>((color >> 0) & 0xFF) / 255.f, 1.f);
                     }
                 }
             }

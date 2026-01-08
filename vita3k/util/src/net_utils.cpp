@@ -197,11 +197,10 @@ std::vector<AssignedAddr> get_all_assigned_addrs() {
     };
 
 #ifdef _WIN32
-    PIP_ADAPTER_INFO pAdapterInfo;
     DWORD dwRetVal = 0;
-    UINT i;
+    // UINT i;
     ULONG ulOutBufLen = sizeof(IP_ADAPTER_INFO);
-    pAdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
+    PIP_ADAPTER_INFO pAdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
     if (pAdapterInfo == NULL) {
         LOG_CRITICAL("Error allocating memory needed to call GetAdaptersinfo");
         return ret_addrs();

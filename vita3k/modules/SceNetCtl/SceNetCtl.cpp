@@ -207,7 +207,7 @@ static void adhoc_thread(EmuEnvState &emuenv, int thread_id) {
             continue;
         }
 
-        const auto send_id = CALL_EXPORT(sceNetSocket, "SceNetAdhocAuthSend", SCE_NET_AF_INET, SCE_NET_SOCK_DGRAM_P2P, SceNetProtocol(0));
+        const auto send_id = CALL_EXPORT(sceNetSocket, "SceNetAdhocAuthSend", SCE_NET_AF_INET, SCE_NET_SOCK_DGRAM_P2P, SCE_NET_IPPROTO_IP);
         if (send_id < 0) {
             LOG_ERROR("Failed to create adhoc send socket: {}", log_hex(send_id));
             handle_error_and_disconnect(recv_id, send_id);
@@ -307,14 +307,11 @@ static void adhoc_thread(EmuEnvState &emuenv, int thread_id) {
         uint64_t lastSendTicks = rtc_get_ticks(emuenv.kernel.base_tick.tick) - emuenv.kernel.start_tick - SEND_INTERVAL_USEC;
         while (emuenv.netctl.adhocCondVarReady.load()) {
             const uint64_t currentTicks = rtc_get_ticks(emuenv.kernel.base_tick.tick) - emuenv.kernel.start_tick;
-            emuenv.netctl.adhocPeers.erase(
-                std::remove_if(
-                    emuenv.netctl.adhocPeers.begin(),
-                    emuenv.netctl.adhocPeers.end(),
-                    [&](const SceNetCtlAdhocPeerInfo &peer) {
-                        return currentTicks - peer.lastRecv > TIMEOUT_USEC;
-                    }),
-                emuenv.netctl.adhocPeers.end());
+            std::erase_if(
+                emuenv.netctl.adhocPeers,
+                [&](const SceNetCtlAdhocPeerInfo &peer) {
+                    return currentTicks - peer.lastRecv > TIMEOUT_USEC;
+                });
 
             // Send the self info to other peers every 1 second
             if ((currentTicks - lastSendTicks) >= SEND_INTERVAL_USEC) {
@@ -324,7 +321,7 @@ static void adhoc_thread(EmuEnvState &emuenv, int thread_id) {
 
             // Wait for incoming packets
             SceNetSockaddrIn fromAddr{};
-            auto fromlen = uint32_t(sizeof(fromAddr));
+            auto fromlen = static_cast<uint32_t>(sizeof(fromAddr));
             SceNetCtlAdhocPeerInfo peerInfo{};
             const auto res = rcv_sock->recv_packet(&peerInfo, sizeof(SceNetCtlAdhocPeerInfo), 0, (SceNetSockaddr *)&fromAddr, &fromlen);
             if ((res > 0) && (res == sizeof(SceNetCtlAdhocPeerInfo)) && (fromAddr.sin_addr.s_addr != emuenv.net.netAddr)) {

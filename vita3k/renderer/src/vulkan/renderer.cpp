@@ -1536,7 +1536,7 @@ TrappedBuffer *BufferTrapping::access_buffer(Address addr, uint32_t size, MemSta
         }
 
         temp_buffer.size = size;
-        temp_buffer.mapped_location = reinterpret_cast<uint8_t *>(std::get<vkutil::Buffer>(mem_it->second.buffer_impl).mapped_data);
+        temp_buffer.mapped_location = static_cast<uint8_t *>(std::get<vkutil::Buffer>(mem_it->second.buffer_impl).mapped_data);
         temp_buffer.mapped_location += addr - mem_it->first;
         temp_buffer.extra = ~0;
 
@@ -1560,12 +1560,12 @@ TrappedBuffer *BufferTrapping::access_buffer(Address addr, uint32_t size, MemSta
     {
         // remove the following overlapping dirty buffers
         auto next_it = it;
-        next_it++;
+        ++next_it;
         while (next_it != trapped_buffers.end() && next_it->first < addr + size) {
             if (next_it->second.dirty)
                 next_it = trapped_buffers.erase(next_it);
             else
-                next_it++;
+                ++next_it;
         }
     }
     it->second.size = size;
@@ -1580,7 +1580,7 @@ TrappedBuffer *BufferTrapping::access_buffer(Address addr, uint32_t size, MemSta
             return &it->second;
         }
 
-        it->second.mapped_location = reinterpret_cast<uint8_t *>(std::get<vkutil::Buffer>(mem_it->second.buffer_impl).mapped_data);
+        it->second.mapped_location = static_cast<uint8_t *>(std::get<vkutil::Buffer>(mem_it->second.buffer_impl).mapped_data);
         it->second.mapped_location += addr - mem_it->first;
     }
 

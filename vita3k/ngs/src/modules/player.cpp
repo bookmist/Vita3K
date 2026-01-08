@@ -25,6 +25,7 @@ extern "C" {
 
 #include <cassert>
 #include <cstring>
+#include <utility>
 
 namespace ngs {
 
@@ -107,7 +108,7 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
     }
 
     // If the amount of samples already processed and pending to be passed is smaller than the amount of samples of the audio buffer
-    if (static_cast<int>(state->decoded_samples_pending) < granularity) {
+    if (std::cmp_less(state->decoded_samples_pending, granularity)) {
         // Memory cleaning check
         if (!data.extra_storage.empty()) {
             // Delete data from previous processing if memory isn't empty
@@ -117,7 +118,7 @@ bool PlayerModule::process(KernelState &kern, const MemState &mem, const SceUID 
         // Reset the passed samples count to 0
         state->decoded_samples_passed = 0;
 
-        while (static_cast<int>(state->decoded_samples_pending) < granularity) {
+        while (std::cmp_less(state->decoded_samples_pending, granularity)) {
             // Ran out of data, supply new
             // Decode new data and deliver them
             // Let's open our context
