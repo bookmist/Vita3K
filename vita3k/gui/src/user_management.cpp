@@ -272,7 +272,14 @@ static auto get_users_index(GuiState &gui, const std::string &user_name) {
     return profils_index;
 }
 
-static std::string del_menu, title, user_id_selected;
+enum class DelMenu {
+    NONE,
+    WARN,
+    CONFIRM,
+};
+
+static DelMenu del_menu = DelMenu::NONE;
+static std::string title, user_id_selected;
 static User temp;
 static std::vector<uint32_t> users_list_available;
 
@@ -287,7 +294,8 @@ static void create_temp_user(GuiState &gui, EmuEnvState &emuenv) {
     }
     user_id_selected = fmt::format("{:0>2d}", id);
     const auto USER_STR = gui.lang.user_management["user"];
-    for (size_t i = 1; i <= gui.users.size(); ++i) {
+    size_t i = 1;
+    for (; i <= gui.users.size(); ++i) {
         if (get_users_index(gui, USER_STR + std::to_string(i)) == gui.users.end())
             break;
     }
@@ -345,7 +353,7 @@ static void delete_user(GuiState &gui, EmuEnvState &emuenv) {
         config::serialize_config(emuenv.cfg, emuenv.cfg.config_path);
         emuenv.io.user_id.clear();
     }
-    del_menu = "confirm";
+    del_menu = DelMenu::CONFIRM;
 }
 
 void browse_users_management(GuiState &gui, EmuEnvState &emuenv, const uint32_t button) {
@@ -418,7 +426,7 @@ void browse_users_management(GuiState &gui, EmuEnvState &emuenv, const uint32_t 
                 clear_user_temp(gui);
             if ((menu == DELETE_USER) && !user_id_selected.empty()) {
                 user_id_selected.clear();
-                del_menu.clear();
+                del_menu = DelMenu::NONE;
             } else {
                 menu = SELECT;
                 if (menu_selected == CREATE)
@@ -459,19 +467,25 @@ void browse_users_management(GuiState &gui, EmuEnvState &emuenv, const uint32_t 
             }
             break;
         case DELETE_USER:
-            if (del_menu.empty()) {
+            switch (del_menu) {
+            case DelMenu::NONE:
                 user_id_selected = current_user_selected_str;
-                del_menu = "warn";
-            } else if (del_menu == "warn")
+                del_menu = DelMenu::WARN;
+                break;
+            case DelMenu::WARN:
                 delete_user(gui, emuenv);
-            else if (del_menu == "confirm") {
-                del_menu.clear();
+                break;
+            case DelMenu::CONFIRM:
+                del_menu = DelMenu::NONE;
                 user_id_selected.clear();
                 current_user_id_selected = first_user_id_available;
                 if (gui.users.empty()) {
                     menu = SELECT;
                     menu_selected = CREATE;
                 }
+                break;
+            default:
+                break;
             }
             break;
         case CONFIRM:
@@ -840,7 +854,8 @@ void draw_user_management(GuiState &gui, EmuEnvState &emuenv) {
             ImGui::PopStyleVar();
         } else {
             ImGui::SetWindowFontScale(0.8f);
-            if (del_menu.empty()) {
+            switch (del_menu) {
+            case DelMenu::NONE:
                 ImGui::SetCursorPos(ImVec2(148.f * SCALE.x, 100.f * SCALE.y));
                 ImGui::TextColored(GUI_COLOR_TEXT, "%s", lang["user_delete_msg"].c_str());
                 ImGui::SetCursorPos(ImVec2(194.f * SCALE.x, 148.f * SCALE.y));
@@ -850,8 +865,9 @@ void draw_user_management(GuiState &gui, EmuEnvState &emuenv) {
                 ImGui::SetWindowFontScale(1.f);
                 ImGui::SetCursorPos(BUTTON_POS);
                 if (ImGui::Button(common["delete"].c_str(), BUTTON_SIZE))
-                    del_menu = "warn";
-            } else if (del_menu == "warn") {
+                    del_menu = DelMenu::WARN;
+                break;
+            case DelMenu::WARN:
                 ImGui::SetCursorPosY(146.f * SCALE.y);
                 TextColoredCentered(GUI_COLOR_TEXT, lang["user_delete_warn"].c_str());
                 ImGui::SetCursorPos(BUTTON_POS);
@@ -859,36 +875,40 @@ void draw_user_management(GuiState &gui, EmuEnvState &emuenv) {
                 ImGui::SetCursorPos(ImVec2((SIZE_USER.x / 2.f) - BUTTON_SIZE.x - 20.f, BUTTON_POS.y));
                 if (ImGui::Button(common["no"].c_str(), BUTTON_SIZE)) {
                     user_id_selected.clear();
-                    del_menu.clear();
+                    del_menu = DelMenu::NONE;
                 }
                 ImGui::SameLine(0, 40.f * SCALE.x);
                 if (ImGui::Button(common["yes"].c_str(), BUTTON_SIZE))
                     delete_user(gui, emuenv);
-            } else if (del_menu == "confirm") {
+                break;
+            case DelMenu::CONFIRM:
                 ImGui::SetCursorPosY(146.f * SCALE.y);
                 TextColoredCentered(GUI_COLOR_TEXT, lang["user_deleted"].c_str());
                 ImGui::SetWindowFontScale(1.f);
                 ImGui::SetCursorPos(BUTTON_POS);
                 if (ImGui::Button(common["ok"].c_str(), BUTTON_SIZE)) {
-                    del_menu.clear();
+                    del_menu = DelMenu::NONE;
                     user_id_selected.clear();
                     if (gui.users.empty()) {
                         menu = SELECT;
                         menu_selected = CREATE;
                     }
                 }
+                break;
+            default:
+                break;
             }
         }
-        break;
+    } break;
     }
-    }
+
     ImGui::EndChild();
 
     ImGui::SetCursorPosY(WINDOW_SIZE.y - POS_SEPARATOR);
     ImGui::Separator();
     ImGui::SetWindowFontScale(RES_SCALE.x);
     const auto USER_ALREADY_INIT = !gui.users.empty() && !emuenv.io.user_id.empty() && (emuenv.cfg.user_id == emuenv.io.user_id);
-    if ((menu == SELECT && USER_ALREADY_INIT) || ((menu != SELECT) && (menu != CONFIRM) && del_menu.empty())) {
+    if ((menu == SELECT && USER_ALREADY_INIT) || ((menu != SELECT) && (menu != CONFIRM) && del_menu == DelMenu::NONE)) {
         ImGui::SetCursorPos(ImVec2(54.f * SCALE.x, ImGui::GetCursorPosY() + (10.f * SCALE.y)));
         if (ImGui::Button(common["cancel"].c_str(), ImVec2(110.f * SCALE.x, 40.f * SCALE.y))) {
             if (menu != SELECT) {
