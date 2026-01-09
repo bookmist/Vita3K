@@ -19,6 +19,7 @@
 
 #include <map>
 #include <util/log.h>
+#include <utility>
 
 // This function will return a PatchHeader struct, which contains the titleid and the binary name (if provided)
 PatchHeader read_header(std::string &header, bool is_patchlist) {
@@ -145,7 +146,7 @@ std::vector<std::string> get_args(std::string inst, char open, char close) {
 }
 
 std::vector<std::string> get_args(std::string inst) {
-    return get_args(inst, '(', ')');
+    return get_args(std::move(inst), '(', ')');
 }
 
 uint32_t translate(std::string &inst, std::vector<uint32_t> &args) {
