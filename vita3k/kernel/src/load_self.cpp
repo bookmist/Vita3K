@@ -41,12 +41,12 @@
 #include <iomanip>
 #include <iostream>
 
-#define NID_MODULE_STOP 0x79F8E492
-#define NID_MODULE_EXIT 0x913482A9
-#define NID_MODULE_START 0x935CD196
-#define NID_MODULE_INFO 0x6C2224BA
-#define NID_SYSLYB 0x936c8a78
-#define NID_PROCESS_PARAM 0x70FBA1E7
+static constexpr uint32_t NID_MODULE_STOP = 0x79F8E492u;
+static constexpr uint32_t NID_MODULE_EXIT = 0x913482A9u;
+static constexpr uint32_t NID_MODULE_START = 0x935CD196u;
+static constexpr uint32_t NID_MODULE_INFO = 0x6C2224BAu;
+static constexpr uint32_t NID_SYSLYB = 0x936C8A78u;
+static constexpr uint32_t NID_PROCESS_PARAM = 0x70FBA1E7u;
 
 static constexpr bool LOG_MODULE_LOADING = false;
 
@@ -359,7 +359,7 @@ static bool load_var_exports(const uint32_t *nids, const Ptr<uint32_t> *entries,
             if (!module_info) {
                 LOG_ERROR("Module not found by nid: {} uid: {}", log_hex(var_binding_info.module_nid), kernel.module_uid_by_nid[var_binding_info.module_nid]);
             } else {
-                for (int k = 0; k < MODULE_INFO_NUM_SEGMENTS; k++) {
+                for (size_t k = 0; k < MODULE_INFO_NUM_SEGMENTS; k++) {
                     const auto &segment = module_info->info.segments[k];
                     if (segment.size > 0) {
                         seg[k] = { segment.vaddr.address(), 0, segment.memsz }; // p_vaddr is not used in variable relocations

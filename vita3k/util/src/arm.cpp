@@ -19,7 +19,7 @@
 
 // Encode code taken from https://github.com/yifanlu/UVLoader/blob/master/resolve.c
 
-uint32_t encode_arm_inst(uint8_t type, uint32_t immed, uint16_t reg) {
+uint32_t encode_arm_inst(InstructionType type, uint32_t immed, uint16_t reg) {
     switch (type) {
     case INSTRUCTION_MOVW:
         // 1110 0011 0000 XXXX YYYY XXXXXXXXXXXX
@@ -58,7 +58,7 @@ inline static uint32_t encode_thumb_blx(uint32_t immed) {
     return (0x1Eu << 27) | (S << 26) | (immhi << 16) | (0x3u << 14) | (J1 << 13) | (J2 << 11) | (immlo << 1);
 }
 
-uint32_t encode_thumb_inst(uint8_t type, uint32_t immed, uint16_t reg) {
+uint32_t encode_thumb_inst(InstructionType type, uint32_t immed, uint16_t reg) {
     switch (type) {
     case INSTRUCTION_MOVW:
         return (0x1Eu << 27) | ((immed & 0x800) << 15) | (0x24u << 20) | ((immed & 0xf000) << 4) | ((immed & 0x700) << 4) | (reg << 8) | (immed & 0xff);
