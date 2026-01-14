@@ -221,9 +221,9 @@ SceUID load_module(EmuEnvState &emuenv, const std::string &module_path) {
         return SCE_ERROR_ERRNO_ENOENT;
     }
 
-    const std::vector<Patch> patches = get_patches(emuenv.patch_path, emuenv.io.title_id, module_path);
+    const std::vector<Patch> patches = (module_path.find("eboot.bin") != std::string::npos) ? get_patches(emuenv.patch_path, emuenv.io.title_id, module_path) : std::vector<Patch>();
 
-    SceUID module_id = load_self(emuenv.kernel, emuenv.mem, module_buffer.data(), module_path, emuenv.log_path, patches);
+    SceUID module_id = load_self(emuenv.kernel, emuenv.mem, module_buffer.data(), module_path, emuenv.log_path / "elfdumps" / emuenv.io.title_id, patches);
 
     if (module_id >= 0) {
         const auto module = lock_and_find(module_id, emuenv.kernel.loaded_modules, emuenv.kernel.mutex);
@@ -330,7 +330,7 @@ static void load_bootimage_module(EmuEnvState &emuenv, const std::string &module
                 // LOG_TRACE("Loading boot image module: {} at {}", module.path.get(emuenv.mem), log_hex(module.data.address()));
                 if (module.path.get(emuenv.mem) == module_name) {
                     // Load the module from the boot image
-                    auto elf_uid = load_elf(emuenv.kernel, emuenv.mem, module.data.get(emuenv.mem), module.path.get(emuenv.mem), emuenv.log_path);
+                    auto elf_uid = load_elf(emuenv.kernel, emuenv.mem, module.data.get(emuenv.mem), module.path.get(emuenv.mem), emuenv.log_path / "elfdumps" / emuenv.io.title_id);
                     const auto module_rec = lock_and_find(elf_uid, emuenv.kernel.loaded_modules, emuenv.kernel.mutex);
                     if (module_rec) {
                         start_module(emuenv, module_rec->info);

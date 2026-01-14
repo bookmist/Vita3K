@@ -589,34 +589,18 @@ SceUID load_self(KernelState &kernel, MemState &mem, const void *self, const std
                 Address segment_address = 0;
                 auto alloc_name = fmt::format("{}:seg{}", self_path, seg_index);
 
-                // TODO: when the virtual process bringup is fixed, uncomment this
-                // Try allocating at image base for RELEXEC to avoid having to relocate the main module
-                /*
                 segment_address = try_alloc_at(mem, seg_header.p_vaddr, seg_header.p_memsz, alloc_name.c_str());
 
                 if (!segment_address) {
-                    if (isRelocatable) { //Try allocating somewhere else
+                    if (isRelocatable) { // Try allocating somewhere else
                         segment_address = alloc(mem, seg_header.p_memsz, alloc_name.c_str());
                     }
 
-                    if (!isRelocatable || !segment_address) {
+                    if (!segment_address) {
                         LOG_CRITICAL("Loading {} ELF {} failed: Could not allocate {} bytes @ {} for segment {}.", (isRelocatable) ? "relocatable" : "fixed", self_path, log_hex(seg_header.p_memsz), log_hex(seg_header.p_vaddr), seg_index);
                         free_all_segments(mem, segment_reloc_info);
-                        return SCE_KERNEL_ERROR_NO_MEMORY; //TODO is this correct?
+                        return SCE_KERNEL_ERROR_NO_MEMORY; // TODO is this correct?
                     }
-                }
-                */
-
-                if (isRelocatable) {
-                    segment_address = alloc(mem, seg_header.p_memsz, alloc_name.c_str());
-                } else {
-                    segment_address = alloc_at(mem, seg_header.p_vaddr, seg_header.p_memsz, alloc_name.c_str());
-                }
-
-                if (!segment_address) {
-                    LOG_CRITICAL("Loading {} ELF {} failed: Could not allocate {} bytes @ {} for segment {}.", (isRelocatable) ? "relocatable" : "fixed", self_path, log_hex(seg_header.p_memsz), log_hex(seg_header.p_vaddr), seg_index);
-                    free_all_segments(mem, segment_reloc_info);
-                    return SCE_KERNEL_ERROR_NO_MEMORY; // TODO is this correct?
                 }
 
                 const Ptr<uint8_t> seg_ptr(segment_address);
@@ -632,7 +616,7 @@ SceUID load_self(KernelState &kernel, MemState &mem, const void *self, const std
 
                 for (auto &patch : patches) {
                     // TODO patches should maybe be able to specify the path/file to patch?
-                    if (seg_index == patch.seg && self_path.find("eboot.bin") != std::string::npos) {
+                    if (seg_index == patch.seg) {
                         LOG_INFO("Patching segment {} at offset 0x{:X} with {} values", seg_index, patch.offset, patch.values.size());
                         memcpy(seg_ptr.get(mem) + patch.offset, patch.values.data(), patch.values.size());
                     }
@@ -677,12 +661,11 @@ SceUID load_self(KernelState &kernel, MemState &mem, const void *self, const std
             dump_segments[seg_index].p_vaddr = segment.addr;
             last_index = std::max(seg_index, last_index);
         }
-        fs::path dump_dir = log_path / "elfdumps";
-        fs::create_directories(dump_dir);
+        fs::create_directories(log_path);
         const auto start = dump_segments[0].p_vaddr;
         const auto end = dump_segments[last_index].p_vaddr + dump_segments[last_index].p_filesz;
         const auto elf_name = fs::path(self_path).filename().stem().string();
-        const auto filename = dump_dir / fmt::format("{}-{}_{}.elf", log_hex_full(start), log_hex_full(end), elf_name);
+        const auto filename = log_path / fmt::format("{}-{}_{}.elf", log_hex_full(start), log_hex_full(end), elf_name);
         fs_utils::dump_data(filename, dump_elf.data(), dump_elf.size());
     }
 
@@ -962,12 +945,11 @@ SceUID load_elf(KernelState &kernel, MemState &mem, const void *elf_content, con
             dump_segments[seg_index].p_vaddr = segment.addr;
             last_index = std::max(seg_index, last_index);
         }
-        fs::path dump_dir = log_path / "elfdumps";
-        fs::create_directories(dump_dir);
+        fs::create_directories(log_path);
         const auto start = dump_segments[0].p_vaddr;
         const auto end = dump_segments[last_index].p_vaddr + dump_segments[last_index].p_filesz;
         const auto elf_name = fs::path(elf_path).filename().stem().string();
-        const auto filename = dump_dir / fmt::format("{}-{}_{}.elf", log_hex_full(start), log_hex_full(end), elf_name);
+        const auto filename = log_path / fmt::format("{}-{}_{}.elf", log_hex_full(start), log_hex_full(end), elf_name);
         fs_utils::dump_data(filename, dump_elf.data(), dump_elf.size());
     }
     const unsigned int module_info_segment_index = elf.e_entry >> 30;
