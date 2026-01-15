@@ -263,6 +263,12 @@ EXPORT(Ptr<int>, sceNetErrnoLoc) {
     TRACY_FUNC(sceNetErrnoLoc);
     // TLS id was taken from disasm source
     auto addr = emuenv.kernel.get_thread_tls_addr(emuenv.mem, thread_id, TLS_NET_ERRNO);
+    Ptr<void> *inner_ptr = addr.get(emuenv.mem);
+    int value = 0;
+    if (inner_ptr)
+        value = *reinterpret_cast<int *>(inner_ptr);
+
+    // LOG_INFO("sceNetErrnoLoc, thread_id: {}, value: {}", thread_id, log_hex(value));
     return addr.cast<int>();
 }
 
@@ -524,7 +530,14 @@ EXPORT(int, sceNetRecvfrom, int sid, void *buf, unsigned int len, int flags, Sce
     TRACY_FUNC(sceNetRecvfrom, sid, buf, len, flags, from, fromlen);
     auto sock = lock_and_find(sid, emuenv.net.socks, emuenv.kernel.mutex);
 
-    RET_NET_ERRNO(sock ? sock->recv_packet(buf, len, flags, from, fromlen) : SCE_NET_ERROR_EBADF);
+    // LOG_INFO("sceNetRecvfrom, sid: {}, flags: {}", sid, log_hex(flags));
+    const auto ret = sock->recv_packet(buf, len, flags, from, fromlen);
+    /*if (ret < 0)
+        LOG_ERROR("sceNetRecvfrom, sid: {}, ret: {}", sid, log_hex(ret));
+    else 
+        LOG_INFO("sceNetRecvfrom, sid: {}, ret: {}", sid, ret);
+    */
+    RET_NET_ERRNO(ret);
 }
 
 EXPORT(int, sceNetRecvmsg) {
@@ -562,12 +575,28 @@ EXPORT(int, sceNetResolverStartAton, int rid, const SceNetInAddr *addr, char *ho
 
 EXPORT(int, sceNetResolverStartNtoa, int rid, const char *hostname, SceNetInAddr *addr, int timeout, int retry, int flags) {
     TRACY_FUNC(sceNetResolverStartNtoa, rid, hostname, addr, timeout, retry, flags);
+    // LOG_DEBUG("sceNetResolverStartNtoa, rid: {}, hostname: {}, timeout: {}, retry: {}, flags: {}", rid, hostname, timeout, retry, flags);
+    if (!hostname || !addr || strstr(hostname, "..") || hostname[0] == '.' || hostname[strlen(hostname) - 1] == '.') {
+        RET_NET_ERRNO(SCE_NET_EINVAL);
+    }
+
+    /* if (flags & SCE_NET_RESOLVER_START_NTOA_DISABLE_IPADDRESS) {
+        struct in_addr dummy;
+        if (inet_aton(hostname, &dummy)) {
+            LOG_WARN("IP address not allowed due to DISABLE_IPADDRESS flag.");
+            RET_NET_ERRNO(SCE_NET_EINVAL);
+        }
+    }*/
+
     struct hostent *resolved = gethostbyname(hostname);
     if (resolved == nullptr) {
         memset(addr, 0, sizeof(*addr));
         RET_NET_ERRNO(SCE_NET_ERROR_EHOSTUNREACH);
     }
-    memcpy(addr, resolved->h_addr, sizeof(uint32_t));
+
+    memcpy(&addr->s_addr, resolved->h_addr_list[0], sizeof(addr->s_addr));
+    // LOG_INFO("sceNetResolverStartNtoa : resolved '{}' to {} ", hostname, inet_ntoa(*reinterpret_cast<in_addr *>(&addr->s_addr)));
+
     return 0;
 }
 
@@ -611,7 +640,7 @@ EXPORT(int, sceNetSendto, int sid, const void *msg, unsigned int len, int flags,
 
     SceNetSockaddrIn to_in;
     std::memcpy(&to_in, to, sizeof(SceNetSockaddrIn));
-    if (!sock->sockopt_so_onesbcast && (to_in.sin_addr.s_addr == INADDR_BROADCAST))
+    if (/* !sock->sockopt_so_onesbcast && */ to_in.sin_addr.s_addr == INADDR_BROADCAST)
         to_in.sin_addr.s_addr = emuenv.net.broadcastAddr;
 
     RET_NET_ERRNO(sock->send_packet(msg, len, flags, (SceNetSockaddr *)&to_in, tolen));
