@@ -574,7 +574,7 @@ void save_apps_cache(GuiState &gui, EmuEnvState &emuenv) {
 }
 
 static void init_app_custom_config(GuiState &gui, EmuEnvState &emuenv) {
-    for (auto &app : gui.app_selector.user_apps) {
+    for (auto &app : gui.app_selector.emu_apps) {
         app.custom_config = fs::exists(emuenv.config_path / "config" / fmt::format("config_{}.xml", app.path));
     }
 }
