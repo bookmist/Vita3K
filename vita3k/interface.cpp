@@ -496,17 +496,17 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
         }
     };
     if (is_lle_module("libkernel", emuenv))
-        lib_load_list.emplace_back("os0:us/libkernel.suprx");
+        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libkernel.suprx");
     if (is_lle_module("driver_us", emuenv))
-        lib_load_list.emplace_back("os0:us/driver_us.suprx");
+        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/driver_us.suprx");
     if (is_lle_module("avcodec_us", emuenv))
-        lib_load_list.emplace_back("os0:us/avcodec_us.suprx");
+        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/avcodec_us.suprx");
     if (is_lle_module("libgpu_es4", emuenv))
-        lib_load_list.emplace_back("os0:us/libgpu_es4.suprx");
+        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libgpu_es4.suprx");
     if (is_lle_module("libgxm_es4", emuenv))
-        lib_load_list.emplace_back("os0:us/libgxm_es4.suprx");
+        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libgxm_es4.suprx");
     if (is_lle_module("libgxm_dbg_es4", emuenv))
-        lib_load_list.emplace_back("os0:us/libgxm_dbg_es4.suprx"); // if DEVELOPMENT_MODE dipsw is set
+        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libgxm_dbg_es4.suprx"); // if DEVELOPMENT_MODE dipsw is set
     add_preload_module(0x00010000, SCE_SYSMODULE_INVALID, "libc", true);
     add_preload_module(0x00020000, SCE_SYSMODULE_DBG, "libdbg", false);
     add_preload_module(0x00080000, SCE_SYSMODULE_INVALID, "libshellsvc", false);
