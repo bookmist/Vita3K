@@ -216,8 +216,32 @@ EXPORT(int, sceAppMgrGetAppMgrState) {
     return UNIMPLEMENTED();
 }
 
-EXPORT(int, sceAppMgrGetAppParam) {
-    TRACY_FUNC(sceAppMgrGetAppParam);
+static std::string trim(const std::string &source) {
+    std::string s(source);
+    s.erase(0, s.find_first_not_of(" \n\r\t"));
+    s.erase(s.find_last_not_of(" \n\r\t") + 1);
+    return s;
+}
+
+EXPORT(int, sceAppMgrGetAppParam, char *param) {
+    TRACY_FUNC(sceAppMgrGetAppParam, param);
+    LOG_TRACE("param:{}", param);
+    auto &sfo = emuenv.sfo_handle;
+    std::string res;
+    for (auto item : sfo.entries) {
+        // skip if item.data.first like "TITLE_xx" or "STITLE_xx"
+        if (item.data.first.starts_with("TITLE_") || item.data.first.starts_with("STITLE_"))
+            continue;
+        if (item.data.first.empty())
+            continue;
+        if (item.entry.data_fmt == SfoDataFormat::UINT32_T)
+            res = res + trim(item.data.first) + '=' + std::to_string(*reinterpret_cast<const uint32_t *>(item.data.second.c_str())) + '&';
+        else
+            res = res + trim(item.data.first) + '=' + item.data.second + '&';
+    }
+    res = res.substr(0, res.size() - 1); // remove last &
+    LOG_TRACE("res:{}", res);
+    strncpy(param, res.c_str(), std::min<size_t>(res.size() + 1, 1023));
     return UNIMPLEMENTED();
 }
 
