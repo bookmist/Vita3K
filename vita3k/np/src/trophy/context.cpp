@@ -40,6 +40,7 @@ Context::Context(const CommunicationID &comm_id, IOState *io, const SceUID troph
 }
 
 #define SET_TROPHY_BIT(arr, bit) arr[(bit) >> 5] |= (1 << ((bit) & 31))
+#define GET_TROPHY_BIT(arr, bit) ((arr)[(bit) >> 5] & (1 << ((bit) & 31)))
 
 static bool read_trophy_entry_to_buffer(TRPFile &trophy_file, const char *fname, std::string &buffer) {
     // Read the trophy config
@@ -108,8 +109,8 @@ bool Context::init_info_from_trp() {
         return false;
     }
 
-    std::fill_n(trophy_progress, (MAX_TROPHIES >> 5), 0);
-    std::fill_n(trophy_availability, (MAX_TROPHIES >> 5), 0);
+    std::fill_n(trophy_progress, std::size(trophy_progress), 0);
+    std::fill_n(trophy_availability, std::size(trophy_availability), 0);
     std::fill(trophy_count_by_group.begin(), trophy_count_by_group.end(), 0);
     std::fill(unlock_timestamps.begin(), unlock_timestamps.end(), 0);
     std::fill(trophy_kinds.begin(), trophy_kinds.end(), SceNpTrophyGrade::SCE_NP_TROPHY_GRADE_UNKNOWN);
@@ -160,66 +161,67 @@ bool Context::init_info_from_trp() {
 static constexpr std::uint32_t TROPHY_USR_MAGIC = 0x12D5819A;
 
 void Context::save_trophy_progress_file() {
+    constexpr auto export_name = "save_trophy_progress_file";
     // Open the file
-    const SceUID output = open_file(*io, trophy_progress_output_file_path.c_str(), SCE_O_WRONLY | SCE_O_CREAT, pref_path, "save_trophy_progress");
+    const SceUID output = open_file(*io, trophy_progress_output_file_path.c_str(), SCE_O_WRONLY | SCE_O_CREAT, pref_path, export_name);
 
-    auto write_stuff = [&](const void *data, std::uint32_t amount) -> int {
-        return write_file(output, data, amount, *io, "save_trophy_progress_file");
+    auto write_stuff = [&]<typename T>(const T *data) -> bool {
+        return write_file(output, data, sizeof(T), *io, export_name) == sizeof(T);
     };
 
-    write_stuff(&TROPHY_USR_MAGIC, 4);
-    write_stuff(trophy_progress, sizeof(trophy_progress));
-    write_stuff(trophy_availability, sizeof(trophy_availability));
-    write_stuff(&group_count, 4);
-    write_stuff(&trophy_count, 4);
-    write_stuff(&platinum_trophy_id, 4);
+    write_stuff(&TROPHY_USR_MAGIC);
+    write_stuff(&trophy_progress);
+    write_stuff(&trophy_availability);
+    write_stuff(&group_count);
+    write_stuff(&trophy_count);
+    write_stuff(&platinum_trophy_id);
 
-    write_stuff(trophy_count_by_group.data(), (std::uint32_t)trophy_count_by_group.size() * 4);
-    write_stuff(unlock_timestamps.data(), (std::uint32_t)unlock_timestamps.size() * 8);
-    write_stuff(trophy_kinds.data(), (std::uint32_t)trophy_kinds.size() * 4);
+    write_stuff(&trophy_count_by_group);
+    write_stuff(&unlock_timestamps);
+    write_stuff(&trophy_kinds);
 
-    close_file(*io, output, "save_trophy_progress_file");
+    close_file(*io, output, export_name);
 }
 
-bool Context::load_trophy_progress_file(const SceUID &progress_input_file) {
+bool Context::load_trophy_progress_file(const SceUID progress_input_file) {
+    constexpr auto export_name = "load_trophy_progress_file";
     // Check magic
     std::uint32_t magic;
-    auto read_stuff = [&](void *data, std::uint32_t amount) -> int {
-        return read_file(data, *io, progress_input_file, amount, "load_trophy_progress_file");
+    auto read_stuff = [&]<typename T>(T *data) -> bool {
+        return read_file(data, *io, progress_input_file, sizeof(T), export_name) == sizeof(T);
     };
 
-    if (read_stuff(&magic, 4) != 4 || magic != TROPHY_USR_MAGIC)
+    if (!read_stuff(&magic) || magic != TROPHY_USR_MAGIC)
         return false;
 
-    std::fill_n(trophy_progress, (MAX_TROPHIES >> 5), 0);
-    if (read_stuff(trophy_progress, sizeof(trophy_progress)) != sizeof(trophy_progress))
+    if (!read_stuff(&trophy_progress))
         return false;
 
-    if (read_stuff(trophy_availability, sizeof(trophy_availability)) != sizeof(trophy_availability))
+    if (!read_stuff(&trophy_availability))
         return false;
 
     // Read group count
-    if (read_stuff(&group_count, 4) != 4)
+    if (!read_stuff(&group_count))
         return false;
 
     // Read trophy count
-    if (read_stuff(&trophy_count, 4) != 4)
+    if (!read_stuff(&trophy_count))
         return false;
 
     // Read platinum trophy ID
-    if (read_stuff(&platinum_trophy_id, 4) != 4)
+    if (!read_stuff(&platinum_trophy_id))
         return false;
 
     // Read trophy count by group
-    if (read_stuff(trophy_count_by_group.data(), (std::uint32_t)trophy_count_by_group.size() * 4) != (int)trophy_count_by_group.size() * 4)
+    if (!read_stuff(&trophy_count_by_group))
         return false;
 
     // Read timestamps
-    if (read_stuff(unlock_timestamps.data(), (std::uint32_t)unlock_timestamps.size() * 8) != (int)unlock_timestamps.size() * 8)
+    if (!read_stuff(&unlock_timestamps))
         return false;
 
     // Read trophy type (shinyyyy!! *yes this is lord of the ring reference*)
-    if (read_stuff(trophy_kinds.data(), (std::uint32_t)trophy_kinds.size() * 4) != (int)trophy_kinds.size() * 4)
+    if (!read_stuff(&trophy_kinds))
         return false;
 
     return true;
@@ -242,9 +244,9 @@ bool Context::unlock_trophy(std::int32_t id, np::NpTrophyError *err, const bool 
         return false;
     }
 
-    if (trophy_progress[id >> 5] & (1 << (id & 31))) {
+    if (GET_TROPHY_BIT(trophy_progress, id)) {
         if (err) {
-            *err = np::NpTrophyError::TROPHY_ALREADY_UNLOCKED;
+            *err = SCE_NP_TROPHY_ERROR np::NpTrophyError::TROPHY_ALREADY_UNLOCKED;
         }
 
         return false;
@@ -253,7 +255,7 @@ bool Context::unlock_trophy(std::int32_t id, np::NpTrophyError *err, const bool 
     SET_TROPHY_BIT(trophy_progress, id);
 
     if (err) {
-        *err = np::NpTrophyError::TROPHY_ERROR_NONE;
+        *err = SCE_NP_TROPHY_ERROR_NONE;
     }
 
     unlock_timestamps[id] = std::time(nullptr);
@@ -263,18 +265,21 @@ bool Context::unlock_trophy(std::int32_t id, np::NpTrophyError *err, const bool 
     return true;
 }
 
-bool Context::is_trophy_hidden(const uint32_t &trophy_index) {
-    return trophy_availability[trophy_index >> 5] & (1 << (trophy_index & 31));
+bool Context::is_trophy_hidden(const uint32_t trophy_index) const {
+    return GET_TROPHY_BIT(trophy_availability, trophy_index);
 }
 
-bool Context::is_trophy_unlocked(const uint32_t &trophy_index) {
-    return trophy_progress[trophy_index >> 5] & (1 << (trophy_index & 31));
+bool Context::is_trophy_unlocked(const uint32_t trophy_index) const {
+    return GET_TROPHY_BIT(trophy_progress, trophy_index);
 }
 
-int Context::total_trophy_unlocked() {
-    int total = 0;
+uint32_t Context::total_trophy_unlocked() const {
+    uint32_t total = 0;
 
-    for (int i = 0; i < (MAX_TROPHIES >> 5); i++) {
+    for (size_t i = 0; i < std::size(trophy_progress); i++) {
+#ifdef __cpp_lib_bitops
+        total += std::popcount(trophy_progress[i]);
+#else
         if (trophy_progress[i] != 0) {
             if (trophy_progress[i] == 0xFFFFFFFF) {
                 total += 32;
@@ -286,6 +291,7 @@ int Context::total_trophy_unlocked() {
                 }
             }
         }
+#endif
     }
 
     return total;
@@ -380,23 +386,23 @@ int Context::install_trophy_conf(IOState *io, const fs::path &pref_path, const s
 } // namespace np::trophy
 
 np::trophy::ContextHandle create_trophy_context(NpState &np, IOState *io, const fs::path &pref_path,
-    const np::CommunicationID *custom_comm, const std::uint32_t lang, np::NpTrophyError *error) {
+    const np::CommunicationID *custom_comm, const int32_t lang, np::NpTrophyError *error) {
     if (!custom_comm) {
         custom_comm = &np.comm_id;
     }
 
     if (error)
-        *error = np::NpTrophyError::TROPHY_ERROR_NONE;
+        *error = SCE_NP_TROPHY_ERROR_NONE;
 
-#define TROPHY_RET_ERROR(err)            \
+#define TROPHY_RET_ERROR(sce_err)            \
     if (error)                           \
-        *error = np::NpTrophyError::err; \
+        *error = sce_err; \
     return np::trophy::INVALID_CONTEXT_HANDLE
 
     // Check if a context has already been created for this communication ID
     for (const auto &context : np.trophy_state.contexts) {
         if (context.valid && context.comm_id == *custom_comm) {
-            TROPHY_RET_ERROR(TROPHY_CONTEXT_EXIST);
+            TROPHY_RET_ERROR(SCE_NP_TROPHY_ERROR_CONTEXT_ALREADY_EXISTS);
         }
     }
 
@@ -407,7 +413,7 @@ np::trophy::ContextHandle create_trophy_context(NpState &np, IOState *io, const 
     // Try to open the file
     const SceUID trophy_file = open_file(*io, trophy_file_path.c_str(), SCE_O_RDONLY, pref_path, "create_trophy_context");
     if (trophy_file < 0) {
-        TROPHY_RET_ERROR(TROPHY_CONTEXT_FILE_NON_EXIST);
+        TROPHY_RET_ERROR(SCE_NP_TROPHY_ERROR_TRP_FILE_NOT_FOUND);
     }
 
     // Try to open the trophy save file. The context will automatically took the default profile to perform trophy

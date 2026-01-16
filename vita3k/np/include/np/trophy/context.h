@@ -31,8 +31,8 @@ namespace np::trophy {
 using ContextHandle = int32_t;
 
 static constexpr ContextHandle INVALID_CONTEXT_HANDLE = -1;
-static constexpr uint32_t MAX_TROPHIES = 128;
-static constexpr uint32_t MAX_GROUPS = 16;
+static constexpr int32_t MAX_TROPHIES = 128;
+static constexpr int32_t MAX_GROUPS = 16;
 
 // Each bit indicates a trophy unlocked. An uint32_t has total of 32 bits, so divide
 // 128 with 32, or 128 >> 5
@@ -69,22 +69,22 @@ struct Context {
     std::string trophy_progress_output_file_path;
     std::string trophy_detail_xml;
 
-    uint32_t lang{ 1 };
+    int32_t lang{ 1 };
 
     IOState *io;
     fs::path pref_path;
 
     void save_trophy_progress_file();
-    bool load_trophy_progress_file(const SceUID &progress_input_file);
+    bool load_trophy_progress_file(const SceUID progress_input_file);
 
     int copy_file_data_from_trophy_file(const char *filename, void *buffer, SceSize *size);
     int install_trophy_conf(IOState *io, const fs::path &pref_path, const std::string &np_com_id);
     bool init_info_from_trp();
     bool unlock_trophy(int32_t id, np::NpTrophyError *err, const bool force_unlock = false);
 
-    bool is_trophy_hidden(const uint32_t &trophy_index);
-    bool is_trophy_unlocked(const uint32_t &trophy_index);
-    int total_trophy_unlocked();
+    bool is_trophy_hidden(const uint32_t trophy_index) const;
+    bool is_trophy_unlocked(const uint32_t trophy_index) const;
+    uint32_t total_trophy_unlocked() const;
     bool get_trophy_details(const int32_t id, std::string &name, std::string &detail);
     bool get_trophy_set(std::string &name, std::string &detail);
 

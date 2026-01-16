@@ -30,7 +30,7 @@ using SceNpTrophyHandle = int32_t;
 using SceNpTrophyID = int32_t;
 using SceNpTrophyGroupId = int32_t;
 
-enum SceNpTrophyErrorCode {
+enum SceNpTrophyErrorCode : uint32_t {
     SCE_NP_TROPHY_ERROR_UNKNOWN = 0x80551600,
     SCE_NP_TROPHY_ERROR_NOT_INITIALIZED = 0x80551601,
     SCE_NP_TROPHY_ERROR_ALREADY_INITIALIZED = 0x80551602,
@@ -155,8 +155,7 @@ EXPORT(int, sceNpTrophyCreateContext, np::trophy::ContextHandle *context, const 
     }
 
     np::NpTrophyError err = np::NpTrophyError::TROPHY_ERROR_NONE;
-    *context = create_trophy_context(emuenv.np, &emuenv.io, emuenv.pref_path, comm_id, static_cast<uint32_t>(emuenv.cfg.sys_lang),
-        &err);
+    *context = create_trophy_context(emuenv.np, &emuenv.io, emuenv.pref_path, comm_id, emuenv.cfg.sys_lang, &err);
 
     if (*context == np::trophy::INVALID_CONTEXT_HANDLE) {
         switch (err) {
@@ -535,7 +534,7 @@ static int do_trophy_callback(EmuEnvState &emuenv, np::trophy::Context *context,
         context->copy_file_data_from_trophy_file(trophy_icon_filename.c_str(), nullptr, &buf_size);
 
         callback_data.icon_buf.resize(buf_size);
-        context->copy_file_data_from_trophy_file(trophy_icon_filename.c_str(), &callback_data.icon_buf[0], &buf_size);
+        context->copy_file_data_from_trophy_file(trophy_icon_filename.c_str(), callback_data.icon_buf.data(), &buf_size);
 
         emuenv.np.trophy_state.trophy_unlock_callback(callback_data);
     }
