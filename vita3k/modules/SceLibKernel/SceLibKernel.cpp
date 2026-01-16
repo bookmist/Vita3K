@@ -589,6 +589,7 @@ EXPORT(int, sceIoGetstatByFd, const SceUID fd, SceIoStat *stat) {
 
 EXPORT(int, sceIoIoctl, SceUID fd, int cmd, const void *argp, SceSize arglen, void *bufp, SceSize buflen) {
     TRACY_FUNC(sceIoIoctl, fd, cmd, argp, arglen, bufp, buflen);
+    LOG_TRACE("{}: sceIoIoctl called fd: {}, cmd: {}, arglen: {}, buflen: {}", export_name, log_hex(fd), log_hex(cmd), log_hex(arglen), log_hex(buflen));
     return UNIMPLEMENTED();
 }
 

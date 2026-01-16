@@ -53,6 +53,11 @@ inline std::string to_debug_str(const MemState &mem, Ptr<char> type) {
     return type.address() ? fmt::format("0x{:X} {}", type.address(), type.get(mem)) : "0x0 NULLPTR";
 }
 
+template <>
+inline std::string to_debug_str(const MemState &mem, Ptr<const char> type) {
+    return type.address() ? fmt::format("0x{:X} {}", type.address(), type.get(mem)) : "0x0 NULLPTR";
+}
+
 // Override for char pointers as the contents are readable
 template <>
 inline std::string to_debug_str(const MemState &mem, char *type) {

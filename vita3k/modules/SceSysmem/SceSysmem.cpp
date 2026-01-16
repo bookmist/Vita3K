@@ -410,7 +410,7 @@ EXPORT(SceUID, sceKernelOpenMemBlock, const char *pName, int flags) {
 
     if (it != state->blocks.end())
         return it->first;
-
+    LOG_TRACE("sceKernelOpenMemBlock: cannot find memblock with name '{}'", pName);
     return RET_ERROR(SCE_KERNEL_ERROR_UID_CANNOT_FIND_BY_NAME);
 }
 

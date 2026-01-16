@@ -112,7 +112,8 @@ EXPORT(int, sceKernelGetCurrentProcess) {
 
 EXPORT(int, sceKernelGetExtraTty) {
     TRACY_FUNC(sceKernelGetExtraTty);
-    return UNIMPLEMENTED();
+    return open_file(emuenv.io, "tty1:", SCE_O_WRONLY, emuenv.pref_path, export_name);
+    // return UNIMPLEMENTED();
 }
 
 EXPORT(int, sceKernelGetProcessName, char *process_name, uint32_t len) {

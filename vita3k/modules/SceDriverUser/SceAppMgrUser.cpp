@@ -17,6 +17,8 @@
 
 #include "SceAppMgrUser.h"
 
+#include "packages/sfo.h"
+
 #include <emuenv/app_util.h>
 #include <io/device.h>
 #include <io/functions.h>
@@ -228,7 +230,7 @@ EXPORT(int, sceAppMgrGetAppParam, char *param) {
     LOG_TRACE("param:{}", param);
     auto &sfo = emuenv.sfo_handle;
     std::string res;
-    for (auto item : sfo.entries) {
+    for (auto &item : sfo.entries) {
         // skip if item.data.first like "TITLE_xx" or "STITLE_xx"
         if (item.data.first.starts_with("TITLE_") || item.data.first.starts_with("STITLE_"))
             continue;

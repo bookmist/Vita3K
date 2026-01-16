@@ -230,7 +230,7 @@ bool Context::load_trophy_progress_file(const SceUID progress_input_file) {
 bool Context::unlock_trophy(std::int32_t id, np::NpTrophyError *err, const bool force_unlock) {
     if (id < 0 || id >= MAX_TROPHIES || trophy_kinds[id] == SceNpTrophyGrade::SCE_NP_TROPHY_GRADE_UNKNOWN) {
         if (err) {
-            *err = np::NpTrophyError::TROPHY_ID_INVALID;
+            *err = SCE_NP_TROPHY_ERROR_INVALID_TROPHY_ID;
         }
 
         return false;
@@ -238,7 +238,7 @@ bool Context::unlock_trophy(std::int32_t id, np::NpTrophyError *err, const bool 
 
     if (trophy_kinds[id] == SceNpTrophyGrade::SCE_NP_TROPHY_GRADE_PLATINUM && !force_unlock) {
         if (err) {
-            *err = np::NpTrophyError::TROPHY_PLATINUM_IS_UNBREAKABLE;
+            *err = SCE_NP_TROPHY_ERROR_PLATINUM_CANNOT_UNLOCK;
         }
 
         return false;
@@ -246,7 +246,7 @@ bool Context::unlock_trophy(std::int32_t id, np::NpTrophyError *err, const bool 
 
     if (GET_TROPHY_BIT(trophy_progress, id)) {
         if (err) {
-            *err = SCE_NP_TROPHY_ERROR np::NpTrophyError::TROPHY_ALREADY_UNLOCKED;
+            *err = SCE_NP_TROPHY_ERROR_TROPHY_ALREADY_UNLOCKED;
         }
 
         return false;

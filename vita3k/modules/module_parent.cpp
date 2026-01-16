@@ -364,7 +364,7 @@ bool load_sys_module(EmuEnvState &emuenv, SceSysmoduleModuleId module_id) {
             const auto module_rec = lock_and_find(module_uid, emuenv.kernel.loaded_modules, emuenv.kernel.mutex);
             if (module_rec)
                 start_module(emuenv, module_rec->info);*/
-            load_bootimage_module(emuenv, "os0:kd/net_ps.skprx");
+            // load_bootimage_module(emuenv, "os0:kd/net_ps.skprx");
         }
         auto loaded_module_uid = load_module(emuenv, module_path);
 

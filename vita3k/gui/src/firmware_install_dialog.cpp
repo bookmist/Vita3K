@@ -22,6 +22,7 @@
 #include <dialog/state.h>
 #include <gui/functions.h>
 #include <host/dialog/filesystem.h>
+#include <io/VitaIoDevice.h>
 #include <packages/functions.h>
 #include <util/log.h>
 

@@ -384,7 +384,7 @@ struct At9Header {
 // Size of the AT9 header
 static constexpr uint32_t AT9_HEADER_SIZE = sizeof(At9Header);
 
-bool init_bgm_streaming(uint8_t *at9_data, uint32_t size) {
+static bool init_bgm_streaming(uint8_t *at9_data, size_t size) {
     if (size < sizeof(At9Header)) {
         LOG_ERROR("AT9 header too small");
         return false;
@@ -408,7 +408,7 @@ bool init_bgm_streaming(uint8_t *at9_data, uint32_t size) {
         data.buffer_position = 0;
         data.filled_size = 0;
         data.data.clear();
-        data.data.reserve(static_cast<size_t>(at9_stream.sample_per_frame * at9_stream.channels * sizeof(uint16_t)));
+        data.data.reserve(sizeof(uint16_t) * at9_stream.sample_per_frame * at9_stream.channels);
     }
 
     {
