@@ -30,43 +30,6 @@ using SceNpTrophyHandle = int32_t;
 using SceNpTrophyID = int32_t;
 using SceNpTrophyGroupId = int32_t;
 
-enum SceNpTrophyErrorCode : uint32_t {
-    SCE_NP_TROPHY_ERROR_UNKNOWN = 0x80551600,
-    SCE_NP_TROPHY_ERROR_NOT_INITIALIZED = 0x80551601,
-    SCE_NP_TROPHY_ERROR_ALREADY_INITIALIZED = 0x80551602,
-    SCE_NP_TROPHY_ERROR_NO_MEMORY = 0x80551603,
-    SCE_NP_TROPHY_ERROR_INVALID_ARGUMENT = 0x80551604,
-    SCE_NP_TROPHY_ERROR_INSUFFICIENT_BUFFER = 0x80551605,
-    SCE_NP_TROPHY_ERROR_EXCEEDS_MAX = 0x80551606,
-    SCE_NP_TROPHY_ERROR_ABORT = 0x80551607,
-    SCE_NP_TROPHY_ERROR_INVALID_HANDLE = 0x80551608,
-    SCE_NP_TROPHY_ERROR_INVALID_CONTEXT = 0x80551609,
-    SCE_NP_TROPHY_ERROR_INVALID_NPCOMMID = 0x8055160a,
-    SCE_NP_TROPHY_ERROR_INVALID_NPCOMMSIGN = 0x8055160b,
-    SCE_NP_TROPHY_ERROR_NPCOMMSIGN_VERIFICATION_FAILURE = 0x8055160c,
-    SCE_NP_TROPHY_ERROR_INVALID_GROUP_ID = 0x8055160d,
-    SCE_NP_TROPHY_ERROR_INVALID_TROPHY_ID = 0x8055160e,
-    SCE_NP_TROPHY_ERROR_TROPHY_ALREADY_UNLOCKED = 0x8055160f,
-    SCE_NP_TROPHY_ERROR_PLATINUM_CANNOT_UNLOCK = 0x80551610,
-    SCE_NP_TROPHY_ERROR_ACCOUNTID_NOT_MATCH = 0x80551611,
-    SCE_NP_TROPHY_ERROR_SETUP_REQUIRED = 0x80551612,
-    SCE_NP_TROPHY_ERROR_ALREADY_SETUP = 0x80551613,
-    SCE_NP_TROPHY_ERROR_BROKEN_DATA = 0x80551614,
-    SCE_NP_TROPHY_ERROR_INSUFFICIENT_EM_SPACE = 0x80551615,
-    SCE_NP_TROPHY_ERROR_CONTEXT_ALREADY_EXISTS = 0x80551616,
-    SCE_NP_TROPHY_ERROR_TRP_FILE_VERIFICATION_FAILURE = 0x80551617,
-    SCE_NP_TROPHY_ERROR_ICON_FILE_NOT_FOUND = 0x80551618,
-    SCE_NP_TROPHY_ERROR_TRP_FILE_NOT_FOUND = 0x80551619,
-    SCE_NP_TROPHY_ERROR_INVALID_TRP_FILE_FORMAT = 0x8055161a,
-    SCE_NP_TROPHY_ERROR_UNSUPPORTED_TRP_FILE = 0x8055161b,
-    SCE_NP_TROPHY_ERROR_INVALID_TROPHY_CONF_FORMAT = 0x8055161c,
-    SCE_NP_TROPHY_ERROR_UNSUPPORTED_TROPHY_CONF = 0x8055161d,
-    SCE_NP_TROPHY_ERROR_TROPHY_NOT_UNLOCKED = 0x8055161e,
-    SCE_NP_TROPHY_ERROR_UNLOCK_DENIED = 0x8055161f,
-    SCE_NP_TROPHY_ERROR_INSUFFICIENT_MC_SPACE = 0x80551620,
-    SCE_NP_TROPHY_ERROR_DEBUG_FAILURE = 0x80551621
-};
-
 #define SCE_NP_TROPHY_GAME_TITLE_MAX_SIZE 128
 #define SCE_NP_TROPHY_GAME_DESCR_MAX_SIZE 1024
 #define SCE_NP_TROPHY_NAME_MAX_SIZE 128
@@ -154,22 +117,11 @@ EXPORT(int, sceNpTrophyCreateContext, np::trophy::ContextHandle *context, const 
         return SCE_NP_TROPHY_ERROR_INVALID_NPCOMMID;
     }
 
-    np::NpTrophyError err = np::NpTrophyError::TROPHY_ERROR_NONE;
-    *context = create_trophy_context(emuenv.np, &emuenv.io, emuenv.pref_path, comm_id, emuenv.cfg.sys_lang, &err);
+    SceNpTrophyErrorCode err = SCE_NP_TROPHY_ERROR_UNKNOWN;
+    *context = create_trophy_context(emuenv.np, &emuenv.io, emuenv.pref_path, comm_id, emuenv.cfg.sys_lang, err);
 
     if (*context == np::trophy::INVALID_CONTEXT_HANDLE) {
-        switch (err) {
-        case np::NpTrophyError::TROPHY_CONTEXT_EXIST: {
-            return SCE_NP_TROPHY_ERROR_CONTEXT_ALREADY_EXISTS;
-        }
-
-        case np::NpTrophyError::TROPHY_CONTEXT_FILE_NON_EXIST: {
-            return SCE_NP_TROPHY_ERROR_TRP_FILE_NOT_FOUND;
-        }
-
-        default:
-            break;
-        }
+        return err;
     }
 
     np::trophy::Context *ctx_ptr = get_trophy_context(emuenv.np.trophy_state, *context);
@@ -560,29 +512,16 @@ EXPORT(int, sceNpTrophyUnlockTrophy, np::trophy::ContextHandle context_handle, S
         return SCE_NP_TROPHY_ERROR_INVALID_CONTEXT;
     }
 
-    np::NpTrophyError error;
-    if (!context->unlock_trophy(trophy_id, &error)) {
-        switch (error) {
-        case np::NpTrophyError::TROPHY_PLATINUM_IS_UNBREAKABLE: {
-            return SCE_NP_TROPHY_ERROR_PLATINUM_CANNOT_UNLOCK;
-        }
-
-        case np::NpTrophyError::TROPHY_ALREADY_UNLOCKED: {
-            return SCE_NP_TROPHY_ERROR_TROPHY_ALREADY_UNLOCKED;
-        }
-
-        case np::NpTrophyError::TROPHY_ID_INVALID: {
-            return SCE_NP_TROPHY_ERROR_INVALID_TROPHY_ID;
-        }
-
-        default:
-            return SCE_NP_TROPHY_ERROR_ABORT;
-        }
+    SceNpTrophyErrorCode error;
+    if (!context->unlock_trophy(trophy_id, error)) {
+        if (error == SCE_NP_TROPHY_ERROR_NONE)
+            error = SCE_NP_TROPHY_ERROR_ABORT;
+        return error;
     }
 
     if ((context->platinum_trophy_id != np::SCE_NP_TROPHY_INVALID_TROPHY_ID) && (context->total_trophy_unlocked() == (context->trophy_count - 1))) {
         // Force unlock platinum trophy
-        context->unlock_trophy(context->platinum_trophy_id, &error, true);
+        context->unlock_trophy(context->platinum_trophy_id, error, true);
         *platinum_id = context->platinum_trophy_id;
     } else
         *platinum_id = np::SCE_NP_TROPHY_INVALID_TROPHY_ID;

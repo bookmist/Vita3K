@@ -67,6 +67,7 @@ struct CommunicationConfig {
 };
 
 constexpr auto SCE_NP_TROPHY_INVALID_TROPHY_ID = -1;
+} // namespace np
 
 enum SceNpTrophyErrorCode : uint32_t {
     SCE_NP_TROPHY_ERROR_NONE = 0,
@@ -105,5 +106,3 @@ enum SceNpTrophyErrorCode : uint32_t {
     SCE_NP_TROPHY_ERROR_INSUFFICIENT_MC_SPACE = 0x80551620,
     SCE_NP_TROPHY_ERROR_DEBUG_FAILURE = 0x80551621
 };
-
-} // namespace np

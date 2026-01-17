@@ -53,7 +53,7 @@ bool deinit(NpTrophyState &state);
  * \returns uint32_t(-1) on failure, else the handle to the context.
  */
 np::trophy::ContextHandle create_trophy_context(NpState &np, IOState *io, const fs::path &pref_path,
-    const np::CommunicationID *custom_comm, const int32_t lang, np::NpTrophyError *error);
+    const np::CommunicationID *custom_comm, const int32_t lang, SceNpTrophyErrorCode &error);
 
 np::trophy::Context *get_trophy_context(NpTrophyState &state, const np::trophy::ContextHandle handle);
 bool destroy_trophy_context(NpTrophyState &state, const np::trophy::ContextHandle handle);

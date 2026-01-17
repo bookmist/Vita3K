@@ -80,16 +80,15 @@ struct Context {
     int copy_file_data_from_trophy_file(const char *filename, void *buffer, SceSize *size);
     int install_trophy_conf(IOState *io, const fs::path &pref_path, const std::string &np_com_id);
     bool init_info_from_trp();
-    bool unlock_trophy(int32_t id, np::NpTrophyError *err, const bool force_unlock = false);
+    bool unlock_trophy(int32_t id, SceNpTrophyErrorCode &err, bool force_unlock = false);
 
-    bool is_trophy_hidden(const uint32_t trophy_index) const;
-    bool is_trophy_unlocked(const uint32_t trophy_index) const;
+    bool is_trophy_hidden(uint32_t trophy_index) const;
+    bool is_trophy_unlocked(uint32_t trophy_index) const;
     uint32_t total_trophy_unlocked() const;
-    bool get_trophy_details(const int32_t id, std::string &name, std::string &detail);
+    bool get_trophy_details(int32_t id, std::string &name, std::string &detail);
     bool get_trophy_set(std::string &name, std::string &detail);
 
-    explicit Context(const CommunicationID &comm_id, IOState *io, const SceUID trophy_stream,
-        const std::string &output_progress_path);
+    explicit Context(const CommunicationID &comm_id, IOState *io, SceUID trophy_stream, const std::string &output_progress_path);
     explicit Context() = default;
 };
 
