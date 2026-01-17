@@ -21,9 +21,9 @@
 #include <mem/ptr.h>
 #include <np/common.h>
 
-#define SCE_NET_ADHOC_PORT 3658
+constexpr auto SCE_NET_ADHOC_PORT = 3658;
 
-#define SCE_NET_AF_INET 2
+constexpr auto SCE_NET_AF_INET = 2;
 
 // Define our own htonll and ntohll because its not available in some systems/platforms
 #define HTONLL(x) ((((uint64_t)htonl((x) & 0xFFFFFFFFUL)) << 32) | htonl((uint32_t)((x) >> 32)))
