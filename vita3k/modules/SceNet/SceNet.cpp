@@ -155,8 +155,10 @@ EXPORT(int, sceNetAccept, int sid, SceNetSockaddr *addr, unsigned int *addrlen) 
 EXPORT(int, sceNetBind, int sid, const SceNetSockaddr *addr, unsigned int addrlen) {
     TRACY_FUNC(sceNetBind, sid, addr, addrlen);
     auto sock = lock_and_find(sid, emuenv.net.socks, emuenv.kernel.mutex);
+    if (!sock)
+        RET_NET_ERRNO(SCE_NET_ERROR_EBADF);
 
-    RET_NET_ERRNO(sock ? sock->bind(addr, addrlen) : SCE_NET_ERROR_EBADF);
+    return sock->bind(addr, addrlen);
 }
 
 EXPORT(int, sceNetClearDnsCache) {
@@ -534,7 +536,7 @@ EXPORT(int, sceNetRecvfrom, int sid, void *buf, unsigned int len, int flags, Sce
     const auto ret = sock->recv_packet(buf, len, flags, from, fromlen);
     /*if (ret < 0)
         LOG_ERROR("sceNetRecvfrom, sid: {}, ret: {}", sid, log_hex(ret));
-    else 
+    else
         LOG_INFO("sceNetRecvfrom, sid: {}, ret: {}", sid, ret);
     */
     RET_NET_ERRNO(ret);
@@ -603,7 +605,7 @@ EXPORT(int, sceNetResolverStartNtoa, int rid, const char *hostname, SceNetInAddr
 EXPORT(int, sceNetSend, int sid, const void *msg, unsigned int len, int flags) {
     TRACY_FUNC(sceNetSend, sid, msg, len, flags);
     auto sock = lock_and_find(sid, emuenv.net.socks, emuenv.kernel.mutex);
-
+    LOG_INFO("SceNetSend, sid: {}", sid); 
     RET_NET_ERRNO(sock ? sock->send_packet(msg, len, flags, nullptr, 0) : SCE_NET_ERROR_EBADF);
 }
 
