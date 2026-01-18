@@ -58,7 +58,6 @@ struct License;
 struct RegMgrState;
 struct SfoFile;
 struct GDBState;
-struct HTTPState;
 struct CameraState;
 
 typedef int32_t SceInt;
@@ -104,7 +103,6 @@ private:
     std::unique_ptr<RegMgrState> _regmgr;
     std::unique_ptr<SfoFile> _sfo_handle;
     std::unique_ptr<GDBState> _gdb;
-    std::unique_ptr<HTTPState> _http;
     std::unique_ptr<CameraState> _camera;
 
 public:
@@ -175,7 +173,7 @@ public:
     float manual_dpi_scale = 1.f;
     FVector2 gui_scale = { 1.f, 1.f };
     GDBState &gdb;
-    HTTPState &http;
+    // HTTPState &http;
     CameraState &camera;
     int max_font_level = 0;
     int current_font_level = 0;
