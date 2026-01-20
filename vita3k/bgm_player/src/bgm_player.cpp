@@ -281,7 +281,25 @@ void set_bgm_volume(const float vol) {
     cubeb_stream_set_volume(stream, vol / 100.f);
 }
 
+static void cubeb_log_callback(char const *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    char buf[1024 * 4];
+    int n = std::vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+
+    if (n < 0) {
+        LOG_DEBUG("cubeb: format error");
+    } else {
+        // Ensure null-termination even if truncated
+        buf[sizeof(buf) - 1] = '\0';
+        LOG_DEBUG("{}", buf);
+    }
+}
+
 void init_bgm_player(const float vol) {
+    cubeb_set_log_callback(CUBEB_LOG_NORMAL, cubeb_log_callback);
     // Create a new Cubeb context
     if (cubeb_init(&ctx, "BGM Player", nullptr) != CUBEB_OK) {
         LOG_ERROR("Failed to initialize Cubeb context");
