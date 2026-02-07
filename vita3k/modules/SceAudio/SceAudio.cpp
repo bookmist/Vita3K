@@ -19,6 +19,7 @@
 
 #include <audio/state.h>
 #include <kernel/state.h>
+#include <kernel/thread/thread_state.h>
 #include <util/lock_and_find.h>
 #include <util/tracy.h>
 
@@ -204,8 +205,10 @@ EXPORT(int, sceAudioOutOutput, int port, const void *buf) {
     if (!thread) {
         return RET_ERROR(SCE_AUDIO_OUT_ERROR_INVALID_PORT);
     }
-
-    emuenv.audio.audio_output(*thread, *prt, buf);
+    // is it really useful to update the thread status?
+    thread->update_status(ThreadStatus::wait);
+    emuenv.audio.audio_output(*prt, buf);
+    thread->update_status(ThreadStatus::run);
 
     return prt->len;
 }

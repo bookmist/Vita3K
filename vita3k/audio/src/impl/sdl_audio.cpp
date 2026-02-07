@@ -16,12 +16,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include "audio/impl/sdl_audio.h"
-
-#include "kernel/thread/thread_state.h"
-
-#include <SDL3/SDL_audio.h>
-
 #include "util/log.h"
+#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_hints.h>
 
 #define SDL_CHECK_EXT(condition, ret)                         \
     do {                                                      \
@@ -40,15 +37,9 @@ void SDLCALL SDLAudioAdapter::thread_wakeup_callback(void *userdata, SDL_AudioSt
     assert(stream != nullptr);
     SDLAudioOutPort *port = static_cast<SDLAudioOutPort *>(userdata);
     // Is there a thread waiting for playback to finish?
-    if (port->thread >= 0) {
-        const int samples_available = port->adapter.get_rest_sample(*port);
-        assert(samples_available >= 0);
-        // Running out of data?
-        if (samples_available < (4 * port->adapter.device_buffer_samples) + port->len) {
-            // Wake the thread up.
-            port->adapter.state.resume_thread(port->thread);
-            port->thread = -1;
-        }
+    const int samples_available = port->adapter.get_rest_sample(*port);
+    if (samples_available < port->max_samples || additional_amount > 0) {
+        port->cond_var.notify_one();
     }
 }
 
@@ -62,6 +53,10 @@ SDLAudioAdapter::~SDLAudioAdapter() {
 }
 
 bool SDLAudioAdapter::init() {
+    // SDL3 default is 1024 sample frames for 48kHz audio, which is higher than cubeb.
+    // Request smaller device buffer for lower latency callbacks.
+    // 512 sample frames = 2048 bytes for stereo 16-bit, matching cubeb's callback size.
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, "512");
     device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
     SDL_CHECK_EXT(device_id > 0, false);
     return true;
@@ -89,22 +84,23 @@ AudioOutPortPtr SDLAudioAdapter::open_port(int nb_channels, int freq, int nb_sam
     port->channels = nb_channels;
     port->len_microseconds = (nb_sample * 1'000'000ULL) / freq;
     port->len_bytes = nb_sample * nb_channels * sizeof(int16_t);
+    port->max_samples = ((device_buffer_samples + nb_sample - 1) / nb_sample + 1) * nb_sample;
     switch_state(false);
     return port;
 }
-void SDLAudioAdapter::audio_output(ThreadState &thread, AudioOutPort &out_port, const void *buffer) {
+void SDLAudioAdapter::audio_output(AudioOutPort &out_port, const void *buffer) {
     //  Put audio to the port's stream and see how much is left to play.
     SDLAudioOutPort &port = static_cast<SDLAudioOutPort &>(out_port);
-    SDL_CHECK_VOID(SDL_PutAudioStreamData(port.stream.get(), buffer, out_port.len_bytes));
-    const int samples_available = get_rest_sample(port);
+    std::unique_lock<std::mutex> lock(port.mutex);
     // If there's lots of audio left to play, stop this thread.
     // The audio callback will wake it up later when it's running out of data.
-    if (samples_available >= (4 * device_buffer_samples) + port.len) {
-        port.thread = thread.id;
-        std::unique_lock<std::mutex> mlock(thread.mutex);
-        thread.update_status(ThreadStatus::wait);
-        thread.status_cond.wait(mlock, [&]() { return thread.status == ThreadStatus::run; });
+    const int samples_available = get_rest_sample(port);
+    if (samples_available > port.max_samples) {
+        port.cond_var.wait(lock);
     }
+    SDL_CHECK_VOID(SDL_PutAudioStreamData(port.stream.get(), buffer, out_port.len_bytes));
+    lock.unlock();
+    port.cond_var.notify_one();
 }
 
 void SDLAudioAdapter::set_volume(AudioOutPort &out_port, float volume) {
