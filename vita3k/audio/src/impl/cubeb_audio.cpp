@@ -30,6 +30,7 @@ static long impl_cubeb_audio_callback(cubeb_stream *stream, void *user_data, con
         if (port->nb_buffers_ready == 0) {
             // no data available, should we wait for it or return nothing?
             // return nothing for now
+            LOG_DEBUG("Cubeb audio callback called with no data available, returning silence");
             break;
         }
 

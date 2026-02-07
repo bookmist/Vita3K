@@ -41,12 +41,15 @@ void SDLCALL SDLAudioAdapter::thread_wakeup_callback(void *userdata, SDL_AudioSt
     if (port->max_samples < new_max_samples) {
         port->adapter.device_buffer_samples = total_amount / port->channels / 2;
         port->max_samples = new_max_samples;
+        LOG_DEBUG("device_buffer_samples changed to {}, new max_samples: {}", port->adapter.device_buffer_samples, port->max_samples);
     }
     const int samples_available = port->adapter.get_rest_sample(*port);
     if (samples_available < port->max_samples || additional_amount > 0) {
         port->cond_var.notify_one();
+        LOG_TRACE("Audio callback woke up the thread, {} samples available, additional_amount: {}, total_amount: {}", samples_available, additional_amount, total_amount);
         if (additional_amount > 0) {
             std::this_thread::yield();
+            LOG_TRACE("Audio callback yielded the thread, {} samples available", port->adapter.get_rest_sample(*port));
         }
     }
 }
@@ -93,6 +96,7 @@ AudioOutPortPtr SDLAudioAdapter::open_port(int nb_channels, int freq, int nb_sam
     port->len_microseconds = (nb_sample * 1'000'000ULL) / freq;
     port->len_bytes = nb_sample * nb_channels * sizeof(int16_t);
     port->max_samples = ((device_buffer_samples + nb_sample - 1) / nb_sample + 1) * nb_sample;
+    LOG_DEBUG("Opened SDL audio port with {} channels, {} Hz, {} samples ({} bytes), device buffer size: {} samples, max_samples: {}", nb_channels, freq, nb_sample, port->len_bytes, device_buffer_samples, port->max_samples);
     switch_state(false);
     return port;
 }
@@ -104,7 +108,9 @@ void SDLAudioAdapter::audio_output(AudioOutPort &out_port, const void *buffer) {
     // The audio callback will wake it up later when it's running out of data.
     const int samples_available = get_rest_sample(port);
     if (samples_available > port.max_samples) {
+        LOG_TRACE("Too much audio left to play ({} samples), waiting for the callback to wake up the thread", samples_available);
         port.cond_var.wait(lock);
+        LOG_TRACE("Thread woke up, {} samples available", get_rest_sample(port));
     }
     SDL_CHECK_VOID(SDL_PutAudioStreamData(port.stream.get(), buffer, out_port.len_bytes));
     lock.unlock();
