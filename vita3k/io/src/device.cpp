@@ -44,11 +44,10 @@ std::string construct_normalized_path(const VitaIoDevice dev, const std::string 
 }
 
 std::string remove_device_from_path(const std::string &path, const VitaIoDevice device, const std::string &mod_path) {
+    if (device == VitaIoDevice::_INVALID)
+        return {};
     // Trim the path to include only the substring after the device string
     const auto device_length = get_device_string(device, true).length();
-    if (device == VitaIoDevice::_INVALID)
-        return std::string{};
-
     auto out = path;
     out = out.substr(device_length, out.size());
     if (!mod_path.empty())

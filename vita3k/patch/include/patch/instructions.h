@@ -52,7 +52,7 @@ uint32_t nop(std::vector<uint32_t> &args);
 uint32_t t1_mov(std::vector<uint32_t> &args);
 uint32_t a1_mov(std::vector<uint32_t> &args);
 
-static const std::map<std::string, Op> instruction_funcs = {
+inline const std::map<std::string, Op> instruction_funcs = {
     { "nop", { Instruction::NOP, nop } },
     { "t1_mov", { Instruction::T1_MOV, t1_mov } },
     { "a1_mov", { Instruction::A1_MOV, a1_mov } },

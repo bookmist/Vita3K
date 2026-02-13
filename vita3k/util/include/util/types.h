@@ -70,7 +70,7 @@ typedef uint16_t SceWChar16;
 typedef uint32_t SceWChar32;
 
 typedef void SceVoid;
-typedef void *ScePVoid;
+// typedef void *ScePVoid;
 
 typedef int SceIntPtr;
 typedef unsigned int SceUIntPtr;
@@ -192,7 +192,7 @@ typedef union SceUnion32 {
     unsigned char uc[4];
     char c[4];
     float f;
-    void *p;
+    // void *p;
 } SceUnion32;
 
 typedef union SceUnion64 {

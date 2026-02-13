@@ -19,7 +19,7 @@
 
 #include <config/functions.h>
 #include <config/state.h>
-#include <ime/state.h>
+#include <ime/functions.h>
 #include <util/string_utils.h>
 
 namespace gui {
@@ -345,30 +345,27 @@ void draw_ime(Ime &ime, EmuEnvState &emuenv) {
         ImGui::PushStyleColor(ImGuiCol_Button, IME_NUMERIC_BG);
         ImGui::PushStyleColor(ImGuiCol_Text, GUI_COLOR_TEXT);
         for (const auto &special : special_key) {
-            for (auto i = 0; i < special.second.size(); i++) {
-                if (!i) {
-                    ImGui::SetCursorPosX(0.f);
-                    if (special.first)
-                        ImGui::Separator();
-                }
-                if (ImGui::Button(string_utils::utf16_to_utf8(special.second[i]).c_str(), NUM_BUTTON_SIZE) && (ime.str.length() < ime.param.maxTextLength))
-                    update_key(ime, special.second[i]);
-                if (i != (special.second.size() - 1))
-                    ImGui::SameLine(0, SPACE);
+            ImGui::SetCursorPosX(0.f);
+            if (special.first)
+                ImGui::Separator();
+            for (const auto &key : special.second) {
+                if (ImGui::Button(string_utils::utf16_to_utf8(key).c_str(), NUM_BUTTON_SIZE) && (ime.str.length() < ime.param.maxTextLength))
+                    update_key(ime, key);
+                ImGui::SameLine(0, SPACE);
             }
+            ImGui::NewLine();
         }
         ImGui::PopStyleColor(2);
         ImGui::EndChild();
         ImGui::SetCursorPos(ImVec2(NUM_BUTTON_POS_X, key_row_pos[1] * SCALE.y));
         for (const auto &numeric : pad_numeric_key) {
-            for (uint32_t i = 0; i < numeric.second.size(); i++) {
-                if (!i)
-                    ImGui::SetCursorPos(ImVec2(NUM_BUTTON_POS_X, key_row_pos[numeric.first] * SCALE.y));
+            ImGui::SetCursorPos(ImVec2(NUM_BUTTON_POS_X, key_row_pos[numeric.first] * SCALE.y));
+            for (auto i = 0; i < numeric.second.size(); i++) {
                 if (ImGui::Button(string_utils::utf16_to_utf8(numeric.second[i]).c_str(), ImVec2(i < 3 ? NUM_BUTTON_SIZE.x : 65.f * SCALE.x, NUM_BUTTON_SIZE.y)) && (ime.str.length() < ime.param.maxTextLength))
                     update_key(ime, numeric.second[i]);
-                if (i != (numeric.second.size() - 1))
-                    ImGui::SameLine(0, SPACE);
+                ImGui::SameLine(0, SPACE);
             }
+            ImGui::NewLine();
         }
         ImGui::SetCursorPos(ImVec2(NUM_BUTTON_POS_X, LAST_ROW_KEY_POS));
         if (ImGui::Button("0", ImVec2((NUM_BUTTON_SIZE.x * 2.f) + SPACE, NUM_BUTTON_SIZE.y)) && (ime.str.length() < ime.param.maxTextLength))
