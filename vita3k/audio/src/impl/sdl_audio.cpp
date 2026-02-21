@@ -37,9 +37,17 @@ void SDLCALL SDLAudioAdapter::thread_wakeup_callback(void *userdata, SDL_AudioSt
     assert(stream != nullptr);
     SDLAudioOutPort *port = static_cast<SDLAudioOutPort *>(userdata);
     // Is there a thread waiting for playback to finish?
+    auto new_max_samples = (((total_amount / port->channels / 2) + port->len - 1) / port->len + 1) * port->len;
+    if (port->max_samples < new_max_samples) {
+        port->adapter.device_buffer_samples = total_amount / port->channels / 2;
+        port->max_samples = new_max_samples;
+    }
     const int samples_available = port->adapter.get_rest_sample(*port);
     if (samples_available < port->max_samples || additional_amount > 0) {
         port->cond_var.notify_one();
+        if (additional_amount > 0) {
+            std::this_thread::yield();
+        }
     }
 }
 
