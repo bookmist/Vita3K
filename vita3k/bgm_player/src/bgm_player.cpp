@@ -438,13 +438,14 @@ static bool init_bgm_streaming(uint8_t *at9_data, size_t size) {
     return true;
 }
 
-static std::pair<std::string, std::string> current_path_bgm = { "pd0", "data/systembgm/initialsetup.at9" };
-void set_current_bgm_path(const std::pair<std::string, std::string> &path) {
+static bgm_path_t current_path_bgm = { VitaIoDevice::pd0, "data/systembgm/initialsetup.at9" };
+
+void set_current_bgm_path(const bgm_path_t &path) {
     current_path_bgm = path;
 }
 
 bool init_bgm(const fs::path &pref_path, const bool is_enable) {
-    const auto device = VitaIoDevice::_from_string(current_path_bgm.first.c_str());
+    const auto device = current_path_bgm.first;
     const auto &path = current_path_bgm.second;
 
     // Check if the path is initialsetup.at9 and if the stream is already initialized

@@ -18,14 +18,17 @@
 #pragma once
 
 #include <util/fs.h>
+#include <io/VitaIoDevice.h>
 
 namespace bgm_player {
+
+using bgm_path_t = std::pair<VitaIoDevice, std::string>;
 
 void destroy_bgm_player();
 bool init_bgm(const fs::path &pref_path, const bool is_enable);
 void init_bgm_player(const float vol);
 void set_bgm_volume(const float vol);
-void set_current_bgm_path(const std::pair<std::string, std::string> &path);
+void set_current_bgm_path(const bgm_path_t &path);
 void stop_bgm();
 void switch_bgm_state(const bool pause);
 

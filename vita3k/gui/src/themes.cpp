@@ -214,7 +214,7 @@ bool init_theme(GuiState &gui, EmuEnvState &emuenv, const std::string &content_i
     std::vector<std::string> theme_bg_name;
 
     // Set default values of bgm theme
-    std::pair<VitaIoDevice, std::string> path_bgm = { VitaIoDevice::pd0, "data/systembgm/home.at9" };
+    bgm_player::bgm_path_t path_bgm = { VitaIoDevice::pd0, "data/systembgm/home.at9" };
 
     // Create a map to associate specific system app title IDs with their corresponding theme icon names.
     std::map<std::string, std::string> theme_icon_name = {
