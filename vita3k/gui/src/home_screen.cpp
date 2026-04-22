@@ -149,7 +149,7 @@ void pre_load_app(GuiState &gui, EmuEnvState &emuenv, bool live_area, const std:
 
 void pre_run_app(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path) {
     bgm_player::switch_bgm_state(true);
-    const auto is_sys = app_path.starts_with("NPXS") && (app_path != "NPXS10007");
+    const auto is_sys = app_path.starts_with("NPXS") && (app_path != "NPXS10007") && (app_path != "NPXS19999");
     if (!is_sys) {
         if (emuenv.io.app_path != app_path) {
             if (!emuenv.io.app_path.empty())

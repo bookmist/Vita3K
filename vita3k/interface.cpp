@@ -458,8 +458,18 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
     init_exported_vars(emuenv);
 
     // Load main executable
-    emuenv.self_path = !emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : EBOOT_PATH;
-    main_module_id = load_module(emuenv, "app0:" + emuenv.self_path);
+    if (emuenv.io.app_path == "NPXS19999") {
+        emuenv.self_path = "vs0:vsh/shell/shell.self";
+    } else if (emuenv.io.app_path == "NPXS10062")
+        emuenv.self_path = "vs0:vsh/initialsetup/initialsetup.self";
+    else if (emuenv.io.app_path == "NPXS10082")
+        emuenv.self_path = "vs0:app/NPXS10082/spawn.self";
+    else if (emuenv.io.app_path.find("NPXS") != std::string::npos) {
+        emuenv.self_path = fmt::format("vs0:app/{}/eboot.bin", emuenv.io.app_path);
+    } else
+        emuenv.self_path = "app0:" + (!emuenv.cfg.self_path.empty() ? emuenv.cfg.self_path : EBOOT_PATH);
+
+    main_module_id = load_module(emuenv, emuenv.self_path);
     if (main_module_id >= 0) {
         const auto module = emuenv.kernel.loaded_modules[main_module_id];
         LOG_INFO("Main executable {} ({}) loaded", module->info.module_name, emuenv.self_path);
@@ -496,17 +506,17 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
         }
     };
     if (is_lle_module("libkernel", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libkernel.suprx");
+        lib_load_list.emplace_back("os0:us/libkernel.suprx");
     if (is_lle_module("driver_us", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/driver_us.suprx");
+        lib_load_list.emplace_back("os0:us/driver_us.suprx");
     if (is_lle_module("avcodec_us", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/avcodec_us.suprx");
+        lib_load_list.emplace_back("os0:us/avcodec_us.suprx");
     if (is_lle_module("libgpu_es4", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libgpu_es4.suprx");
+        lib_load_list.emplace_back("os0:us/libgpu_es4.suprx");
     if (is_lle_module("libgxm_es4", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libgxm_es4.suprx");
+        lib_load_list.emplace_back("os0:us/libgxm_es4.suprx");
     if (is_lle_module("libgxm_dbg_es4", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/libgxm_dbg_es4.suprx"); // if DEVELOPMENT_MODE dipsw is set
+        lib_load_list.emplace_back("os0:us/libgxm_dbg_es4.suprx"); // if DEVELOPMENT_MODE dipsw is set
     add_preload_module(0x00010000, SCE_SYSMODULE_INVALID, "libc", true);
     add_preload_module(0x00020000, SCE_SYSMODULE_DBG, "libdbg", false);
     add_preload_module(0x00080000, SCE_SYSMODULE_INVALID, "libshellsvc", false);
@@ -517,9 +527,9 @@ static ExitCode load_app_impl(SceUID &main_module_id, EmuEnvState &emuenv) {
     add_preload_module(0x01000000, SCE_SYSMODULE_INVALID, "libpvf", false);
     add_preload_module(0x02000000, SCE_SYSMODULE_PERF, "libperf", false); // if DEVELOPMENT_MODE dipsw is set
     if (is_lle_module("taihen", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/taihen.suprx");
+        lib_load_list.emplace_back("os0:us/taihen.suprx");
     if (is_lle_module("VitaGrafix", emuenv))
-        lib_load_list.emplace_back(SCE_SYSMODULE_INVALID, "os0:us/VitaGrafix.suprx");
+        lib_load_list.emplace_back("os0:us/VitaGrafix.suprx");
 
     for (const auto &module_path : lib_load_list) {
         auto res = load_module(emuenv, module_path);

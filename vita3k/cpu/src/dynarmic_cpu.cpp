@@ -133,7 +133,7 @@ public:
         if (CRn == CoprocReg::C13 && CRm == CoprocReg::C0 && opc1 == 0 && opc2 == 3) {
             return &tpidruro;
         }
-        LOG_ERROR("coproc_id:15, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, CRn, CRm, opc2);
+        LOG_ERROR("coproc_id:15, two:{}, opc1:{}, CRn:{}, CRm:{}, opc2:{}", two, opc1, (int)CRn, (int)CRm, opc2);
         return &one_word;
         return CallbackOrAccessOneWord{};
     }

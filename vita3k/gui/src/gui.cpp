@@ -574,7 +574,7 @@ void save_apps_cache(GuiState &gui, EmuEnvState &emuenv) {
 }
 
 static void init_app_custom_config(GuiState &gui, EmuEnvState &emuenv) {
-    for (auto &app : gui.app_selector.emu_apps) {
+    for (auto &app : gui.app_selector.user_apps) {
         app.custom_config = fs::exists(emuenv.config_path / "config" / fmt::format("config_{}.xml", app.path));
     }
 }
@@ -705,7 +705,7 @@ void get_app_param(GuiState &gui, EmuEnvState &emuenv, const std::string &app_pa
     }
     gui.app_selector.user_apps.push_back({ app_info.app_version, app_info.app_category, app_info.app_content_id, app_info.app_addcont, app_info.app_savedata, app_info.app_parental_level, app_info.app_short_title, app_info.app_title, app_info.app_title_id, app_path });
 }
-/*
+
 ImU32 get_selectable_color_pulse(const float max_alpha) {
     // Define constants for pulsing effect
     constexpr float speed = 3.f;
@@ -720,7 +720,7 @@ ImU32 get_selectable_color_pulse(const float max_alpha) {
     ImVec4 base_color = ImVec4(0.412f, 0.98f, 1.f, alpha);
     return ImGui::ColorConvertFloat4ToU32(base_color);
 }
-*/
+
 void get_user_apps_title(GuiState &gui, EmuEnvState &emuenv) {
     const fs::path app_path{ emuenv.pref_path / "ux0/app" };
     if (!fs::exists(app_path))
@@ -739,7 +739,7 @@ void get_user_apps_title(GuiState &gui, EmuEnvState &emuenv) {
 
 void get_sys_apps_title(GuiState &gui, EmuEnvState &emuenv) {
     gui.app_selector.sys_apps.clear();
-    constexpr std::array<const std::string_view, 4> sys_apps_list = { "NPXS10003", "NPXS10008", "NPXS10015", "NPXS10026" };
+    constexpr std::array<const std::string_view, 5> sys_apps_list = { "NPXS10003", "NPXS10008", "NPXS10015", "NPXS10026", "NPXS19999" };
     for (const auto &app : sys_apps_list) {
         vfs::FileBuffer params;
         if (vfs::read_file(VitaIoDevice::vs0, params, emuenv.pref_path, fmt::format("app/{}/sce_sys/param.sfo", app))) {
