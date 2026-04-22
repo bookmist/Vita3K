@@ -271,34 +271,12 @@ static std::vector<std::string> list_user_lang;
 void init_config(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path) {
     // If no app-specific config file is being used for the initialized application,
     // set up `config` with the values set in the global emulator configuration
-    if (app_path.empty() || !get_custom_config(emuenv, app_path)) {
-        config.cpu_opt = emuenv.cfg.cpu_opt;
-        config.modules_mode = emuenv.cfg.modules_mode;
-        config.lle_modules = emuenv.cfg.lle_modules;
-        config.backend_renderer = emuenv.cfg.backend_renderer;
-        config.gpu_idx = emuenv.cfg.gpu_idx;
-#ifdef __ANDROID__
-        config.custom_driver_name = emuenv.cfg.custom_driver_name;
-#endif
-        config.high_accuracy = emuenv.cfg.high_accuracy;
-        config.resolution_multiplier = emuenv.cfg.resolution_multiplier;
-        config.disable_surface_sync = emuenv.cfg.disable_surface_sync;
-        config.screen_filter = emuenv.cfg.screen_filter;
-        config.memory_mapping = emuenv.cfg.memory_mapping;
-        config.v_sync = emuenv.cfg.v_sync;
-        config.anisotropic_filtering = emuenv.cfg.anisotropic_filtering;
-        config.async_pipeline_compilation = emuenv.cfg.async_pipeline_compilation;
-        config.import_textures = emuenv.cfg.import_textures;
-        config.export_textures = emuenv.cfg.export_textures;
-        config.export_as_png = emuenv.cfg.export_as_png;
-        config.fps_hack = emuenv.cfg.fps_hack;
-        config.audio_backend = emuenv.cfg.audio_backend;
-        config.audio_volume = emuenv.cfg.audio_volume;
-        config.ngs_enable = emuenv.cfg.ngs_enable;
-        config.pstv_mode = emuenv.cfg.pstv_mode;
-        config.show_touchpad_cursor = emuenv.cfg.show_touchpad_cursor;
-        config.file_loading_delay = emuenv.cfg.file_loading_delay;
-        config.psn_signed_in = emuenv.cfg.psn_signed_in;
+    if (!get_custom_config(emuenv, app_path)) {
+#define UPDATE_MEMBERS(option_type, option_name, option_default, member_name) \
+    config.member_name = emuenv.cfg.member_name;
+
+        CONFIG_LIST_CUSTOM(UPDATE_MEMBERS)
+#undef UPDATE_MEMBERS
     }
 
     set_backend_renderer(emuenv, config.backend_renderer);
@@ -346,6 +324,7 @@ void init_config(GuiState &gui, EmuEnvState &emuenv, const std::string &app_path
  * @param emuenv State of the emulated PlayStation Vita environment
  */
 static void save_config(GuiState &gui, EmuEnvState &emuenv) {
+    bool update_viewport_en = false;
     if (gui.configuration_menu.custom_settings_dialog) {
         const auto CONFIG_PATH{ emuenv.config_path / "config" };
         const auto CUSTOM_CONFIG_PATH{ CONFIG_PATH / fmt::format("config_{}.xml", emuenv.app_path) };
@@ -416,45 +395,18 @@ static void save_config(GuiState &gui, EmuEnvState &emuenv) {
         if (app)
             app->custom_config = fs::exists(CUSTOM_CONFIG_PATH);
     } else {
-        emuenv.cfg.cpu_opt = config.cpu_opt;
-        emuenv.cfg.modules_mode = config.modules_mode;
-        emuenv.cfg.lle_modules = config.lle_modules;
-        emuenv.cfg.backend_renderer = config.backend_renderer;
-        emuenv.cfg.gpu_idx = config.gpu_idx;
-#ifdef __ANDROID__
-        emuenv.cfg.custom_driver_name = config.custom_driver_name;
-#endif
-        emuenv.cfg.high_accuracy = config.high_accuracy;
-        emuenv.cfg.resolution_multiplier = config.resolution_multiplier;
-        emuenv.cfg.disable_surface_sync = config.disable_surface_sync;
-        emuenv.cfg.screen_filter = config.screen_filter;
-        emuenv.cfg.memory_mapping = config.memory_mapping;
-        emuenv.cfg.v_sync = config.v_sync;
-        emuenv.cfg.anisotropic_filtering = config.anisotropic_filtering;
-        emuenv.cfg.async_pipeline_compilation = config.async_pipeline_compilation;
-        emuenv.cfg.import_textures = config.import_textures;
-        emuenv.cfg.export_textures = config.export_textures;
-        emuenv.cfg.export_as_png = config.export_as_png;
-        emuenv.cfg.fps_hack = config.fps_hack;
-        emuenv.cfg.audio_backend = config.audio_backend;
-        emuenv.cfg.audio_volume = config.audio_volume;
-        emuenv.cfg.ngs_enable = config.ngs_enable;
-        emuenv.cfg.pstv_mode = config.pstv_mode;
-        emuenv.cfg.show_touchpad_cursor = config.show_touchpad_cursor;
-        emuenv.cfg.file_loading_delay = config.file_loading_delay;
-        emuenv.cfg.psn_signed_in = config.psn_signed_in;
-    }
+        if (emuenv.cfg.fullscreen_hd_res_pixel_perfect != config.fullscreen_hd_res_pixel_perfect) {
+            update_viewport_en = true;
+        }
 
-    bool update_viewport_en = false;
+        if (emuenv.cfg.stretch_the_display_area != config.stretch_the_display_area) {
+            update_viewport_en = true;
+        }
+#define UPDATE_MEMBERS(option_type, option_name, option_default, member_name) \
+    emuenv.cfg.member_name = config.member_name;
 
-    if (emuenv.cfg.fullscreen_hd_res_pixel_perfect != config.fullscreen_hd_res_pixel_perfect) {
-        emuenv.cfg.fullscreen_hd_res_pixel_perfect = config.fullscreen_hd_res_pixel_perfect;
-        update_viewport_en = true;
-    }
-
-    if (emuenv.cfg.stretch_the_display_area != config.stretch_the_display_area) {
-        emuenv.cfg.stretch_the_display_area = config.stretch_the_display_area;
-        update_viewport_en = true;
+        CONFIG_LIST_CUSTOM(UPDATE_MEMBERS)
+#undef UPDATE_MEMBERS
     }
 
     if (update_viewport_en)
@@ -483,33 +435,11 @@ void set_current_config(EmuEnvState &emuenv, const std::string &app_path) {
         emuenv.cfg.current_config = config;
     else {
         // Else inherit the values from the global emulator config
-        emuenv.cfg.current_config.cpu_opt = emuenv.cfg.cpu_opt;
-        emuenv.cfg.current_config.modules_mode = emuenv.cfg.modules_mode;
-        emuenv.cfg.current_config.lle_modules = emuenv.cfg.lle_modules;
-        emuenv.cfg.current_config.backend_renderer = emuenv.cfg.backend_renderer;
-        emuenv.cfg.current_config.gpu_idx = emuenv.cfg.gpu_idx;
-#ifdef __ANDROID__
-        emuenv.cfg.current_config.custom_driver_name = emuenv.cfg.custom_driver_name;
-#endif
-        emuenv.cfg.current_config.high_accuracy = emuenv.cfg.high_accuracy;
-        emuenv.cfg.current_config.resolution_multiplier = emuenv.cfg.resolution_multiplier;
-        emuenv.cfg.current_config.disable_surface_sync = emuenv.cfg.disable_surface_sync;
-        emuenv.cfg.current_config.screen_filter = emuenv.cfg.screen_filter;
-        emuenv.cfg.current_config.memory_mapping = emuenv.cfg.memory_mapping;
-        emuenv.cfg.current_config.v_sync = emuenv.cfg.v_sync;
-        emuenv.cfg.current_config.anisotropic_filtering = emuenv.cfg.anisotropic_filtering;
-        emuenv.cfg.current_config.async_pipeline_compilation = emuenv.cfg.async_pipeline_compilation;
-        emuenv.cfg.current_config.import_textures = emuenv.cfg.import_textures;
-        emuenv.cfg.current_config.export_textures = emuenv.cfg.export_textures;
-        emuenv.cfg.current_config.export_as_png = emuenv.cfg.export_as_png;
-        emuenv.cfg.current_config.fps_hack = emuenv.cfg.fps_hack;
-        emuenv.cfg.current_config.audio_backend = emuenv.cfg.audio_backend;
-        emuenv.cfg.current_config.audio_volume = emuenv.cfg.audio_volume;
-        emuenv.cfg.current_config.ngs_enable = emuenv.cfg.ngs_enable;
-        emuenv.cfg.current_config.pstv_mode = emuenv.cfg.pstv_mode;
-        emuenv.cfg.current_config.show_touchpad_cursor = emuenv.cfg.show_touchpad_cursor;
-        emuenv.cfg.current_config.file_loading_delay = emuenv.cfg.file_loading_delay;
-        emuenv.cfg.current_config.psn_signed_in = emuenv.cfg.psn_signed_in;
+#define UPDATE_MEMBERS(option_type, option_name, option_default, member_name) \
+    emuenv.cfg.current_config.member_name = emuenv.cfg.member_name;
+
+        CONFIG_LIST_CUSTOM(UPDATE_MEMBERS)
+#undef UPDATE_MEMBERS
     }
 
     set_backend_renderer(emuenv, emuenv.cfg.current_config.backend_renderer);

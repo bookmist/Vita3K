@@ -59,35 +59,11 @@ struct Config {
      * All the settings that appear in this struct can be adjusted using app-specific custom config files.
      */
     struct CurrentConfig {
-        bool cpu_opt = true;
-        int modules_mode = ModulesMode::AUTOMATIC;
-        std::vector<std::string> lle_modules = {};
-        std::string audio_backend = "SDL";
-        int audio_volume = 100;
-        bool ngs_enable = true;
-        bool pstv_mode = false;
-        std::string backend_renderer = "Vulkan";
-        int gpu_idx = 0;
-#ifdef __ANDROID__
-        std::string custom_driver_name{};
-#endif
-        bool high_accuracy = false;
-        float resolution_multiplier = 1.0f;
-        bool disable_surface_sync = false;
-        std::string screen_filter = "Bilinear";
-        std::string memory_mapping = "double-buffer";
-        bool v_sync = true;
-        int anisotropic_filtering = 1;
-        bool async_pipeline_compilation = true;
-        bool import_textures = false;
-        bool export_textures = false;
-        bool export_as_png = false;
-        bool fps_hack = false;
-        bool stretch_the_display_area = false;
-        bool fullscreen_hd_res_pixel_perfect = false;
-        bool show_touchpad_cursor = true;
-        int file_loading_delay = 0;
-        bool psn_signed_in = false;
+#define CREATE_MEMBERS(option_type, option_name, option_default, member_name) \
+    option_type member_name = option_default;
+
+        CONFIG_LIST_CUSTOM(CREATE_MEMBERS)
+#undef CREATE_MEMBERS
     };
 
     /**
