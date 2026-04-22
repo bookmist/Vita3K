@@ -216,7 +216,7 @@ std::string translate_path(const char *path, VitaIoDevice &device, const IOState
         break;
     }
     case VitaIoDevice::cache0: { // Redirect cache0: to ux0:cache/<title_id>
-        relative_path = device::remove_device_from_path(relative_path, device, "cache/" + io.title_id);
+        relative_path = device::remove_device_from_path(relative_path, device, "cache/" + device_paths.app0);
         device = VitaIoDevice::ux0;
         break;
     }

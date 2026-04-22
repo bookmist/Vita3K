@@ -1046,7 +1046,7 @@ EXPORT(int, sceKernelCreateThreadForUser, const char *name, SceKernelThreadEntry
     TRACY_FUNC(sceKernelCreateThreadForUser, name, entry, init_priority, options);
     /*if (options->cpu_affinity_mask & ~SCE_KERNEL_CPU_MASK_USER_ALL) {
         return RET_ERROR(SCE_KERNEL_ERROR_INVALID_CPU_AFFINITY);
-    }
+    }*/
 
     const ThreadStatePtr thread = emuenv.kernel.create_thread(emuenv.mem, name, entry.cast<void>(), init_priority, options->cpu_affinity_mask, options->stack_size, options->option.get(emuenv.mem));
     if (!thread)

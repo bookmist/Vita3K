@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "io/VitaIoDevice.h"
+
 #include <compat/state.h>
 #include <config/config.h>
 #include <lang/state.h>
@@ -319,6 +321,7 @@ struct GuiState {
 
     std::map<std::string, std::vector<TimeApp>> time_apps;
 
+    float bg_transition_alpha = 1.0f;
     std::uint64_t current_theme_bg = 0;
     std::map<std::string, std::map<ThemePreviewType, ImGui_Texture>> themes_preview;
     std::vector<ImGui_Texture> theme_backgrounds;
