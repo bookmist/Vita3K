@@ -59,7 +59,7 @@ consteval std::array<const char, N> make_option_name(const char (&input)[N]) {
     return std::array<const char, N>{ const_cast<const char &>(result[0]) };
 }
 
-#define CODE_NOTHING(option_type, option_name, option_default, member_name)
+#define CODE_NOTHING(option_type, option_name, option_default, member_name, ...)
 
 #define CONFIG_VITA_IF_HELPER(...) CONFIG_VITA_IF_SELECT(__VA_ARGS__)
 #define CONFIG_VITA_IF_SELECT(condition, ...) CONFIG_VITA_IF_##condition
@@ -68,10 +68,19 @@ consteval std::array<const char, N> make_option_name(const char (&input)[N]) {
 #define CONFIG_VITA_IF_0(true_case, false_case) false_case
 
 // if code_custom is empty then use code_all else use code_custom or code_no_custom based on is_custom
-#define CONFIG_VITA_IF(is_custom, code_custom, code_no_custom) CONFIG_VITA_IF_HELPER(is_custom)(code_custom, code_no_custom)
+#define CONFIG_VITA_IF(is_custom, code_custom, code_no_custom) \
+    CONFIG_VITA_IF_HELPER(is_custom)(code_custom, code_no_custom)
 
-#define CODE(code_custom, code_no_custom, type, name, def_value, is_custom) \
-    CONFIG_VITA_IF(is_custom, code_custom, code_no_custom)(type, (&(make_option_name(#name)[0])), def_value, name)
+// New CODE macro: allow the last parameter to be optional (node name) and treat it as a token.
+// When the optional parameter is present, invoke `code_custom` with an extra argument
+// (the node name). When absent, invoke `code_no_custom`.
+
+//  Detect whether an extra variadic argument was provided. Expands to 1 if provided, 0 otherwise.
+#define PP_HAS_ARG_IMPL(_0, _1, N, ...) N
+#define PP_HAS_ARG(...) PP_HAS_ARG_IMPL(, ##__VA_ARGS__, 1, 0)
+
+#define CODE(code_custom, code_no_custom, type, name, def_value, ...) \
+    CONFIG_VITA_IF(PP_HAS_ARG(__VA_ARGS__), code_custom, code_no_custom)(type, (&(make_option_name(#name)[0])), def_value, name, ##__VA_ARGS__)
 
 // clang-format off
 // Singular options produced in config file
@@ -253,18 +262,20 @@ consteval std::array<const char, N> make_option_name(const char (&input)[N]) {
     CODE(code_custom, code_no_custom, std::vector<uint64_t>, ime_langs, std::vector<uint64_t>{4},0)                       \
     CODE(code_custom, code_no_custom, std::vector<std::string>, tracy_advanced_profiling_modules, std::vector<std::string>{},0)
 
-#define CONFIG_INDIVIDUAL(code)                                                                         \
+// clang-format on
+#define CONFIG_INDIVIDUAL(code) \
     CONFIG_INDIVIDUAL_EXT(code, code)
 
-#define CONFIG_INDIVIDUAL_CUSTOM(code)                                                                         \
+#define CONFIG_INDIVIDUAL_CUSTOM(code) \
     CONFIG_INDIVIDUAL_EXT(code, CODE_NOTHING)
 
-#define CONFIG_VECTOR(code)                                                                             \
-  CONFIG_VECTOR_EXT(code, code)
+#define CONFIG_VECTOR(code) \
+    CONFIG_VECTOR_EXT(code, code)
 
-#define CONFIG_VECTOR_CUSTOM(code)                                                                             \
+#define CONFIG_VECTOR_CUSTOM(code) \
     CONFIG_VECTOR_EXT(code, CODE_NOTHING)
 
+// clang-format off
 // Parent macro for easier generation
 #define CONFIG_LIST(code)                                                                               \
     CONFIG_INDIVIDUAL(code)                                                                             \
