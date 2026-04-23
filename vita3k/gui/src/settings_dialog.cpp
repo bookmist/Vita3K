@@ -49,6 +49,7 @@
 #include <camera/state.h>
 #include <imgui_internal.h>
 #include <pugixml.hpp>
+#include <type_traits>
 #include <util/vector_utils.h>
 
 #undef ERROR
@@ -151,6 +152,32 @@ static void change_emulator_path(GuiState &gui, EmuEnvState &emuenv) {
     }
 }
 
+template <typename T>
+static void read_xml_value(const pugi::xml_attribute &attribute, T &out_value, const T &default_value) {
+    if constexpr (std::is_same_v<T, bool>) {
+        out_value = attribute.as_bool(default_value);
+    } else if constexpr (std::is_same_v<T, int>) {
+        out_value = attribute.as_int(default_value);
+    } else if constexpr (std::is_same_v<T, float>) {
+        out_value = attribute.as_float(default_value);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        // Avoid temporary std::string creation:
+        // parse as C-string and assign directly to destination.
+        out_value = attribute.as_string(default_value.c_str());
+    } else {
+        static_assert(!sizeof(T), "Unsupported type in read_xml_value");
+    }
+}
+
+template <typename T>
+static void write_xml_value(pugi::xml_node &node, const char *attribute_name, const T &value) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        node.append_attribute(attribute_name) = value.c_str();
+    } else {
+        node.append_attribute(attribute_name) = value;
+    }
+}
+
 /**
  * @brief Set up `config` with the values contained in the custom config file of a certain PlayStation Vita application
  *
@@ -174,67 +201,30 @@ static bool get_custom_config(EmuEnvState &emuenv, const std::string &app_path) 
             // Config
             const auto config_child = custom_config_xml.child("config");
 
-            // Load Core Config
-            if (!config_child.child("core").empty()) {
-                const auto core_child = config_child.child("core");
-                config.modules_mode = core_child.attribute("modules-mode").as_int();
+            // Extract nodes once
+            const auto core_child = config_child.child("core");
+            const auto cpu_child = config_child.child("cpu");
+            const auto gpu_child = config_child.child("gpu");
+            const auto audio_child = config_child.child("audio");
+            const auto system_child = config_child.child("system");
+            const auto emulator_child = config_child.child("emulator");
+            const auto network_child = config_child.child("network");
+
+            // Vector config entry that isn't stored as attribute.
+            if (!core_child.empty()) {
                 for (auto &m : core_child.child("lle-modules"))
                     config.lle_modules.emplace_back(m.text().as_string());
             }
 
-            // Load CPU Config
-            if (!config_child.child("cpu").empty()) {
-                const auto cpu_child = config_child.child("cpu");
-                config.cpu_opt = cpu_child.attribute("cpu-opt").as_bool();
-            }
+#define READ_CUSTOM_MEMBER(option_type, option_name, option_default, member_name, section) \
+    if (!section##_child.empty()) {                                                        \
+        const auto attribute = section##_child.attribute(option_name);                     \
+        read_xml_value<option_type>(attribute, config.member_name, config.member_name);    \
+    }
 
-            // Load GPU Config
-            if (!config_child.child("gpu").empty()) {
-                const auto gpu_child = config_child.child("gpu");
-                config.backend_renderer = gpu_child.attribute("backend-renderer").as_string();
-                config.gpu_idx = gpu_child.attribute("gpu-idx").as_int(emuenv.cfg.gpu_idx);
-#ifdef __ANDROID__
-                config.custom_driver_name = gpu_child.attribute("custom-driver-name").as_string();
-#endif
-                config.high_accuracy = gpu_child.attribute("high-accuracy").as_bool();
-                config.resolution_multiplier = gpu_child.attribute("resolution-multiplier").as_float();
-                config.disable_surface_sync = gpu_child.attribute("disable-surface-sync").as_bool();
-                config.screen_filter = gpu_child.attribute("screen-filter").as_string();
-                config.memory_mapping = gpu_child.attribute("memory-mapping").as_string();
-                config.v_sync = gpu_child.attribute("v-sync").as_bool();
-                config.anisotropic_filtering = gpu_child.attribute("anisotropic-filtering").as_int();
-                config.async_pipeline_compilation = gpu_child.attribute("async-pipeline-compilation").as_bool();
-                config.import_textures = gpu_child.attribute("import-textures").as_bool();
-                config.export_textures = gpu_child.attribute("export-textures").as_bool();
-                config.export_as_png = gpu_child.attribute("export-as-png").as_bool();
-                config.fps_hack = gpu_child.attribute("fps-hack").as_bool();
-            }
+            CONFIG_INDIVIDUAL_CUSTOM(READ_CUSTOM_MEMBER)
 
-            // Load Audio Config
-            if (!config_child.child("audio").empty()) {
-                const auto audio_child = config_child.child("audio");
-                config.audio_backend = audio_child.attribute("audio-backend").as_string(emuenv.cfg.audio_backend.c_str());
-                config.audio_volume = audio_child.attribute("audio-volume").as_int();
-                config.ngs_enable = audio_child.attribute("enable-ngs").as_bool();
-            }
-
-            // Load System Config
-            const auto system_child = config_child.child("system");
-            if (!system_child.empty())
-                config.pstv_mode = system_child.attribute("pstv-mode").as_bool();
-
-            // Load Emulator Config
-            if (!config_child.child("emulator").empty()) {
-                const auto emulator_child = config_child.child("emulator");
-                config.show_touchpad_cursor = emulator_child.attribute("show-touchpad-cursor").as_bool();
-                config.file_loading_delay = emulator_child.attribute("file-loading-delay").as_int();
-            }
-
-            // Load Network Config
-            if (!config_child.child("network").empty()) {
-                const auto network_child = config_child.child("network");
-                config.psn_signed_in = network_child.attribute("psn-signed-in").as_bool();
-            }
+#undef READ_CUSTOM_MEMBER
 
             return true;
         } else {
@@ -338,55 +328,25 @@ static void save_config(GuiState &gui, EmuEnvState &emuenv) {
         // Config
         auto config_child = custom_config_xml.append_child("config");
 
-        // Core
+        // Create nodes once
         auto core_child = config_child.append_child("core");
-        core_child.append_attribute("modules-mode") = config.modules_mode;
+        auto cpu_child = config_child.append_child("cpu");
+        auto gpu_child = config_child.append_child("gpu");
+        auto audio_child = config_child.append_child("audio");
+        auto system_child = config_child.append_child("system");
+        auto emulator_child = config_child.append_child("emulator");
+        auto network_child = config_child.append_child("network");
+
         auto enable_module = core_child.append_child("lle-modules");
         for (const auto &m : config.lle_modules)
             enable_module.append_child("module").append_child(pugi::node_pcdata).set_value(m.c_str());
 
-        // CPU
-        auto cpu_child = config_child.append_child("cpu");
-        cpu_child.append_attribute("cpu-opt") = config.cpu_opt;
+#define WRITE_CUSTOM_MEMBER(option_type, option_name, option_default, member_name, section) \
+    write_xml_value<option_type>(section##_child, option_name, config.member_name);
 
-        // GPU
-        auto gpu_child = config_child.append_child("gpu");
-        gpu_child.append_attribute("backend-renderer") = config.backend_renderer.c_str();
-        gpu_child.append_attribute("gpu-idx") = config.gpu_idx;
-#ifdef __ANDROID__
-        gpu_child.append_attribute("custom-driver-name") = config.custom_driver_name.c_str();
-#endif
-        gpu_child.append_attribute("high-accuracy") = config.high_accuracy;
-        gpu_child.append_attribute("resolution-multiplier") = config.resolution_multiplier;
-        gpu_child.append_attribute("disable-surface-sync") = config.disable_surface_sync;
-        gpu_child.append_attribute("screen-filter") = config.screen_filter.c_str();
-        gpu_child.append_attribute("memory-mapping") = config.memory_mapping.c_str();
-        gpu_child.append_attribute("v-sync") = config.v_sync;
-        gpu_child.append_attribute("anisotropic-filtering") = config.anisotropic_filtering;
-        gpu_child.append_attribute("async-pipeline-compilation") = config.async_pipeline_compilation;
-        gpu_child.append_attribute("import-textures") = config.import_textures;
-        gpu_child.append_attribute("export-textures") = config.export_textures;
-        gpu_child.append_attribute("export-as-png") = config.export_as_png;
-        gpu_child.append_attribute("fps-hack") = config.fps_hack;
+        CONFIG_INDIVIDUAL_CUSTOM(WRITE_CUSTOM_MEMBER)
 
-        // Audio
-        auto audio_child = config_child.append_child("audio");
-        audio_child.append_attribute("audio-backend") = config.audio_backend.c_str();
-        audio_child.append_attribute("audio-volume") = config.audio_volume;
-        audio_child.append_attribute("enable-ngs") = config.ngs_enable;
-
-        // System
-        auto system_child = config_child.append_child("system");
-        system_child.append_attribute("pstv-mode") = config.pstv_mode;
-
-        // Emulator
-        auto emulator_child = config_child.append_child("emulator");
-        emulator_child.append_attribute("show-touchpad-cursor") = config.show_touchpad_cursor;
-        emulator_child.append_attribute("file-loading-delay") = config.file_loading_delay;
-
-        // Network
-        auto network_child = config_child.append_child("network");
-        network_child.append_attribute("psn-signed-in") = config.psn_signed_in;
+#undef WRITE_CUSTOM_MEMBER
 
         const auto save_xml = custom_config_xml.save_file(CUSTOM_CONFIG_PATH.c_str());
         if (!save_xml)
