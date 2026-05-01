@@ -72,7 +72,8 @@ __pragma(warning(disable : 4002))
 
 // if code_custom is empty then use code_all else use code_custom or code_no_custom based on is_custom
 #define CONFIG_VITA_IF(is_custom, code_custom, code_no_custom) \
-    CONFIG_VITA_IF_HELPER(is_custom)(code_custom, code_no_custom)
+    CONFIG_VITA_IF_HELPER(is_custom)                           \
+    (code_custom, code_no_custom)
 
 // New CODE macro: allow the last parameter to be optional (node name) and treat it as a token.
 // When the optional parameter is present, invoke `code_custom` with an extra argument
@@ -82,8 +83,9 @@ __pragma(warning(disable : 4002))
 #define PP_HAS_ARG_IMPL(_0, _1, N, ...) N
 #define PP_HAS_ARG(...) PP_HAS_ARG_IMPL(, ##__VA_ARGS__, 1, 0)
 
-#define CODE(code_custom, code_no_custom, type, name, def_value, ...) \
-    CONFIG_VITA_IF(PP_HAS_ARG(__VA_ARGS__), code_custom, code_no_custom)(type, (&(make_option_name(#name)[0])), def_value, name, ##__VA_ARGS__)
+#define CODE(code_custom, code_no_custom, type, name, def_value, ...)    \
+    CONFIG_VITA_IF(PP_HAS_ARG(__VA_ARGS__), code_custom, code_no_custom) \
+    (type, (&(make_option_name(#name)[0])), def_value, name, ##__VA_ARGS__)
 
 // clang-format off
 // Singular options produced in config file

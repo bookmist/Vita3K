@@ -117,7 +117,7 @@ static void run_execv(char *argv[], EmuEnvState &emuenv) {
     // The function call above will exit with some delay
     // Exit now to match the behavior on PC
     exit(0);
-};
+}
 #else
 static void run_execv(char *argv[], EmuEnvState &emuenv) {
     char const *args[10];
